@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { NavLink } from 'react-router-dom';
 import { School } from 'lucide-react';
 import { MissionVisionGoals } from '../components/MissionVisionGoals';
+import { RulesSection } from '../components/RulesSection';
 
 const slides = [
   "https://dhungesanghuschool.edu.np/wp-content/uploads/2026/04/DSC01862-scaled.jpg",
@@ -161,6 +162,9 @@ export const Home: React.FC = () => {
 
       {/* Mission, Vision & Goals Section */}
       <MissionVisionGoals />
+
+      {/* Rules & Regulations Section */}
+      <RulesSection limit={5} />
     </div>
   );
 };

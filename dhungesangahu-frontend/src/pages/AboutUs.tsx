@@ -1,5 +1,6 @@
 import React from 'react';
 import { MissionVisionGoals } from '../components/MissionVisionGoals';
+import { RulesSection } from '../components/RulesSection';
 
 export const AboutUs: React.FC = () => {
   return (
@@ -93,6 +94,9 @@ export const AboutUs: React.FC = () => {
           </div>
         </div>
       </div>
+
+      {/* Rules & Regulations Section */}
+      <RulesSection />
 
     </div>
   );
