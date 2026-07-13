@@ -3,6 +3,7 @@ import { NavLink } from 'react-router-dom';
 import { School } from 'lucide-react';
 import { MissionVisionGoals } from '../components/MissionVisionGoals';
 import { RulesSection } from '../components/RulesSection';
+import { FacilitiesSection } from '../components/FacilitiesSection';
 
 const slides = [
   "https://dhungesanghuschool.edu.np/wp-content/uploads/2026/04/DSC01862-scaled.jpg",
@@ -207,6 +208,9 @@ export const Home: React.FC = () => {
           </div>
         </div>
       </section>
+
+      {/* School Facilities Section */}
+      <FacilitiesSection limit={4} />
 
       {/* Mission, Vision & Goals Section */}
       <MissionVisionGoals />
