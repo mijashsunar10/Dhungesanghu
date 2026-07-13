@@ -10,6 +10,7 @@ import { Programs } from './pages/Programs';
 import { Bulletins } from './pages/Bulletins';
 import { ContactUs } from './pages/ContactUs';
 import { Admissions } from './pages/Admissions';
+import { PrincipalMessage } from './pages/PrincipalMessage';
 import { Heart } from 'lucide-react';
 
 function App() {
@@ -31,6 +32,7 @@ function App() {
             <Route path="/bulletins" element={<Bulletins />} />
             <Route path="/contact-us" element={<ContactUs />} />
             <Route path="/admissions" element={<Admissions />} />
+            <Route path="/principal-message" element={<PrincipalMessage />} />
             {/* Fallback route */}
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>

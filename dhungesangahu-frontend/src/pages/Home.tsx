@@ -160,6 +160,54 @@ export const Home: React.FC = () => {
         </div>
       </section>
 
+      {/* Principal Message Section */}
+      <section className="w-full py-16 px-6 sm:px-12 md:px-20 bg-gradient-to-b from-white to-[#652d90]/5 font-sans">
+        <div className="max-w-6xl mx-auto grid grid-cols-1 md:grid-cols-12 gap-10 lg:gap-16 items-center w-full">
+          {/* Text Content */}
+          <div className="md:col-span-8 flex flex-col items-center md:items-start text-center md:text-left gap-5">
+            <span className="inline-block px-5 py-2 bg-[#652d90]/10 text-[#652d90] font-semibold text-sm rounded-full tracking-wide">
+              🌼 Principal’s Message
+            </span>
+            <h2 className="text-3xl sm:text-4xl font-extrabold text-slate-800 leading-tight">
+              Message From <span className="text-[#652d90] font-serif">The Principal</span>
+            </h2>
+            <blockquote className="bg-[#f7f2fb] border-l-4 border-[#652d90] p-5 my-2 italic text-slate-700 rounded-r-xl text-left w-full">
+              “Education is not the learning of facts, but the training of the mind to think.”
+              <span className="block text-xs text-slate-500 font-sans font-medium mt-1.5">— Albert Einstein</span>
+            </blockquote>
+            <div className="flex flex-col gap-4 text-slate-600 leading-relaxed font-light text-sm sm:text-base">
+              <p className="font-bold text-slate-800">Dear Parents, Children and Well-Wishers,</p>
+              <p>
+                A warm greeting from the Principal!
+                It is an honor and privilege to lead an institution where everyone is a learner
+                and each day brings new opportunities to grow and discover.
+              </p>
+              <p>
+                At our school, we believe education is more than academics.
+                It is about character building, discipline, creativity,
+                and preparing students to face the future with confidence.
+              </p>
+            </div>
+            <div className="mt-4">
+              <NavLink 
+                to="/principal-message" 
+                className="inline-block bg-[#652d90] hover:bg-[#4b1f6b] text-white font-semibold px-8 py-3.5 rounded-full shadow-md hover:shadow-lg transition-all duration-300"
+              >
+                View Full Message →
+              </NavLink>
+            </div>
+          </div>
+          {/* Photo */}
+          <div className="md:col-span-4 flex justify-center w-full">
+            <img 
+              src="https://dhungesanghuschool.edu.np/wp-content/uploads/2026/02/BishnuGcPrincipal.jpeg" 
+              alt="Principal Bishnu G.C." 
+              className="w-[280px] h-[280px] sm:w-[360px] sm:h-[360px] object-cover rounded-full border-8 border-white shadow-2xl transition-transform duration-500 hover:scale-[1.02]"
+            />
+          </div>
+        </div>
+      </section>
+
       {/* Mission, Vision & Goals Section */}
       <MissionVisionGoals />
 
