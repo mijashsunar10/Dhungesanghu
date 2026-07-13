@@ -6,6 +6,8 @@ import { RulesSection } from '../components/RulesSection';
 import { FacilitiesSection } from '../components/FacilitiesSection';
 import { PhotoGallerySection } from '../components/PhotoGallerySection';
 import { AcademicTeamSection } from '../components/AcademicTeamSection';
+import { ContactSection } from '../components/ContactSection';
+
 
 
 const slides = [
@@ -226,6 +228,9 @@ export const Home: React.FC = () => {
 
       {/* Rules & Regulations Section */}
       <RulesSection limit={5} />
+
+      {/* Contact Us Section */}
+      <ContactSection />
     </div>
   );
 };

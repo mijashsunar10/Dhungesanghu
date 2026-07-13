@@ -1,4 +1,5 @@
-import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Navigate, Link } from 'react-router-dom';
+
 import { Header } from './components/Header';
 import { AppDownload } from './components/AppDownload';
 import { Home } from './pages/Home';
@@ -42,28 +43,74 @@ function App() {
         <AppDownload />
 
         {/* Footer */}
-        <footer className="bg-slate-950 text-slate-400 py-12 px-6 border-t border-slate-900 mt-auto">
-          <div className="max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between gap-6">
-            <div className="flex flex-col items-center md:items-start gap-2">
-              <div className="flex items-center gap-2">
+        <footer className="school-footer mt-auto">
+          <div className="footer-container">
+            {/* LOGO / ABOUT */}
+            <div className="footer-box footer-about">
+              <div className="logo-wrapper">
+                <div className="logo-bg"></div>
                 <img 
-                  src="https://rainbowacademic.edu.np/wp-content/uploads/2026/01/d2.png" 
+                  src="https://dhungesanghuschool.edu.np/wp-content/uploads/2026/01/Untitled-design-10.png" 
                   alt="Dhungesanghu Boarding School Logo" 
-                  className="h-10 w-auto object-contain"
+                  className="footer-logo"
                 />
-                <span className="font-serif font-bold text-white text-base">Dhungesanghu Boarding School</span>
               </div>
-              <p className="text-xs text-slate-500 font-light font-sans pl-1">
-                © {new Date().getFullYear()} Dhungesanghu Boarding School. All Rights Reserved.
+              <p className="max-w-md mx-auto text-white/90">
+                Dhungesanghu Boarding School provides quality education and holistic learning. We nurture young minds to excel academically and socially for a bright future.
               </p>
             </div>
-            
-            <div className="flex items-center gap-1.5 text-xs text-slate-500 font-light">
-              <span>Made with</span>
-              <Heart className="h-3.5 w-3.5 text-red-500 fill-current animate-pulse" />
-              <span>for Education Excellence</span>
+
+            {/* QUICK LINKS */}
+            <div className="footer-box footer-links">
+              <h4>Quick Links</h4>
+              <ul>
+                <li><Link to="/">Home</Link></li>
+                <li><Link to="/about-us">About Us</Link></li>
+                <li><Link to="/services">Services</Link></li>
+                <li><Link to="/admissions">Admissions</Link></li>
+                <li><Link to="/contact-us">Contact Us</Link></li>
+              </ul>
+            </div>
+
+            {/* CONTACT */}
+            <div className="footer-box footer-contact text-center">
+              <h4>Contact</h4>
+              <p className="text-white/90"><strong>Location:</strong> Pokhara-17, Mahatgaunda</p>
+              <p className="text-white/90">
+                <strong>Contact:</strong>{' '}
+                <a href="tel:061402039" className="hover:text-[#ffdd57] transition-colors">
+                  061-402039
+                </a>
+              </p>
+              <p className="text-white/90">
+                <strong>Email:</strong>{' '}
+                <a href="mailto:dhungesanghuschool@gmail.com" className="hover:text-[#ffdd57] transition-colors">
+                  dhungesanghuschool@gmail.com
+                </a>
+              </p>
+            </div>
+
+            {/* SOCIAL */}
+            <div className="footer-box footer-social">
+              <h4>Follow Us</h4>
+              <div className="socials">
+                <a href="https://www.facebook.com/profile.php?id=100063511542673" target="_blank" rel="noreferrer" className="social fb" aria-label="Facebook">
+                  <i className="fab fa-facebook-f"></i>
+                </a>
+                <a href="https://instagram.com" target="_blank" rel="noreferrer" className="social ig" aria-label="Instagram">
+                  <i className="fab fa-instagram"></i>
+                </a>
+                <a href="https://youtube.com" target="_blank" rel="noreferrer" className="social yt" aria-label="YouTube">
+                  <i className="fab fa-youtube"></i>
+                </a>
+                <a href="https://wa.me/9779800000000" target="_blank" rel="noreferrer" className="social wa" aria-label="WhatsApp">
+                  <i className="fab fa-whatsapp"></i>
+                </a>
+              </div>
             </div>
           </div>
+          
+
         </footer>
       </div>
     </Router>
