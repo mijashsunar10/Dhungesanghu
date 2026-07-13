@@ -4,6 +4,7 @@ import { School } from 'lucide-react';
 import { MissionVisionGoals } from '../components/MissionVisionGoals';
 import { RulesSection } from '../components/RulesSection';
 import { FacilitiesSection } from '../components/FacilitiesSection';
+import { PhotoGallerySection } from '../components/PhotoGallerySection';
 
 const slides = [
   "https://dhungesanghuschool.edu.np/wp-content/uploads/2026/04/DSC01862-scaled.jpg",
@@ -211,6 +212,9 @@ export const Home: React.FC = () => {
 
       {/* School Facilities Section */}
       <FacilitiesSection limit={4} />
+
+      {/* Photo Gallery Section */}
+      <PhotoGallerySection limit={6} />
 
       {/* Mission, Vision & Goals Section */}
       <MissionVisionGoals />
