@@ -1,5 +1,6 @@
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { Header } from './components/Header';
+import { AppDownload } from './components/AppDownload';
 import { Home } from './pages/Home';
 import { AboutUs } from './pages/AboutUs';
 import { Services } from './pages/Services';
@@ -34,6 +35,9 @@ function App() {
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
         </main>
+
+        {/* Global floating App Download widget */}
+        <AppDownload />
 
         {/* Footer */}
         <footer className="bg-slate-950 text-slate-400 py-12 px-6 border-t border-slate-900 mt-auto">
