@@ -90,6 +90,28 @@ export const Home: React.FC = () => {
         </div>
       </section>
 
+      {/* Stats Counter Section */}
+      <section className="bg-white py-12 px-6 sm:px-12 md:px-20 border-b border-slate-100 font-sans">
+        <div className="max-w-7xl mx-auto grid grid-cols-2 md:grid-cols-4 gap-8 text-center">
+          <div className="flex flex-col items-center p-6 rounded-3xl bg-slate-50 border border-slate-100/80 transition-all hover:shadow-md">
+            <span className="text-4xl sm:text-5xl font-black text-[#652d90] mb-2 font-mono">20+</span>
+            <span className="text-xs sm:text-sm text-slate-500 font-bold uppercase tracking-wider">Years of History</span>
+          </div>
+          <div className="flex flex-col items-center p-6 rounded-3xl bg-slate-50 border border-slate-100/80 transition-all hover:shadow-md">
+            <span className="text-4xl sm:text-5xl font-black text-[#652d90] mb-2 font-mono">500+</span>
+            <span className="text-xs sm:text-sm text-slate-500 font-bold uppercase tracking-wider">Active Students</span>
+          </div>
+          <div className="flex flex-col items-center p-6 rounded-3xl bg-slate-50 border border-slate-100/80 transition-all hover:shadow-md">
+            <span className="text-4xl sm:text-5xl font-black text-[#652d90] mb-2 font-mono">40+</span>
+            <span className="text-xs sm:text-sm text-slate-500 font-bold uppercase tracking-wider">Certified Teachers</span>
+          </div>
+          <div className="flex flex-col items-center p-6 rounded-3xl bg-slate-50 border border-slate-100/80 transition-all hover:shadow-md">
+            <span className="text-4xl sm:text-5xl font-black text-[#652d90] mb-2 font-mono">100%</span>
+            <span className="text-xs sm:text-sm text-slate-500 font-bold uppercase tracking-wider">SECURE CAMPUS</span>
+          </div>
+        </div>
+      </section>
+
       {/* About Us Section */}
       <section className="bg-gradient-to-b from-white to-[#f7f3fb] py-20 px-6 sm:px-12 md:px-20 font-sans">
         <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-16 items-center">
@@ -228,6 +250,68 @@ export const Home: React.FC = () => {
 
       {/* Rules & Regulations Section */}
       <RulesSection limit={5} />
+
+      {/* Testimonials Section */}
+      <section className="py-20 px-6 sm:px-12 md:px-20 bg-gradient-to-b from-[#f7f3fb] to-white font-sans overflow-hidden">
+        <div className="max-w-7xl mx-auto flex flex-col items-center text-center">
+          <span className="inline-block px-5 py-1.5 bg-[#652d90]/10 text-[#652d90] font-bold text-xs uppercase tracking-wider rounded-full">
+            Testimonials
+          </span>
+          <h2 className="text-3xl sm:text-4xl font-extrabold text-[#4b1f6b] font-serif leading-tight mt-3 mb-12">
+            What Parents Say About Us
+          </h2>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 w-full">
+            <div className="bg-white p-8 rounded-3xl border border-slate-200/60 shadow-sm flex flex-col justify-between text-left relative transition-all duration-300 hover:-translate-y-1.5 hover:shadow-lg">
+              <div className="text-4xl text-purple-200 font-serif absolute top-6 right-8">“</div>
+              <p className="text-slate-600 font-light text-sm sm:text-base leading-relaxed mb-6 italic z-10">
+                "Dhungesanghu has provided a fantastic environment for my son. The teachers are very attentive, and the focus on moral values and discipline has helped him grow into a responsible student."
+              </p>
+              <div className="flex items-center gap-3">
+                <div className="w-11 h-11 rounded-full bg-purple-100 flex items-center justify-center font-bold text-[#652d90]">
+                  KP
+                </div>
+                <div>
+                  <h4 className="font-bold text-slate-800 text-sm">Kiran Parajuli</h4>
+                  <span className="text-xs text-slate-400">Parent of Grade 8 Student</span>
+                </div>
+              </div>
+            </div>
+
+            <div className="bg-white p-8 rounded-3xl border border-slate-200/60 shadow-sm flex flex-col justify-between text-left relative transition-all duration-300 hover:-translate-y-1.5 hover:shadow-lg">
+              <div className="text-4xl text-purple-200 font-serif absolute top-6 right-8">“</div>
+              <p className="text-slate-600 font-light text-sm sm:text-base leading-relaxed mb-6 italic z-10">
+                "We are highly impressed with the digital communication system. We receive homework, bulletins, and exams updates on the school app. The educational quality is excellent."
+              </p>
+              <div className="flex items-center gap-3">
+                <div className="w-11 h-11 rounded-full bg-purple-100 flex items-center justify-center font-bold text-[#652d90]">
+                  SG
+                </div>
+                <div>
+                  <h4 className="font-bold text-slate-800 text-sm">Sita Gurung</h4>
+                  <span className="text-xs text-slate-400">Parent of Grade 3 Student</span>
+                </div>
+              </div>
+            </div>
+
+            <div className="bg-white p-8 rounded-3xl border border-slate-200/60 shadow-sm flex flex-col justify-between text-left relative transition-all duration-300 hover:-translate-y-1.5 hover:shadow-lg">
+              <div className="text-4xl text-purple-200 font-serif absolute top-6 right-8">“</div>
+              <p className="text-slate-600 font-light text-sm sm:text-base leading-relaxed mb-6 italic z-10">
+                "The sports and extracurricular activities are wonderful. My daughter participates in debate and drawing classes, which has boosted her self-confidence immensely."
+              </p>
+              <div className="flex items-center gap-3">
+                <div className="w-11 h-11 rounded-full bg-purple-100 flex items-center justify-center font-bold text-[#652d90]">
+                  RB
+                </div>
+                <div>
+                  <h4 className="font-bold text-slate-800 text-sm">Ramesh Baral</h4>
+                  <span className="text-xs text-slate-400">Parent of Grade 10 Student</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
 
       {/* Contact Us Section */}
       <ContactSection />
