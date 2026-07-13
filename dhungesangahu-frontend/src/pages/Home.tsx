@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { NavLink } from 'react-router-dom';
 import { School } from 'lucide-react';
+import { MissionVisionGoals } from '../components/MissionVisionGoals';
 
 const slides = [
   "https://dhungesanghuschool.edu.np/wp-content/uploads/2026/04/DSC01862-scaled.jpg",
@@ -157,6 +158,9 @@ export const Home: React.FC = () => {
 
         </div>
       </section>
+
+      {/* Mission, Vision & Goals Section */}
+      <MissionVisionGoals />
     </div>
   );
 };

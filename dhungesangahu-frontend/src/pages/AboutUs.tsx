@@ -1,5 +1,5 @@
 import React from 'react';
-import { BookOpen, Award } from 'lucide-react';
+import { MissionVisionGoals } from '../components/MissionVisionGoals';
 
 export const AboutUs: React.FC = () => {
   return (
@@ -15,27 +15,9 @@ export const AboutUs: React.FC = () => {
         </p>
       </div>
 
-      {/* Grid: Mission & Vision */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-        <div className="bg-[#652d90]/5 border border-purple-200/50 p-8 rounded-2xl flex flex-col gap-4">
-          <div className="w-12 h-12 bg-[#652d90] text-white rounded-xl flex items-center justify-center shadow-md">
-            <BookOpen className="h-6 w-6" />
-          </div>
-          <h2 className="text-2xl font-bold font-serif text-purple-900">Our Mission</h2>
-          <p className="text-slate-600 font-light leading-relaxed">
-            To provide premium quality education focusing on critical thinking, ethical understanding, and community responsibility. We encourage children to ask questions, explore their limits, and seek academic and personal excellence in a safe, child-centered environment.
-          </p>
-        </div>
-
-        <div className="bg-[#652d90]/5 border border-purple-200/50 p-8 rounded-2xl flex flex-col gap-4">
-          <div className="w-12 h-12 bg-[#ffdd57] text-[#652d90] rounded-xl flex items-center justify-center shadow-md">
-            <Award className="h-6 w-6" />
-          </div>
-          <h2 className="text-2xl font-bold font-serif text-purple-900">Our Vision</h2>
-          <p className="text-slate-600 font-light leading-relaxed">
-            To remain a premier academic institution in the Pokhara valley, bridging the gap between traditional values and global standard scientific training. We strive to graduate leaders of tomorrow who are ready to face global challenges with confidence and wisdom.
-          </p>
-        </div>
+      {/* Mission, Vision & Goals Section */}
+      <div className="-mx-6 sm:-mx-12 md:-mx-20 border-y border-slate-100">
+        <MissionVisionGoals />
       </div>
 
       {/* Core Values Section */}
