@@ -8,21 +8,23 @@ export const Bulletins: React.FC = () => {
   ];
 
   return (
-    <div className="py-16 px-6 max-w-4xl mx-auto text-left flex flex-col gap-8">
-      <h1 className="text-4xl font-bold font-serif text-purple-900 border-b-2 border-[#ffdd57] pb-2 w-fit">News & Bulletins</h1>
-      
-      <div className="flex flex-col gap-6 mt-4">
-        {notices.map((notice, idx) => (
-          <div key={idx} className="bg-white border border-slate-200 hover:border-purple-300 rounded-2xl p-6 shadow-sm transition-all flex flex-col sm:flex-row gap-4 sm:items-center">
-            <div className="bg-[#652d90]/10 text-[#652d90] font-bold text-sm px-4 py-2 rounded-xl text-center min-w-[120px] h-fit">
-              {notice.date}
+    <div className="w-full flex flex-col font-sans">
+      <div className="py-16 px-6 max-w-4xl mx-auto text-left flex flex-col gap-8 w-full">
+        <h1 className="text-4xl font-bold font-serif text-purple-900 border-b-2 border-[#ffdd57] pb-2 w-fit">News & Bulletins</h1>
+        
+        <div className="flex flex-col gap-6 mt-4">
+          {notices.map((notice, idx) => (
+            <div key={idx} className="bg-white border border-slate-200 hover:border-purple-300 rounded-2xl p-6 shadow-sm transition-all flex flex-col sm:flex-row gap-4 sm:items-center">
+              <div className="bg-[#652d90]/10 text-[#652d90] font-bold text-sm px-4 py-2 rounded-xl text-center min-w-[120px] h-fit">
+                {notice.date}
+              </div>
+              <div>
+                <h3 className="text-lg font-bold text-slate-800">{notice.title}</h3>
+                <p className="text-slate-500 text-sm mt-1 font-light leading-relaxed">{notice.desc}</p>
+              </div>
             </div>
-            <div>
-              <h3 className="text-lg font-bold text-slate-800">{notice.title}</h3>
-              <p className="text-slate-500 text-sm mt-1 font-light leading-relaxed">{notice.desc}</p>
-            </div>
-          </div>
-        ))}
+          ))}
+        </div>
       </div>
     </div>
   );
