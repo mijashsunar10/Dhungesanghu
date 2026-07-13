@@ -5,6 +5,8 @@ import { MissionVisionGoals } from '../components/MissionVisionGoals';
 import { RulesSection } from '../components/RulesSection';
 import { FacilitiesSection } from '../components/FacilitiesSection';
 import { PhotoGallerySection } from '../components/PhotoGallerySection';
+import { AcademicTeamSection } from '../components/AcademicTeamSection';
+
 
 const slides = [
   "https://dhungesanghuschool.edu.np/wp-content/uploads/2026/04/DSC01862-scaled.jpg",
@@ -209,6 +211,9 @@ export const Home: React.FC = () => {
           </div>
         </div>
       </section>
+
+      {/* Academic Team Section */}
+      <AcademicTeamSection />
 
       {/* School Facilities Section */}
       <FacilitiesSection limit={4} />
