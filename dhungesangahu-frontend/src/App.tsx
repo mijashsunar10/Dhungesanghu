@@ -1,122 +1,67 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from './assets/vite.svg'
-import heroImg from './assets/hero.png'
-import './App.css'
+import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import { Header } from './components/Header';
+import { Home } from './pages/Home';
+import { AboutUs } from './pages/AboutUs';
+import { Services } from './pages/Services';
+import { Officials } from './pages/Officials';
+import { Gallery } from './pages/Gallery';
+import { Programs } from './pages/Programs';
+import { Bulletins } from './pages/Bulletins';
+import { ContactUs } from './pages/ContactUs';
+import { Admissions } from './pages/Admissions';
+import { Heart } from 'lucide-react';
 
 function App() {
-  const [count, setCount] = useState(0)
-
   return (
-    <>
-      <section id="center">
-        <div className="hero">
-          <img src={heroImg} className="base" width="170" height="179" alt="" />
-          <img src={reactLogo} className="framework" alt="React logo" />
-          <img src={viteLogo} className="vite" alt="Vite logo" />
-        </div>
-        <div>
-          <h1 className="text-5xl font-extrabold text-blue-500 hover:text-blue-600 transition-colors duration-300 my-8">Get started</h1>
-          <p>
-            Edit <code>src/App.tsx</code> and save to test <code>HMR</code>
-          </p>
-        </div>
-        <button
-          type="button"
-          className="counter"
-          onClick={() => setCount((count) => count + 1)}
-        >
-          Count is {count}
-        </button>
-      </section>
+    <Router>
+      <div className="flex flex-col min-h-screen bg-white">
+        {/* The Header is rendered once and is visible on all pages */}
+        <Header />
 
-      <div className="ticks"></div>
+        {/* Dynamic page content */}
+        <main className="flex-1 w-full">
+          <Routes>
+            <Route path="/" element={<Home />} />
+            <Route path="/about-us" element={<AboutUs />} />
+            <Route path="/services" element={<Services />} />
+            <Route path="/officials" element={<Officials />} />
+            <Route path="/gallery" element={<Gallery />} />
+            <Route path="/programs" element={<Programs />} />
+            <Route path="/bulletins" element={<Bulletins />} />
+            <Route path="/contact-us" element={<ContactUs />} />
+            <Route path="/admissions" element={<Admissions />} />
+            {/* Fallback route */}
+            <Route path="*" element={<Navigate to="/" replace />} />
+          </Routes>
+        </main>
 
-      <section id="next-steps">
-        <div id="docs">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#documentation-icon"></use>
-          </svg>
-          <h2>Documentation</h2>
-          <p>Your questions, answered</p>
-          <ul>
-            <li>
-              <a href="https://vite.dev/" target="_blank">
-                <img className="logo" src={viteLogo} alt="" />
-                Explore Vite
-              </a>
-            </li>
-            <li>
-              <a href="https://react.dev/" target="_blank">
-                <img className="button-icon" src={reactLogo} alt="" />
-                Learn more
-              </a>
-            </li>
-          </ul>
-        </div>
-        <div id="social">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#social-icon"></use>
-          </svg>
-          <h2>Connect with us</h2>
-          <p>Join the Vite community</p>
-          <ul>
-            <li>
-              <a href="https://github.com/vitejs/vite" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#github-icon"></use>
-                </svg>
-                GitHub
-              </a>
-            </li>
-            <li>
-              <a href="https://chat.vite.dev/" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#discord-icon"></use>
-                </svg>
-                Discord
-              </a>
-            </li>
-            <li>
-              <a href="https://x.com/vite_js" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#x-icon"></use>
-                </svg>
-                X.com
-              </a>
-            </li>
-            <li>
-              <a href="https://bsky.app/profile/vite.dev" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#bluesky-icon"></use>
-                </svg>
-                Bluesky
-              </a>
-            </li>
-          </ul>
-        </div>
-      </section>
-
-      <div className="ticks"></div>
-      <section id="spacer"></section>
-    </>
-  )
+        {/* Footer */}
+        <footer className="bg-slate-950 text-slate-400 py-12 px-6 border-t border-slate-900 mt-auto">
+          <div className="max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between gap-6">
+            <div className="flex flex-col items-center md:items-start gap-2">
+              <div className="flex items-center gap-2">
+                <img 
+                  src="https://rainbowacademic.edu.np/wp-content/uploads/2026/01/d2.png" 
+                  alt="Dhungesanghu Boarding School Logo" 
+                  className="h-10 w-auto object-contain"
+                />
+                <span className="font-serif font-bold text-white text-base">Dhungesanghu Boarding School</span>
+              </div>
+              <p className="text-xs text-slate-500 font-light font-sans pl-1">
+                © {new Date().getFullYear()} Dhungesanghu Boarding School. All Rights Reserved.
+              </p>
+            </div>
+            
+            <div className="flex items-center gap-1.5 text-xs text-slate-500 font-light">
+              <span>Made with</span>
+              <Heart className="h-3.5 w-3.5 text-red-500 fill-current animate-pulse" />
+              <span>for Education Excellence</span>
+            </div>
+          </div>
+        </footer>
+      </div>
+    </Router>
+  );
 }
 
-export default App
+export default App;
