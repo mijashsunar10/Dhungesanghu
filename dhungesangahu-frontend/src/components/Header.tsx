@@ -110,7 +110,7 @@ export const Header: React.FC = () => {
           <div className="flex lg:hidden items-center gap-3 w-full sm:w-auto justify-between md:justify-end">
             <a 
               href="tel:061-402039" 
-              className="sm:hidden flex items-center gap-2 bg-[#ffdd57] text-[#652d90] font-semibold text-xs px-3 py-1.5 rounded-full"
+              className="sm:hidden flex items-center gap-2 bg-[#ffdd57] text-white font-semibold text-xs px-3 py-1.5 rounded-full"
             >
               <Phone className="h-4 w-4" />
               Call Now
@@ -181,7 +181,7 @@ export const Header: React.FC = () => {
 
           <NavLink 
             to="/admissions" 
-            className="bg-[#ffdd57] text-[#652d90] hover:bg-[#e6c84a] font-bold text-sm px-6 py-2.5 rounded-full shadow-md transition-all duration-300 hover:-translate-y-0.5 hover:shadow-lg active:translate-y-0"
+            className="bg-[#ffdd57] text-white hover:bg-[#e6c84a] font-bold text-sm px-6 py-2.5 rounded-full shadow-md transition-all duration-300 hover:-translate-y-0.5 hover:shadow-lg active:translate-y-0"
           >
             Admissions Open
           </NavLink>
@@ -260,7 +260,7 @@ export const Header: React.FC = () => {
             <NavLink 
               to="/admissions" 
               onClick={() => setIsMenuOpen(false)}
-              className="w-full bg-[#ffdd57] text-[#652d90] font-bold py-3 px-4 rounded-xl text-center shadow-md active:scale-95 transition-all"
+              className="w-full bg-[#ffdd57] text-white font-bold py-3 px-4 rounded-xl text-center shadow-md active:scale-95 transition-all"
             >
               Admissions Open
             </NavLink>

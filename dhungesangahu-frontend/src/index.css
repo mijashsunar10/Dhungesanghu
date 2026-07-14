@@ -41,6 +41,13 @@ html, body {
               color 0.5s cubic-bezier(0.16, 1, 0.3, 1),
               box-shadow 0.5s cubic-bezier(0.16, 1, 0.3, 1);
 }
+/* Ensure all elements with a yellow background and yellow hover states use white text globally */
+[class*="bg-[#ffdd57]"],
+[class*="bg-[#facc15]"],
+.hover\:bg-\[\#ffdd57\]:hover,
+.hover\:bg-\[\#facc15\]:hover {
+  color: #ffffff !important;
+}
 
 /* ================= DARK MODE OVERRIDES ================= */
 .dark {
@@ -92,7 +99,7 @@ html, body {
 
 .dark .bg-\[\#ffdd57\] {
   background-color: #eab308 !important;
-  color: #000000 !important;
+  color: #ffffff !important;
 }
 
 .dark .text-slate-900,
@@ -242,9 +249,19 @@ html, body {
   border-color: var(--border-color) !important;
 }
 
+/* Dim the home page slider images in dark mode */
+.dark section.relative.min-h-\[500px\] {
+  background-color: var(--bg-primary) !important;
+}
 
+.dark section.relative.min-h-\[500px\] .bg-cover {
+  opacity: 0.25 !important;
+  filter: grayscale(40%) contrast(110%);
+}
 
-
+.dark section.relative.min-h-\[500px\] .bg-black\/60 {
+  background-color: rgba(11, 5, 20, 0.85) !important;
+}
 /* ================= ACADEMY TEAM SECTION ================= */
 .academy-team-section {
   padding: 80px 20px;
