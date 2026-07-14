@@ -49,6 +49,29 @@ html, body {
   color: #ffffff !important;
 }
 
+
+/* Accessibility: Focus visible outline for keyboard navigation */
+button:focus-visible,
+a:focus-visible,
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible,
+[role="button"]:focus-visible {
+  outline: 3px solid #652d90 !important;
+  outline-offset: 3px !important;
+}
+
+/* Ensure focus outline contrasts nicely in dark mode */
+.dark button:focus-visible,
+.dark a:focus-visible,
+.dark input:focus-visible,
+.dark select:focus-visible,
+.dark textarea:focus-visible,
+.dark [role="button"]:focus-visible {
+  outline: 3px solid #c084fc !important;
+  outline-offset: 3px !important;
+}
+
 /* ================= DARK MODE OVERRIDES ================= */
 .dark {
   --bg-primary: #0b0514;
