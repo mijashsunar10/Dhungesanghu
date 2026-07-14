@@ -1,7 +1,8 @@
 import React from 'react';
-import { Mail, GraduationCap, Award, Compass, Heart } from 'lucide-react';
+import { Mail, GraduationCap, Award, Heart } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { ImageWithFallback } from '../components/ImageWithFallback';
+import { PageBanner } from '../components/PageBanner';
 
 export const PrincipalMessage: React.FC = () => {
   return (
@@ -11,25 +12,11 @@ export const PrincipalMessage: React.FC = () => {
       transition={{ duration: 0.4 }}
       className="w-full flex flex-col font-sans bg-slate-50 min-h-screen"
     >
-      
-      {/* Header Banner */}
-      <section className="bg-gradient-to-r from-[#652d90] to-[#4b1f6b] text-white py-16 px-6 text-center relative overflow-hidden">
-        <div className="absolute top-[-50px] right-[-50px] w-48 h-48 rounded-full bg-white/5 pointer-events-none" />
-        <div className="absolute bottom-[-100px] left-[-20px] w-64 h-64 rounded-full bg-white/5 pointer-events-none" />
-        
-        <div className="max-w-4xl mx-auto flex flex-col gap-3 relative z-10 items-center">
-          <span className="inline-flex items-center gap-1.5 px-4 py-1.5 bg-[#ffdd57] text-[#4b1f6b] font-bold text-xs uppercase tracking-wider rounded-full shadow-md">
-            <Compass className="h-3.5 w-3.5" />
-            Leadership address
-          </span>
-          <h1 className="text-4xl sm:text-5xl font-extrabold font-serif tracking-tight drop-shadow-sm mt-2">
-            Principal's Message
-          </h1>
-          <p className="text-purple-200 font-light text-base sm:text-lg max-w-2xl mx-auto">
-            A warm welcome and leadership address from the Principal of Dhungesanghu Boarding School.
-          </p>
-        </div>
-      </section>
+      <PageBanner 
+        title="Principal's Message" 
+        subtitle="A warm welcome and leadership address from the Principal of Dhungesanghu Boarding School." 
+        badge="Leadership address"
+      />
 
       {/* Main Content Area */}
       <div className="max-w-6xl w-full mx-auto px-6 py-16 grid grid-cols-1 lg:grid-cols-12 gap-12 items-start">

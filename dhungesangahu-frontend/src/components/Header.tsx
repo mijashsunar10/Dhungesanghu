@@ -2,26 +2,13 @@ import React, { useState, useEffect } from 'react';
 import { NavLink } from 'react-router-dom';
 import { MapPin, Phone, Mail, Menu, X, LogIn, Sun, Moon } from 'lucide-react';
 import { ImageWithFallback } from './ImageWithFallback';
+import { useThemeMode } from '../hooks/useThemeMode';
 
 export const Header: React.FC = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isFixed, setIsFixed] = useState(false);
 
-  // Dark Mode States
-  const [isDarkMode, setIsDarkMode] = useState<boolean>(() => {
-    return document.documentElement.classList.contains('dark') || 
-      localStorage.getItem('theme') === 'dark';
-  });
-
-  useEffect(() => {
-    if (isDarkMode) {
-      document.documentElement.classList.add('dark');
-      localStorage.setItem('theme', 'dark');
-    } else {
-      document.documentElement.classList.remove('dark');
-      localStorage.setItem('theme', 'light');
-    }
-  }, [isDarkMode]);
+  const { isDarkMode, toggleTheme } = useThemeMode();
 
   useEffect(() => {
     const handleScroll = () => {
@@ -173,7 +160,7 @@ export const Header: React.FC = () => {
 
             {/* Theme Toggle Button */}
             <button
-              onClick={() => setIsDarkMode(!isDarkMode)}
+              onClick={toggleTheme}
               className="p-1.5 rounded-full hover:bg-white/10 text-purple-100 hover:text-[#ffdd57] transition-all cursor-pointer select-none"
               title="Toggle Light/Dark Theme"
             >
@@ -213,7 +200,7 @@ export const Header: React.FC = () => {
             <span className="font-serif font-bold text-lg text-[#ffdd57]">Navigation</span>
             <div className="flex items-center gap-3">
               <button
-                onClick={() => setIsDarkMode(!isDarkMode)}
+                onClick={toggleTheme}
                 className="p-1.5 rounded-full bg-purple-900/50 hover:bg-purple-950 transition-colors cursor-pointer select-none"
                 aria-label="Toggle theme"
               >

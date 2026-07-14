@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { Gamepad2, Trophy, RefreshCw, Play, Sparkles, Timer, Check, X, Brain, Calculator, Award } from 'lucide-react';
+import { Gamepad2, Trophy, RefreshCw, Play, Timer, Check, X, Brain, Calculator, Award } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { PageBanner } from '../components/PageBanner';
 
 interface Question {
   question: string;
@@ -208,7 +209,7 @@ export const GameZone: React.FC = () => {
 
   // Math Timer
   useEffect(() => {
-    let timerId: any;
+    let timerId: ReturnType<typeof setTimeout> | undefined;
     if (mathActive && mathTimer > 0) {
       timerId = setTimeout(() => setMathTimer(t => t - 1), 1000);
     } else if (mathTimer === 0 && mathActive) {
@@ -252,24 +253,11 @@ export const GameZone: React.FC = () => {
       transition={{ duration: 0.4 }}
       className="w-full flex flex-col font-sans bg-slate-50 min-h-screen"
     >
-      {/* Header Banner */}
-      <section className="bg-gradient-to-r from-[#652d90] to-[#4b1f6b] text-white py-16 px-6 text-center relative overflow-hidden">
-        <div className="absolute top-[-50px] right-[-50px] w-48 h-48 rounded-full bg-white/5 pointer-events-none" />
-        <div className="absolute bottom-[-100px] left-[-20px] w-64 h-64 rounded-full bg-white/5 pointer-events-none" />
-        
-        <div className="max-w-4xl mx-auto flex flex-col gap-3 relative z-10 items-center">
-          <span className="inline-flex items-center gap-1.5 px-4 py-1.5 bg-[#ffdd57] text-[#4b1f6b] font-bold text-xs uppercase tracking-wider rounded-full shadow-md">
-            <Sparkles className="h-3.5 w-3.5" />
-            Learn & Play
-          </span>
-          <h1 className="text-4xl sm:text-5xl font-extrabold font-serif tracking-tight drop-shadow-sm mt-2">
-            Student Game Zone
-          </h1>
-          <p className="text-purple-200 font-light text-base sm:text-lg max-w-2xl mx-auto">
-            Test your knowledge, improve your math speed, and challenge your memory with our educational games!
-          </p>
-        </div>
-      </section>
+      <PageBanner 
+        title="Student Game Zone" 
+        subtitle="Test your knowledge, improve your math speed, and challenge your memory with our educational games!" 
+        badge="Learn & Play"
+      />
 
       {/* Main Container */}
       <div className="max-w-6xl w-full mx-auto px-6 py-12 flex-1 flex flex-col">

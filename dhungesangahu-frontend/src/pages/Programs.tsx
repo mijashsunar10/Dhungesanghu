@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
-import { Sparkles, BookOpen, GraduationCap, Award, CheckCircle } from 'lucide-react';
+import { Sparkles, BookOpen, GraduationCap, CheckCircle } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { PageBanner } from '../components/PageBanner';
 
 interface ProgramDetail {
   id: string;
@@ -76,24 +77,11 @@ export const Programs: React.FC = () => {
       transition={{ duration: 0.4 }}
       className="w-full flex flex-col font-sans bg-slate-50 min-h-screen"
     >
-      {/* Header Banner */}
-      <section className="bg-gradient-to-r from-[#652d90] to-[#4b1f6b] text-white py-16 px-6 text-center relative overflow-hidden">
-        <div className="absolute top-[-50px] right-[-50px] w-48 h-48 rounded-full bg-white/5 pointer-events-none" />
-        <div className="absolute bottom-[-100px] left-[-20px] w-64 h-64 rounded-full bg-white/5 pointer-events-none" />
-        
-        <div className="max-w-4xl mx-auto flex flex-col gap-3 relative z-10 items-center">
-          <span className="inline-flex items-center gap-1.5 px-4 py-1.5 bg-[#ffdd57] text-[#4b1f6b] font-bold text-xs uppercase tracking-wider rounded-full shadow-md">
-            <Award className="h-3.5 w-3.5" />
-            Curriculum
-          </span>
-          <h1 className="text-4xl sm:text-5xl font-extrabold font-serif tracking-tight drop-shadow-sm mt-2">
-            Academic Programs
-          </h1>
-          <p className="text-purple-200 font-light text-base sm:text-lg max-w-2xl mx-auto">
-            Explore our curriculum paths meticulously designed for holistic child growth, logic cultivation, and SEE excellence.
-          </p>
-        </div>
-      </section>
+      <PageBanner 
+        title="Academic Programs" 
+        subtitle="Explore our curriculum paths meticulously designed for holistic child growth, logic cultivation, and SEE excellence." 
+        badge="Curriculum"
+      />
 
       {/* Main Content Area */}
       <div className="max-w-5xl w-full mx-auto px-6 py-16 flex flex-col items-center">

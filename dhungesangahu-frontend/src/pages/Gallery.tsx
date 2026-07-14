@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
 import { PhotoGallerySection } from '../components/PhotoGallerySection';
-import { Sparkles, Map, Image as ImageIcon, MapPin } from 'lucide-react';
+import { Map, Image as ImageIcon, MapPin } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ImageWithFallback } from '../components/ImageWithFallback';
+import { PageBanner } from '../components/PageBanner';
 
 interface CampusArea {
   id: string;
@@ -81,24 +82,11 @@ export const Gallery: React.FC = () => {
       transition={{ duration: 0.4 }}
       className="w-full flex flex-col font-sans bg-slate-50 min-h-screen"
     >
-      {/* Header Banner */}
-      <section className="bg-gradient-to-r from-[#652d90] to-[#4b1f6b] text-white py-16 px-6 text-center relative overflow-hidden">
-        <div className="absolute top-[-50px] right-[-50px] w-48 h-48 rounded-full bg-white/5 pointer-events-none" />
-        <div className="absolute bottom-[-100px] left-[-20px] w-64 h-64 rounded-full bg-white/5 pointer-events-none" />
-        
-        <div className="max-w-4xl mx-auto flex flex-col gap-3 relative z-10 items-center">
-          <span className="inline-flex items-center gap-1.5 px-4 py-1.5 bg-[#ffdd57] text-[#4b1f6b] font-bold text-xs uppercase tracking-wider rounded-full shadow-md">
-            <Sparkles className="h-3.5 w-3.5" />
-            Explore Campus
-          </span>
-          <h1 className="text-4xl sm:text-5xl font-extrabold font-serif tracking-tight drop-shadow-sm mt-2">
-            Gallery & Campus Tour
-          </h1>
-          <p className="text-purple-200 font-light text-base sm:text-lg max-w-2xl mx-auto">
-            Take a virtual tour of our school campus buildings or browse photos of academics, sports, and celebrations.
-          </p>
-        </div>
-      </section>
+      <PageBanner 
+        title="Gallery & Campus Tour" 
+        subtitle="Take a virtual tour of our school campus buildings or browse photos of academics, sports, and celebrations." 
+        badge="Explore Campus"
+      />
 
       {/* Main Container Area */}
       <div className="max-w-6xl w-full mx-auto px-6 py-12 flex-1 flex flex-col gap-8">
