@@ -8,6 +8,15 @@
 @variant dark (&:where(.dark, .dark *));
 
 :root {
+  --bg-primary: #ffffff;
+  --bg-secondary: #f8fafc;
+  --bg-card: #ffffff;
+  --text-primary: #0f172a;
+  --text-secondary: #475569;
+  --text-muted: #94a3b8;
+  --border-color: #e2e8f0;
+  --border-light: #f1f5f9;
+
   --academy-primary: #652d90;
   --academy-accent: #4b1f6b;
   --academy-highlight: #d97706;
@@ -15,14 +24,226 @@
   --academy-soft-shadow: rgba(101, 45, 144, 0.15);
 }
 
+/* Smooth transition styles for theme toggling */
+.bg-white, .bg-slate-50, .bg-slate-100, .bg-slate-200, .bg-purple-50, 
+.text-slate-900, .text-slate-800, .text-slate-700, .text-slate-600, .text-slate-500, .text-slate-400,
+.border-slate-200, .border-slate-100 {
+  transition: background-color 0.35s ease-in-out, border-color 0.35s ease-in-out, color 0.35s ease-in-out;
+}
+
 /* Premium Dark Mode Toggle Transition */
 html, body {
   font-family: 'Outfit', sans-serif;
+  background-color: var(--bg-primary);
+  color: var(--text-primary);
   transition: background-color 0.5s cubic-bezier(0.16, 1, 0.3, 1),
               border-color 0.5s cubic-bezier(0.16, 1, 0.3, 1),
               color 0.5s cubic-bezier(0.16, 1, 0.3, 1),
               box-shadow 0.5s cubic-bezier(0.16, 1, 0.3, 1);
 }
+
+/* ================= DARK MODE OVERRIDES ================= */
+.dark {
+  --bg-primary: #0b0514;
+  --bg-secondary: #0b0514;
+  --bg-card: #150d24;
+  --text-primary: #f8fafc;
+  --text-secondary: #cbd5e1;
+  --text-muted: #94a3b8;
+  --border-color: #23163a;
+  --border-light: #2c1c49;
+
+  --academy-primary: #c084fc;
+  --academy-accent: #a855f7;
+  --academy-highlight: #fbbf24;
+  --academy-soft-bg: #0b0514;
+  --academy-soft-shadow: rgba(0, 0, 0, 0.6);
+}
+
+.dark body {
+  background-color: var(--bg-primary);
+  color: var(--text-primary);
+}
+
+/* Base Utility Overrides */
+.dark .bg-white {
+  background-color: var(--bg-card) !important;
+}
+
+.dark .bg-slate-50 {
+  background-color: var(--bg-secondary) !important;
+}
+
+.dark .bg-slate-100 {
+  background-color: #221235 !important;
+}
+
+.dark .bg-slate-200 {
+  background-color: #2e1847 !important;
+}
+
+.dark .bg-purple-50,
+.dark .bg-\[\#f7f2fb\],
+.dark .bg-purple-100\/65,
+.dark .bg-\[\#652d90\]\/10,
+.dark .bg-purple-100 {
+  background-color: rgba(168, 85, 247, 0.15) !important;
+}
+
+.dark .bg-\[\#ffdd57\] {
+  background-color: #eab308 !important;
+  color: #000000 !important;
+}
+
+.dark .text-slate-900,
+.dark .text-slate-800 {
+  color: var(--text-primary) !important;
+}
+
+.dark .text-slate-700,
+.dark .text-slate-600 {
+  color: var(--text-secondary) !important;
+}
+
+.dark .text-slate-500,
+.dark .text-slate-400 {
+  color: var(--text-muted) !important;
+}
+
+.dark .border-slate-200,
+.dark .border-slate-300 {
+  border-color: var(--border-color) !important;
+}
+
+.dark .border-slate-100 {
+  border-color: var(--border-light) !important;
+}
+
+.dark .text-\[\#652d90\] {
+  color: #c084fc !important;
+}
+
+.dark .text-\[\#4b1f6b\] {
+  color: #d8b4fe !important;
+}
+
+/* Specific Badge and State Backgrounds */
+.dark .bg-rose-50,
+.dark .bg-rose-100 {
+  background-color: rgba(244, 63, 94, 0.15) !important;
+}
+
+.dark .bg-amber-50,
+.dark .bg-amber-100 {
+  background-color: rgba(245, 158, 11, 0.15) !important;
+}
+
+.dark .bg-emerald-50,
+.dark .bg-emerald-100 {
+  background-color: rgba(16, 185, 129, 0.15) !important;
+}
+
+/* Badge Text colors */
+.dark .text-rose-700,
+.dark .text-rose-800 {
+  color: #fda4af !important;
+}
+
+.dark .text-amber-700,
+.dark .text-amber-800 {
+  color: #fde047 !important;
+}
+
+.dark .text-emerald-700,
+.dark .text-emerald-800 {
+  color: #6ee7b7 !important;
+}
+
+.dark .text-purple-700,
+.dark .text-purple-800 {
+  color: #d8b4fe !important;
+}
+
+/* Glassmorphism overlays & borders */
+.dark .bg-white\/90 {
+  background-color: rgba(28, 14, 45, 0.9) !important;
+}
+
+.dark .bg-white\/60 {
+  background-color: rgba(28, 14, 45, 0.6) !important;
+}
+
+.dark .border-white {
+  border-color: var(--bg-primary) !important;
+}
+
+.dark .hover\:bg-slate-50:hover {
+  background-color: var(--bg-secondary) !important;
+}
+
+.dark .hover\:bg-slate-100:hover {
+  background-color: #221235 !important;
+}
+
+.dark .hover\:bg-white:hover {
+  background-color: var(--bg-card) !important;
+}
+
+.dark .bg-slate-50\/50 {
+  background-color: rgba(18, 8, 29, 0.5) !important;
+}
+
+.dark .bg-slate-50\/20 {
+  background-color: rgba(18, 8, 29, 0.2) !important;
+}
+
+.dark .border-slate-100\/50 {
+  border-color: rgba(56, 31, 87, 0.5) !important;
+}
+
+.dark .bg-slate-100\/50 {
+  background-color: rgba(34, 18, 53, 0.5) !important;
+}
+
+/* Custom components overrides */
+.dark .academy-team-member {
+  background-color: var(--bg-card) !important;
+  border-color: var(--border-color) !important;
+}
+
+/* Disable light gradients and override layout containers to match the dark color */
+.dark [class*="from-white"],
+.dark [class*="to-white"],
+.dark [class*="from-[#f7f3fb]"],
+.dark [class*="to-[#f7f3fb]"],
+.dark [class*="from-[#652d90]/5"],
+.dark [class*="to-[#652d90]/5"],
+.dark [class*="from-[#652d90]/[0.01]"],
+.dark [class*="to-[#4b1f6b]/[0.06]"],
+.dark [class*="to-[#4b1f6b]/5"] {
+  background-image: none !important;
+  background-color: var(--bg-primary) !important;
+}
+
+/* Ensure background image is none on standard light gradient directives */
+.dark .bg-gradient-to-b,
+.dark .bg-gradient-to-br,
+.dark .bg-gradient-to-r {
+  background-image: none !important;
+  background-color: var(--bg-primary) !important;
+}
+
+/* Constant Dark Colors for Header & Footer elements */
+.dark header .bg-\[\#652d90\],
+.dark header .bg-\[\#4b1f6b\],
+.dark .school-footer {
+  background-color: var(--bg-primary) !important;
+  background-image: none !important;
+  border-color: var(--border-color) !important;
+}
+
+
+
 
 /* ================= ACADEMY TEAM SECTION ================= */
 .academy-team-section {

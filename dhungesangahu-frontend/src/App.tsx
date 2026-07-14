@@ -17,7 +17,7 @@ import { GameZone } from './pages/GameZone';
 function App() {
   return (
     <Router>
-      <div className="flex flex-col min-h-screen bg-white dark:bg-[#0f0914] text-slate-800 dark:text-slate-100 transition-colors duration-200">
+      <div className="flex flex-col min-h-screen bg-slate-50 text-slate-800 transition-colors duration-200">
         {/* The Header is rendered once and is visible on all pages */}
         <Header />
 
