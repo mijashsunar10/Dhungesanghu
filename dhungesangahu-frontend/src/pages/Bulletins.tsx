@@ -287,48 +287,65 @@ export const Bulletins: React.FC = () => {
                 </div>
               </div>
 
+              {/* Filter Stats */}
+              <div className="text-slate-400 dark:text-purple-300/60 text-xs sm:text-sm font-light text-left pl-1 -mt-3">
+                Showing {filteredNotices.length} out of {notices.length} notices
+              </div>
+
               {/* List */}
               {filteredNotices.length > 0 ? (
-                <div className="flex flex-col gap-5 text-left">
-                  {filteredNotices.map((notice) => (
-                    <div 
-                      key={notice.id} 
-                      onClick={() => setSelectedNotice(notice)}
-                      className="group bg-white border border-slate-200 hover:border-[#652d90]/40 rounded-2xl p-5 sm:p-6 shadow-sm hover:shadow-md transition-all duration-300 flex flex-col sm:flex-row gap-5 items-start cursor-pointer relative"
-                    >
-                      <div className="absolute left-0 top-0 w-1 h-full rounded-l-2xl bg-[#652d90] opacity-0 group-hover:opacity-100 transition-opacity" />
-                      <div className="flex sm:flex-col items-center justify-center bg-[#652d90]/10 text-[#652d90] px-4 py-2 sm:py-3.5 rounded-xl text-center min-w-[70px] sm:min-w-[80px] shrink-0 gap-1.5 sm:gap-0 select-none">
-                        <span className="text-[10px] uppercase font-bold tracking-wider text-purple-700">{notice.month}</span>
-                        <span className="text-xl sm:text-2xl font-black leading-none font-serif">{notice.day}</span>
-                      </div>
-
-                      <div className="flex-1 flex flex-col gap-1">
-                        <div className="flex flex-wrap items-center gap-2 mb-1">
-                          <span className={`text-[10px] font-bold px-2.5 py-1 rounded-full ${
-                            notice.category === 'exams' ? 'bg-amber-50 text-amber-700 border border-amber-200' :
-                            notice.category === 'events' ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' :
-                            'bg-purple-50 text-purple-700 border border-purple-200'
-                          }`}>
-                            {notice.categoryLabel}
-                          </span>
-                          <span className="text-slate-400 text-xs font-light">• Posted on {notice.date}</span>
+                <motion.div layout className="flex flex-col gap-5 text-left">
+                  <AnimatePresence mode="popLayout">
+                    {filteredNotices.map((notice) => (
+                      <motion.div 
+                        layout
+                        initial={{ opacity: 0, y: 15 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, scale: 0.95 }}
+                        transition={{ duration: 0.25 }}
+                        key={notice.id} 
+                        onClick={() => setSelectedNotice(notice)}
+                        className="group bg-white border border-slate-200 hover:border-[#652d90]/40 rounded-2xl p-5 sm:p-6 shadow-sm hover:shadow-md transition-all duration-300 flex flex-col sm:flex-row gap-5 items-start cursor-pointer relative"
+                      >
+                        <div className="absolute left-0 top-0 w-1 h-full rounded-l-2xl bg-[#652d90] opacity-0 group-hover:opacity-100 transition-opacity" />
+                        <div className="flex sm:flex-col items-center justify-center bg-[#652d90]/10 text-[#652d90] px-4 py-2 sm:py-3.5 rounded-xl text-center min-w-[70px] sm:min-w-[80px] shrink-0 gap-1.5 sm:gap-0 select-none">
+                          <span className="text-[10px] uppercase font-bold tracking-wider text-purple-700">{notice.month}</span>
+                          <span className="text-xl sm:text-2xl font-black leading-none font-serif">{notice.day}</span>
                         </div>
-                        <h3 className="text-lg font-bold text-slate-800 group-hover:text-[#652d90] transition-colors leading-snug">
-                          {notice.title}
-                        </h3>
-                        <p className="text-slate-500 text-sm mt-1 font-light leading-relaxed">
-                          {notice.desc}
-                        </p>
-                      </div>
-                    </div>
-                  ))}
-                </div>
+
+                        <div className="flex-1 flex flex-col gap-1">
+                          <div className="flex flex-wrap items-center gap-2 mb-1">
+                            <span className={`text-[10px] font-bold px-2.5 py-1 rounded-full ${
+                              notice.category === 'exams' ? 'bg-amber-50 text-amber-700 border border-amber-200' :
+                              notice.category === 'events' ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' :
+                              'bg-purple-50 text-purple-700 border border-purple-200'
+                            }`}>
+                              {notice.categoryLabel}
+                            </span>
+                            <span className="text-slate-400 text-xs font-light">• Posted on {notice.date}</span>
+                          </div>
+                          <h3 className="text-lg font-bold text-slate-800 group-hover:text-[#652d90] transition-colors leading-snug">
+                            {notice.title}
+                          </h3>
+                          <p className="text-slate-500 text-sm mt-1 font-light leading-relaxed">
+                            {notice.desc}
+                          </p>
+                        </div>
+                      </motion.div>
+                    ))}
+                  </AnimatePresence>
+                </motion.div>
               ) : (
-                <div className="bg-white rounded-3xl p-16 text-center border border-slate-200/60 shadow-sm flex flex-col items-center gap-4">
+                <motion.div 
+                  layout
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  className="bg-white rounded-3xl p-16 text-center border border-slate-200/60 shadow-sm flex flex-col items-center gap-4"
+                >
                   <Search className="h-7 w-7 text-slate-300" />
                   <h3 className="text-xl font-bold text-slate-800 font-serif">No notices found</h3>
                   <p className="text-slate-400 text-sm font-light">We couldn't find any notices matching your query.</p>
-                </div>
+                </motion.div>
               )}
             </motion.div>
           ) : (
