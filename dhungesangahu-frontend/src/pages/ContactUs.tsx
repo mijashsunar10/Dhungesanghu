@@ -1,9 +1,15 @@
 import React from 'react';
 import { ContactSection } from '../components/ContactSection';
+import { motion } from 'framer-motion';
 
 export const ContactUs: React.FC = () => {
   return (
-    <div className="w-full flex flex-col font-sans">
+    <motion.div 
+      initial={{ opacity: 0, y: 15 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.4 }}
+      className="w-full flex flex-col font-sans"
+    >
       {/* Premium Header/Banner */}
       <section className="bg-gradient-to-r from-[#652d90] to-[#4b1f6b] text-white py-16 px-6 text-center relative overflow-hidden">
         {/* Decorative Circles */}
@@ -22,6 +28,6 @@ export const ContactUs: React.FC = () => {
 
       {/* Main Contact Section */}
       <ContactSection isPage={true} />
-    </div>
+    </motion.div>
   );
 };

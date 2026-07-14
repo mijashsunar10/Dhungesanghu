@@ -1,5 +1,7 @@
 import React, { useState } from 'react';
 import { Sparkles, Mail, ShieldCheck, Award } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
+
 
 interface Official {
   name: string;
@@ -149,55 +151,65 @@ export const Officials: React.FC = () => {
         </div>
 
         {/* Dynamic Officials Grid */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8 mt-4">
-          {filteredOfficials.map((official, idx) => (
-            <div 
-              key={idx}
-              className="bg-white border border-slate-200/80 rounded-3xl overflow-hidden shadow-[0_14px_35px_rgba(101,45,144,0.06)] hover:shadow-[0_20px_50px_rgba(101,45,144,0.15)] hover:-translate-y-1.5 transition-all duration-300 flex flex-col justify-between group"
-            >
-              {/* Image with overlay info */}
-              <div className="relative aspect-[3/4] overflow-hidden bg-slate-100 shrink-0">
-                <img 
-                  src={official.image} 
-                  alt={official.name}
-                  className="w-full h-full object-cover group-hover:scale-104 transition-transform duration-500"
-                />
-                {/* Category tag absolute */}
-                <span className="absolute top-4 left-4 bg-white/90 backdrop-blur-sm text-[#652d90] font-extrabold text-[10px] uppercase tracking-wider px-3 py-1 rounded-full border border-purple-100">
-                  {official.categoryLabel}
-                </span>
-              </div>
-
-              {/* Title & Qualification Details */}
-              <div className="p-6 text-left flex-1 flex flex-col justify-between gap-5 bg-white">
-                <div className="flex flex-col gap-1.5">
-                  <h3 className="text-lg font-black text-slate-800 font-serif leading-tight">{official.name}</h3>
-                  <span className="text-xs font-bold text-[#652d90] tracking-wide">{official.position}</span>
-                  
-                  <div className="flex flex-col gap-1 mt-2 text-slate-400 text-xs font-light">
-                    <span className="flex items-center gap-1.5">
-                      <Award className="h-3.5 w-3.5 text-amber-500" />
-                      {official.qualification}
-                    </span>
-                    <span className="flex items-center gap-1.5">
-                      <ShieldCheck className="h-3.5 w-3.5 text-emerald-500" />
-                      {official.experience}
-                    </span>
-                  </div>
+        <motion.div 
+          layout
+          className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8 mt-4"
+        >
+          <AnimatePresence mode="popLayout">
+            {filteredOfficials.map((official) => (
+              <motion.div 
+                layout
+                initial={{ opacity: 0, scale: 0.9 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0, scale: 0.9 }}
+                transition={{ duration: 0.3 }}
+                key={official.name}
+                className="bg-white border border-slate-200/80 rounded-3xl overflow-hidden shadow-[0_14px_35px_rgba(101,45,144,0.06)] hover:shadow-[0_20px_50px_rgba(101,45,144,0.15)] hover:-translate-y-1.5 transition-all duration-300 flex flex-col justify-between group"
+              >
+                {/* Image with overlay info */}
+                <div className="relative aspect-[3/4] overflow-hidden bg-slate-100 shrink-0">
+                  <img 
+                    src={official.image} 
+                    alt={official.name}
+                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 ease-out"
+                  />
+                  {/* Category tag absolute */}
+                  <span className="absolute top-4 left-4 bg-white/90 backdrop-blur-sm text-[#652d90] font-extrabold text-[10px] uppercase tracking-wider px-3 py-1 rounded-full border border-purple-100">
+                    {official.categoryLabel}
+                  </span>
                 </div>
 
-                {/* Email Sign off */}
-                <a 
-                  href={`mailto:${official.email}`}
-                  className="flex items-center gap-2 text-xs font-bold text-slate-400 hover:text-[#652d90] transition-colors border-t border-slate-100 pt-4"
-                >
-                  <Mail className="h-4 w-4 text-slate-300" />
-                  <span>{official.email}</span>
-                </a>
-              </div>
-            </div>
-          ))}
-        </div>
+                {/* Title & Qualification Details */}
+                <div className="p-6 text-left flex-1 flex flex-col justify-between gap-5 bg-white">
+                  <div className="flex flex-col gap-1.5">
+                    <h3 className="text-lg font-black text-slate-800 font-serif leading-tight">{official.name}</h3>
+                    <span className="text-xs font-bold text-[#652d90] tracking-wide">{official.position}</span>
+                    
+                    <div className="flex flex-col gap-1 mt-2 text-slate-400 text-xs font-light">
+                      <span className="flex items-center gap-1.5">
+                        <Award className="h-3.5 w-3.5 text-amber-500" />
+                        {official.qualification}
+                      </span>
+                      <span className="flex items-center gap-1.5">
+                        <ShieldCheck className="h-3.5 w-3.5 text-emerald-500" />
+                        {official.experience}
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Email Sign off */}
+                  <a 
+                    href={`mailto:${official.email}`}
+                    className="flex items-center gap-2 text-xs font-bold text-slate-400 hover:text-[#652d90] transition-colors border-t border-slate-100 pt-4"
+                  >
+                    <Mail className="h-4 w-4 text-slate-300" />
+                    <span>{official.email}</span>
+                  </a>
+                </div>
+              </motion.div>
+            ))}
+          </AnimatePresence>
+        </motion.div>
 
       </div>
     </div>

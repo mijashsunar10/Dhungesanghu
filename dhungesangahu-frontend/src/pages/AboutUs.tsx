@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
 import { MissionVisionGoals } from '../components/MissionVisionGoals';
 import { RulesSection } from '../components/RulesSection';
-import { Sparkles } from 'lucide-react';
+import { Sparkles, ChevronLeft, ChevronRight, GraduationCap } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
 
 interface TimelineEvent {
   year: string;
@@ -9,8 +10,57 @@ interface TimelineEvent {
   desc: string;
 }
 
+interface Alumni {
+  name: string;
+  batch: string;
+  profession: string;
+  quote: string;
+  affiliation: string;
+  path: string;
+  image: string;
+}
+
+const alumniList: Alumni[] = [
+  {
+    name: "Dr. Sandesh Rijal",
+    batch: "2012",
+    profession: "Medical Doctor / Resident",
+    quote: "The solid academic foundation and the regular science lab experiments at Dhungesanghu gave me the interest and drive to pursue medical school. I am forever grateful to my teachers.",
+    affiliation: "Tribhuvan University Teaching Hospital, Kathmandu",
+    path: "SEE (Dhungesanghu) -> +2 Science -> MBBS (IOM)",
+    image: "https://images.unsplash.com/photo-1622253692010-333f2da6031d?q=80&w=400"
+  },
+  {
+    name: "Er. Sneha Baral",
+    batch: "2014",
+    profession: "Software Engineer",
+    quote: "Dhungesanghu's early coding classes and computer lab assignments were where my tech journey began. The school helped build my self-belief and logic.",
+    affiliation: "F1Soft Technologies, Lalitpur",
+    path: "SEE (Dhungesanghu) -> +2 Computer Science -> B.E. in Software Engineering",
+    image: "https://images.unsplash.com/photo-1573497019940-1c28c88b4f3e?q=80&w=400"
+  },
+  {
+    name: "Abhishek Thapa",
+    batch: "2016",
+    profession: "Chartered Accountant (CA)",
+    quote: "The mathematical training and analytical tests at school trained my brain for speed and logic. It made clearing my professional CA papers much easier.",
+    affiliation: "Deloitte Nepal, Kathmandu",
+    path: "SEE (Dhungesanghu) -> +2 Commerce -> Chartered Accountancy (ICAN)",
+    image: "https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?q=80&w=400"
+  }
+];
+
 export const AboutUs: React.FC = () => {
   const [activeValue, setActiveValue] = useState<'wisdom' | 'excellence' | 'competency'>('wisdom');
+  const [activeAlumniIdx, setActiveAlumniIdx] = useState<number>(0);
+
+  const nextAlumni = () => {
+    setActiveAlumniIdx(prev => (prev === alumniList.length - 1 ? 0 : prev + 1));
+  };
+
+  const prevAlumni = () => {
+    setActiveAlumniIdx(prev => (prev === 0 ? alumniList.length - 1 : prev - 1));
+  };
 
   const timelineEvents: TimelineEvent[] = [
     {
@@ -81,7 +131,7 @@ export const AboutUs: React.FC = () => {
           <div className="md:col-span-4 flex flex-row md:flex-col gap-3 overflow-x-auto pb-4 md:pb-0 w-full">
             <button
               onClick={() => setActiveValue('wisdom')}
-              className={`flex items-center gap-3 p-4 rounded-xl border text-left min-w-[150px] md:min-w-0 transition-all shrink-0 cursor-pointer ${
+              className={`flex items-center gap-3 p-4 rounded-xl border text-left min-w-[150px] md:min-w-0 transition-all duration-300 ease-in-out shrink-0 cursor-pointer ${
                 activeValue === 'wisdom'
                   ? 'bg-white border-[#652d90] shadow border-l-4 border-l-[#652d90]'
                   : 'bg-white/60 border-slate-200 hover:bg-white text-slate-500'
@@ -92,7 +142,7 @@ export const AboutUs: React.FC = () => {
             </button>
             <button
               onClick={() => setActiveValue('excellence')}
-              className={`flex items-center gap-3 p-4 rounded-xl border text-left min-w-[150px] md:min-w-0 transition-all shrink-0 cursor-pointer ${
+              className={`flex items-center gap-3 p-4 rounded-xl border text-left min-w-[150px] md:min-w-0 transition-all duration-300 ease-in-out shrink-0 cursor-pointer ${
                 activeValue === 'excellence'
                   ? 'bg-white border-[#652d90] shadow border-l-4 border-l-[#652d90]'
                   : 'bg-white/60 border-slate-200 hover:bg-white text-slate-500'
@@ -103,7 +153,7 @@ export const AboutUs: React.FC = () => {
             </button>
             <button
               onClick={() => setActiveValue('competency')}
-              className={`flex items-center gap-3 p-4 rounded-xl border text-left min-w-[150px] md:min-w-0 transition-all shrink-0 cursor-pointer ${
+              className={`flex items-center gap-3 p-4 rounded-xl border text-left min-w-[150px] md:min-w-0 transition-all duration-300 ease-in-out shrink-0 cursor-pointer ${
                 activeValue === 'competency'
                   ? 'bg-white border-[#652d90] shadow border-l-4 border-l-[#652d90]'
                   : 'bg-white/60 border-slate-200 hover:bg-white text-slate-500'
@@ -115,37 +165,48 @@ export const AboutUs: React.FC = () => {
           </div>
 
           {/* Details Content Box */}
-          <div className="md:col-span-8 bg-white border border-slate-200 rounded-3xl p-6 sm:p-8 shadow-sm text-left flex flex-col gap-3 relative min-h-[160px]">
-            {activeValue === 'wisdom' && (
-              <>
-                <h3 className="text-lg font-bold text-slate-800 flex items-center gap-2">
-                  <span className="text-xl">💡</span> Cultivating Wisdom
-                </h3>
-                <p className="text-slate-500 font-light text-xs sm:text-sm leading-relaxed">
-                  We believe true wisdom is born of curiosity, critical inquiry, and sound moral guidelines. We encourage students to ask questions, explore science and literature, and seek truth beyond rote memorization.
-                </p>
-              </>
-            )}
-            {activeValue === 'excellence' && (
-              <>
-                <h3 className="text-lg font-bold text-slate-800 flex items-center gap-2">
-                  <span className="text-xl">⭐</span> Pursuit of Excellence
-                </h3>
-                <p className="text-slate-500 font-light text-xs sm:text-sm leading-relaxed">
-                  Academic metrics, athletic sportsmanship, and cultural presentations are all measured with excellence. We inspire students to exceed their own benchmarks and build strong discipline for a lifetime.
-                </p>
-              </>
-            )}
-            {activeValue === 'competency' && (
-              <>
-                <h3 className="text-lg font-bold text-slate-800 flex items-center gap-2">
-                  <span className="text-xl">🛡️</span> Practical Competency
-                </h3>
-                <p className="text-slate-500 font-light text-xs sm:text-sm leading-relaxed">
-                  Equipping young minds with practical digital programming logic, public speaking capabilities, collaborative project work, and life skills needed to solve real-world problems.
-                </p>
-              </>
-            )}
+          <div className="md:col-span-8 bg-white border border-slate-200 rounded-3xl p-6 sm:p-8 shadow-sm text-left flex flex-col gap-3 relative min-h-[180px] overflow-hidden">
+            <AnimatePresence mode="wait">
+              <motion.div
+                key={activeValue}
+                initial={{ opacity: 0, y: 15 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -15 }}
+                transition={{ duration: 0.25, ease: "easeInOut" }}
+                className="flex flex-col gap-3"
+              >
+                {activeValue === 'wisdom' && (
+                  <>
+                    <h3 className="text-lg font-bold text-slate-800 flex items-center gap-2">
+                      <span className="text-xl">💡</span> Cultivating Wisdom
+                    </h3>
+                    <p className="text-slate-500 font-light text-xs sm:text-sm leading-relaxed">
+                      We believe true wisdom is born of curiosity, critical inquiry, and sound moral guidelines. We encourage students to ask questions, explore science and literature, and seek truth beyond rote memorization.
+                    </p>
+                  </>
+                )}
+                {activeValue === 'excellence' && (
+                  <>
+                    <h3 className="text-lg font-bold text-slate-800 flex items-center gap-2">
+                      <span className="text-xl">⭐</span> Pursuit of Excellence
+                    </h3>
+                    <p className="text-slate-500 font-light text-xs sm:text-sm leading-relaxed">
+                      Academic metrics, athletic sportsmanship, and cultural presentations are all measured with excellence. We inspire students to exceed their own benchmarks and build strong discipline for a lifetime.
+                    </p>
+                  </>
+                )}
+                {activeValue === 'competency' && (
+                  <>
+                    <h3 className="text-lg font-bold text-slate-800 flex items-center gap-2">
+                      <span className="text-xl">🛡️</span> Practical Competency
+                    </h3>
+                    <p className="text-slate-500 font-light text-xs sm:text-sm leading-relaxed">
+                      Equipping young minds with practical digital programming logic, public speaking capabilities, collaborative project work, and life skills needed to solve real-world problems.
+                    </p>
+                  </>
+                )}
+              </motion.div>
+            </AnimatePresence>
           </div>
         </div>
 
@@ -201,8 +262,98 @@ export const AboutUs: React.FC = () => {
             <img 
               src="https://dhungesanghuschool.edu.np/wp-content/uploads/2026/06/711446612_1619901500136886_2783704930028341872_n.jpg" 
               alt="Students Activity" 
-              className="w-full h-full object-cover"
+              className="w-full h-full object-cover hover:scale-105 transition-transform duration-500 ease-out"
             />
+          </div>
+        </div>
+
+        {/* ALUMNI SUCCESS TRACKER SECTION */}
+        <div className="flex flex-col gap-8 mt-20 w-full text-left">
+          <div className="flex justify-between items-end">
+            <div className="flex flex-col gap-1.5">
+              <h2 className="text-2xl sm:text-3xl font-bold font-serif text-[#4b1f6b]">Alumni Success Network</h2>
+              <p className="text-slate-400 text-xs sm:text-sm font-light">Where are they now? Tracking the academic paths of our SEE graduates.</p>
+            </div>
+            <div className="flex gap-2">
+              <button 
+                onClick={prevAlumni}
+                className="p-2.5 border border-slate-200 rounded-xl hover:bg-slate-50 text-slate-600 transition-colors duration-300 ease-in-out cursor-pointer select-none"
+              >
+                <ChevronLeft className="h-5 w-5" />
+              </button>
+              <button 
+                onClick={nextAlumni}
+                className="p-2.5 border border-slate-200 rounded-xl hover:bg-slate-50 text-slate-600 transition-colors duration-300 ease-in-out cursor-pointer select-none"
+              >
+                <ChevronRight className="h-5 w-5" />
+              </button>
+            </div>
+          </div>
+
+          {/* Active Alumni Display Card */}
+          <div className="bg-white border border-slate-200 rounded-3xl p-6 sm:p-10 shadow-lg grid grid-cols-1 md:grid-cols-12 gap-8 items-center relative overflow-hidden min-h-[300px]">
+            <div className="absolute top-0 left-0 w-full h-2.5 bg-gradient-to-r from-[#652d90] to-[#ffdd57]" />
+            
+            <AnimatePresence mode="wait">
+              <motion.div
+                key={activeAlumniIdx}
+                initial={{ opacity: 0, x: 20 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: -20 }}
+                transition={{ duration: 0.35, ease: "easeOut" }}
+                className="col-span-12 grid grid-cols-1 md:grid-cols-12 gap-8 items-center w-full"
+              >
+                {/* Left Photo & Badges */}
+                <div className="md:col-span-4 flex flex-col items-center text-center gap-3">
+                  <div className="w-36 h-36 sm:w-40 sm:h-40 rounded-full overflow-hidden border-4 border-slate-100 shadow-md">
+                    <img 
+                      src={alumniList[activeAlumniIdx].image} 
+                      alt={alumniList[activeAlumniIdx].name} 
+                      className="w-full h-full object-cover"
+                    />
+                  </div>
+                  <div>
+                    <h4 className="font-extrabold text-slate-800 text-base">{alumniList[activeAlumniIdx].name}</h4>
+                    <span className="text-xs font-bold text-[#652d90] uppercase tracking-wider block mt-0.5">
+                      SEE Batch {alumniList[activeAlumniIdx].batch}
+                    </span>
+                  </div>
+                </div>
+
+                {/* Right Quote & Details */}
+                <div className="md:col-span-8 flex flex-col gap-4 text-left">
+                  <div className="flex items-center gap-2 text-xs font-extrabold text-emerald-600 bg-emerald-50 border border-emerald-200/50 w-fit px-3 py-1 rounded-full uppercase tracking-wider">
+                    <GraduationCap className="h-4 w-4" />
+                    {alumniList[activeAlumniIdx].profession}
+                  </div>
+
+                  <blockquote className="text-slate-600 italic text-sm sm:text-base leading-relaxed relative">
+                    <span className="text-4xl text-purple-200 font-serif absolute -top-5 -left-4 select-none">“</span>
+                    <span className="relative z-10">{alumniList[activeAlumniIdx].quote}</span>
+                  </blockquote>
+
+                  <div className="h-[1px] bg-slate-100 w-full my-1" />
+
+                  <div className="flex flex-col gap-1 text-slate-400 text-xs font-light">
+                    <span>Current Affiliation: <strong className="text-slate-700 font-semibold">{alumniList[activeAlumniIdx].affiliation}</strong></span>
+                    <span>Education Path: <strong className="text-slate-700 font-semibold">{alumniList[activeAlumniIdx].path}</strong></span>
+                  </div>
+                </div>
+              </motion.div>
+            </AnimatePresence>
+          </div>
+
+          {/* Dots Indicator */}
+          <div className="flex justify-center gap-2 mt-1">
+            {alumniList.map((_, idx) => (
+              <button
+                key={idx}
+                onClick={() => setActiveAlumniIdx(idx)}
+                className={`w-2.5 h-2.5 rounded-full transition-all duration-300 ease-in-out cursor-pointer ${
+                  activeAlumniIdx === idx ? 'bg-[#652d90] w-6' : 'bg-slate-200 hover:bg-slate-300'
+                }`}
+              />
+            ))}
           </div>
         </div>
 

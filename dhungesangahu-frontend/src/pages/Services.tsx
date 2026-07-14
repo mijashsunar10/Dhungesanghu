@@ -1,9 +1,15 @@
 import React from 'react';
 import { FacilitiesSection } from '../components/FacilitiesSection';
+import { motion } from 'framer-motion';
 
 export const Services: React.FC = () => {
   return (
-    <div className="w-full flex flex-col font-sans">
+    <motion.div 
+      initial={{ opacity: 0, y: 15 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.4 }}
+      className="w-full flex flex-col font-sans"
+    >
       
       {/* Intro header */}
       <div className="pt-16 pb-4 px-6 max-w-5xl mx-auto text-left flex flex-col gap-4 w-full">
@@ -18,6 +24,6 @@ export const Services: React.FC = () => {
       {/* Full Facilities Grid */}
       <FacilitiesSection />
 
-    </div>
+    </motion.div>
   );
 };

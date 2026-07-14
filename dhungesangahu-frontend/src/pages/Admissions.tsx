@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Sparkles, ClipboardList, FileCheck, FileSpreadsheet, Compass, ArrowRight, ChevronDown, ChevronUp, Download, Calculator, Coins } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
 
 interface Step {
   num: string;
@@ -140,7 +141,12 @@ export const Admissions: React.FC = () => {
   };
 
   return (
-    <div className="w-full flex flex-col font-sans bg-slate-50 min-h-screen">
+    <motion.div 
+      initial={{ opacity: 0, y: 15 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.4 }}
+      className="w-full flex flex-col font-sans bg-slate-50 min-h-screen"
+    >
       {/* Header Banner */}
       <section className="bg-gradient-to-r from-[#652d90] to-[#4b1f6b] text-white py-16 px-6 text-center relative overflow-hidden">
         <div className="absolute top-[-50px] right-[-50px] w-48 h-48 rounded-full bg-white/5 pointer-events-none" />
@@ -164,7 +170,12 @@ export const Admissions: React.FC = () => {
       <div className="max-w-5xl w-full mx-auto px-6 py-16 flex flex-col gap-12">
         
         {/* Direct Link to form */}
-        <div className="bg-amber-50 border-2 border-amber-200 rounded-3xl p-6 sm:p-8 flex flex-col sm:flex-row items-center justify-between gap-6 shadow-sm">
+        <motion.div 
+          initial={{ opacity: 0, scale: 0.95 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ duration: 0.5, delay: 0.1 }}
+          className="bg-amber-50 border-2 border-amber-200 rounded-3xl p-6 sm:p-8 flex flex-col sm:flex-row items-center justify-between gap-6 shadow-sm"
+        >
           <div className="text-left flex flex-col gap-1.5">
             <h3 className="font-extrabold text-amber-800 text-lg sm:text-xl font-serif">Online Application Forms Open</h3>
             <p className="text-slate-600 text-sm font-light max-w-xl">
@@ -179,7 +190,7 @@ export const Admissions: React.FC = () => {
           >
             Apply Online Now
           </a>
-        </div>
+        </motion.div>
 
         {/* STEPPER JOURNEY SECTION */}
         <div className="flex flex-col gap-8">
@@ -212,31 +223,42 @@ export const Admissions: React.FC = () => {
             </div>
 
             {/* Step Details Right Panel */}
-            <div className="md:col-span-8 bg-white border border-slate-200 rounded-3xl p-6 sm:p-8 shadow-md text-left flex flex-col gap-5 relative min-h-[280px]">
-              <div className="flex items-center gap-3">
-                <div className="p-3 bg-purple-100 rounded-xl shrink-0">
-                  {admissionSteps[activeStep].icon}
-                </div>
-                <h3 className="text-lg sm:text-xl font-bold text-slate-800">{admissionSteps[activeStep].title}</h3>
-              </div>
-              
-              <p className="text-slate-600 font-light text-sm sm:text-base leading-relaxed">
-                {admissionSteps[activeStep].desc}
-              </p>
+            <div className="md:col-span-8 bg-white border border-slate-200 rounded-3xl p-6 sm:p-8 shadow-md text-left flex flex-col gap-5 relative min-h-[280px] overflow-hidden">
+              <AnimatePresence mode="wait">
+                <motion.div
+                  key={activeStep}
+                  initial={{ opacity: 0, x: 20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  exit={{ opacity: 0, x: -20 }}
+                  transition={{ duration: 0.25, ease: "easeInOut" }}
+                  className="flex flex-col gap-5 h-full w-full"
+                >
+                  <div className="flex items-center gap-3">
+                    <div className="p-3 bg-purple-100 rounded-xl shrink-0">
+                      {admissionSteps[activeStep].icon}
+                    </div>
+                    <h3 className="text-lg sm:text-xl font-bold text-slate-800">{admissionSteps[activeStep].title}</h3>
+                  </div>
+                  
+                  <p className="text-slate-600 font-light text-sm sm:text-base leading-relaxed">
+                    {admissionSteps[activeStep].desc}
+                  </p>
 
-              <div className="h-[1px] bg-slate-100 w-full" />
+                  <div className="h-[1px] bg-slate-100 w-full" />
 
-              <div className="flex flex-col gap-3">
-                <h4 className="font-extrabold text-slate-700 text-xs sm:text-sm uppercase tracking-wider">Required Guidelines & Criteria:</h4>
-                <ul className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-slate-500 font-light text-xs sm:text-sm">
-                  {admissionSteps[activeStep].details.map((detail, idx) => (
-                    <li key={idx} className="flex items-start gap-2.5">
-                      <div className="w-1.5 h-1.5 rounded-full bg-[#652d90] mt-2 shrink-0" />
-                      <span>{detail}</span>
-                    </li>
-                  ))}
-                </ul>
-              </div>
+                  <div className="flex flex-col gap-3">
+                    <h4 className="font-extrabold text-slate-700 text-xs sm:text-sm uppercase tracking-wider">Required Guidelines & Criteria:</h4>
+                    <ul className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-slate-500 font-light text-xs sm:text-sm">
+                      {admissionSteps[activeStep].details.map((detail, idx) => (
+                        <li key={idx} className="flex items-start gap-2.5">
+                          <div className="w-1.5 h-1.5 rounded-full bg-[#652d90] mt-2 shrink-0" />
+                          <span>{detail}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                </motion.div>
+              </AnimatePresence>
             </div>
           </div>
         </div>
@@ -310,34 +332,42 @@ export const Admissions: React.FC = () => {
               </div>
 
               {/* Option 3: Transport service */}
-              {!hasHostel && (
-                <div className="flex flex-col gap-3 animate-fadeIn">
-                  <label className="font-bold text-slate-700 text-sm sm:text-base uppercase tracking-wider">
-                    3. Transportation Facility
-                  </label>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                    {[
-                      { id: 'none', label: 'No Bus Service', desc: 'Self commutation' },
-                      { id: 'local', label: 'Local Routes (Within 2km)', desc: 'NRs. 1,500 / month' },
-                      { id: 'mid', label: 'Mid Distance (2km - 5km)', desc: 'NRs. 2,200 / month' },
-                      { id: 'far', label: 'Long Distance (5km+)', desc: 'NRs. 2,800 / month' }
-                    ].map(route => (
-                      <button
-                        key={route.id}
-                        onClick={() => setTransportRoute(route.id)}
-                        className={`p-3 border rounded-2xl text-left cursor-pointer transition-all active:scale-[0.98] ${
-                          transportRoute === route.id
-                            ? 'border-[#652d90] bg-[#652d90]/5 ring-2 ring-[#652d90]/15'
-                            : 'border-slate-200 hover:bg-slate-50'
-                        }`}
-                      >
-                        <span className="font-bold text-slate-800 text-xs sm:text-sm block leading-tight">{route.label}</span>
-                        <span className="text-[10px] text-slate-400 font-light mt-0.5 block">{route.desc}</span>
-                      </button>
-                    ))}
-                  </div>
-                </div>
-              )}
+              <AnimatePresence initial={false}>
+                {!hasHostel && (
+                  <motion.div 
+                    initial={{ height: 0, opacity: 0 }}
+                    animate={{ height: "auto", opacity: 1 }}
+                    exit={{ height: 0, opacity: 0 }}
+                    transition={{ duration: 0.3 }}
+                    className="flex flex-col gap-3 overflow-hidden"
+                  >
+                    <label className="font-bold text-slate-700 text-sm sm:text-base uppercase tracking-wider mt-2">
+                      3. Transportation Facility
+                    </label>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                      {[
+                        { id: 'none', label: 'No Bus Service', desc: 'Self commutation' },
+                        { id: 'local', label: 'Local Routes (Within 2km)', desc: 'NRs. 1,500 / month' },
+                        { id: 'mid', label: 'Mid Distance (2km - 5km)', desc: 'NRs. 2,200 / month' },
+                        { id: 'far', label: 'Long Distance (5km+)', desc: 'NRs. 2,800 / month' }
+                      ].map(route => (
+                        <button
+                          key={route.id}
+                          onClick={() => setTransportRoute(route.id)}
+                          className={`p-3 border rounded-2xl text-left cursor-pointer transition-all active:scale-[0.98] ${
+                            transportRoute === route.id
+                              ? 'border-[#652d90] bg-[#652d90]/5 ring-2 ring-[#652d90]/15'
+                              : 'border-slate-200 hover:bg-slate-50'
+                          }`}
+                        >
+                          <span className="font-bold text-slate-800 text-xs sm:text-sm block leading-tight">{route.label}</span>
+                          <span className="text-[10px] text-slate-400 font-light mt-0.5 block">{route.desc}</span>
+                        </button>
+                      ))}
+                    </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
 
               {/* Option 4: Extra Clubs Activity */}
               <div className="flex flex-col gap-3">
@@ -420,7 +450,13 @@ export const Admissions: React.FC = () => {
 
         {/* SYLLABI DOWNLOADS SECTION */}
         <div className="grid grid-cols-1 md:grid-cols-12 gap-8 items-stretch mt-4">
-          <div className="md:col-span-5 bg-[#652d90]/5 rounded-3xl p-8 border border-purple-100/50 flex flex-col justify-between text-left">
+          <motion.div 
+            initial={{ opacity: 0, y: 30 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true, amount: 0.2 }}
+            transition={{ duration: 0.5 }}
+            className="md:col-span-5 bg-[#652d90]/5 rounded-3xl p-8 border border-purple-100/50 flex flex-col justify-between text-left"
+          >
             <div>
               <h3 className="text-xl font-bold font-serif text-[#4b1f6b] mb-2">Need Guidance?</h3>
               <p className="text-slate-600 text-sm font-light leading-relaxed">
@@ -429,14 +465,20 @@ export const Admissions: React.FC = () => {
             </div>
             <a 
               href="mailto:dhungesanghuschool@gmail.com" 
-              className="mt-6 flex items-center justify-between p-3.5 bg-white rounded-xl border border-purple-100 hover:shadow-sm transition-shadow font-semibold text-[#652d90] text-sm"
+              className="mt-6 flex items-center justify-between p-3.5 bg-white rounded-xl border border-purple-100 hover:shadow-sm transition-shadow font-semibold text-[#652d90] text-sm cursor-pointer"
             >
               <span>Email Admission Office</span>
               <ArrowRight className="h-4.5 w-4.5" />
             </a>
-          </div>
+          </motion.div>
 
-          <div className="md:col-span-7 bg-white border border-slate-200 rounded-3xl p-6 sm:p-8 shadow-sm text-left flex flex-col gap-4">
+          <motion.div 
+            initial={{ opacity: 0, y: 30 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true, amount: 0.2 }}
+            transition={{ duration: 0.5, delay: 0.1 }}
+            className="md:col-span-7 bg-white border border-slate-200 rounded-3xl p-6 sm:p-8 shadow-sm text-left flex flex-col gap-4"
+          >
             <h3 className="text-lg font-bold text-slate-800 font-serif">Information Downloads</h3>
             
             <div className="flex flex-col gap-3">
@@ -468,7 +510,7 @@ export const Admissions: React.FC = () => {
                 <button className="text-xs text-[#652d90] font-bold hover:underline cursor-pointer">Download</button>
               </div>
             </div>
-          </div>
+          </motion.div>
         </div>
 
         {/* FAQS SECTION */}
@@ -493,11 +535,21 @@ export const Admissions: React.FC = () => {
                     <span>{faq.q}</span>
                     {isOpen ? <ChevronUp className="h-4.5 w-4.5 text-slate-400 shrink-0" /> : <ChevronDown className="h-4.5 w-4.5 text-slate-400 shrink-0" />}
                   </button>
-                  {isOpen && (
-                    <div className="px-5 pb-5 pt-1 text-slate-500 font-light text-xs sm:text-sm leading-relaxed border-t border-slate-100">
-                      {faq.a}
-                    </div>
-                  )}
+                  <AnimatePresence initial={false}>
+                    {isOpen && (
+                      <motion.div
+                        initial={{ height: 0, opacity: 0 }}
+                        animate={{ height: "auto", opacity: 1 }}
+                        exit={{ height: 0, opacity: 0 }}
+                        transition={{ duration: 0.25, ease: "easeInOut" }}
+                        className="overflow-hidden"
+                      >
+                        <div className="px-5 pb-5 pt-1 text-slate-500 font-light text-xs sm:text-sm leading-relaxed border-t border-slate-100">
+                          {faq.a}
+                        </div>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
                 </div>
               );
             })}
@@ -505,6 +557,6 @@ export const Admissions: React.FC = () => {
         </div>
 
       </div>
-    </div>
+    </motion.div>
   );
 };

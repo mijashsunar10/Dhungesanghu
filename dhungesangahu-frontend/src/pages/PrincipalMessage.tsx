@@ -1,9 +1,15 @@
 import React from 'react';
 import { Mail, GraduationCap, Award, Compass, Heart } from 'lucide-react';
+import { motion } from 'framer-motion';
 
 export const PrincipalMessage: React.FC = () => {
   return (
-    <div className="w-full flex flex-col font-sans bg-slate-50 min-h-screen">
+    <motion.div 
+      initial={{ opacity: 0, y: 15 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.4 }}
+      className="w-full flex flex-col font-sans bg-slate-50 min-h-screen"
+    >
       
       {/* Header Banner */}
       <section className="bg-gradient-to-r from-[#652d90] to-[#4b1f6b] text-white py-16 px-6 text-center relative overflow-hidden">
@@ -28,7 +34,12 @@ export const PrincipalMessage: React.FC = () => {
       <div className="max-w-6xl w-full mx-auto px-6 py-16 grid grid-cols-1 lg:grid-cols-12 gap-12 items-start">
         
         {/* Left Side: Photo and Quick stats */}
-        <div className="lg:col-span-4 flex flex-col gap-6 w-full lg:sticky lg:top-24">
+        <motion.div 
+          initial={{ opacity: 0, x: -20 }}
+          animate={{ opacity: 1, x: 0 }}
+          transition={{ duration: 0.5, delay: 0.1 }}
+          className="lg:col-span-4 flex flex-col gap-6 w-full lg:sticky lg:top-24"
+        >
           
           {/* Principal Card */}
           <div className="bg-white border border-slate-200 rounded-3xl overflow-hidden shadow-md p-6 text-center flex flex-col items-center">
@@ -80,10 +91,15 @@ export const PrincipalMessage: React.FC = () => {
             </ul>
           </div>
 
-        </div>
+        </motion.div>
 
         {/* Right Side: Message body */}
-        <div className="lg:col-span-8 bg-white border border-slate-200 rounded-3xl p-6 sm:p-10 shadow-lg text-left flex flex-col gap-6">
+        <motion.div 
+          initial={{ opacity: 0, x: 20 }}
+          animate={{ opacity: 1, x: 0 }}
+          transition={{ duration: 0.5, delay: 0.2 }}
+          className="lg:col-span-8 bg-white border border-slate-200 rounded-3xl p-6 sm:p-10 shadow-lg text-left flex flex-col gap-6"
+        >
           
           {/* Einstein Quote Block */}
           <blockquote className="bg-[#f7f2fb] border-l-4 border-[#652d90] p-6 my-2 italic text-slate-700 rounded-r-2xl shadow-inner text-sm sm:text-base leading-relaxed">
@@ -128,9 +144,9 @@ export const PrincipalMessage: React.FC = () => {
             <span className="text-slate-400 text-xs mt-0.5">Dhungesanghu Boarding School</span>
           </div>
 
-        </div>
+        </motion.div>
 
       </div>
-    </div>
+    </motion.div>
   );
 };

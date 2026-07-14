@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { NavLink } from 'react-router-dom';
 import { X, Folder, Image as ImageIcon } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
 
 interface PhotoGallerySectionProps {
   limit?: number;
@@ -129,14 +130,14 @@ export const PhotoGallerySection: React.FC<PhotoGallerySectionProps> = ({ limit 
           </h2>
         </div>
 
-        {/* PROPER ALBUM FOLDERS (Only shown on full gallery page) */}
+        {/* PROPER ALBUM FOLDERS */}
         {!limit && (
           <div className="flex flex-wrap justify-center gap-3 sm:gap-4 my-2">
             {categories.map(cat => (
               <button
                 key={cat.id}
                 onClick={() => setActiveCategory(cat.id)}
-                className={`flex items-center gap-2 px-5 py-2.5 rounded-full text-sm font-bold shadow-sm transition-all active:scale-95 ${
+                className={`flex items-center gap-2 px-5 py-2.5 rounded-full text-sm font-bold shadow-sm transition-all active:scale-95 cursor-pointer ${
                   activeCategory === cat.id
                     ? 'bg-[#652d90] text-white'
                     : 'bg-[#652d90]/5 text-[#652d90] hover:bg-[#652d90]/10'
@@ -150,30 +151,40 @@ export const PhotoGallerySection: React.FC<PhotoGallerySectionProps> = ({ limit 
         )}
 
         {/* GALLERY GRID */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 w-full">
-          {displayImages.map((img, index) => {
-            // If home page limit is active, hide index 2, 3, 4, 5 on screens smaller than md
-            const isMobileHidden = limit && index >= 2;
-            return (
-              <div 
-                key={index}
-                onClick={() => openLightbox(img.url)}
-                className={`group bg-white rounded-3xl overflow-hidden shadow-[0_14px_32px_rgba(101,45,144,0.15)] hover:shadow-[0_22px_45px_rgba(101,45,144,0.25)] hover:-translate-y-1.5 hover:scale-[1.02] transition-all duration-300 aspect-[5/3] cursor-pointer ${
-                  isMobileHidden ? 'hidden md:block' : 'block'
-                }`}
-              >
-                <img 
-                  src={img.url} 
-                  alt={img.caption} 
-                  className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-103"
-                  loading="lazy"
-                />
-              </div>
-            );
-          })}
-        </div>
+        <motion.div 
+          layout
+          className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 w-full"
+        >
+          <AnimatePresence mode="popLayout">
+            {displayImages.map((img, index) => {
+              // If home page limit is active, hide index 2, 3, 4, 5 on screens smaller than md
+              const isMobileHidden = limit && index >= 2;
+              return (
+                <motion.div 
+                  layout
+                  initial={{ opacity: 0, scale: 0.9 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  exit={{ opacity: 0, scale: 0.9 }}
+                  transition={{ duration: 0.3 }}
+                  key={img.url}
+                  onClick={() => openLightbox(img.url)}
+                  className={`group bg-white rounded-3xl overflow-hidden shadow-[0_14px_32px_rgba(101,45,144,0.15)] hover:shadow-[0_22px_45px_rgba(101,45,144,0.25)] hover:-translate-y-1.5 hover:scale-[1.02] transition-all duration-300 aspect-[5/3] cursor-pointer ${
+                    isMobileHidden ? 'hidden md:block' : 'block'
+                  }`}
+                >
+                  <img 
+                    src={img.url} 
+                    alt={img.caption} 
+                    className="w-full h-full object-cover transition-transform duration-500 ease-out group-hover:scale-103"
+                    loading="lazy"
+                  />
+                </motion.div>
+              );
+            })}
+          </AnimatePresence>
+        </motion.div>
 
-        {/* VIEW ALL BUTTON (Only shown on Home page view) */}
+        {/* VIEW ALL BUTTON */}
         {limit && (
           <div className="text-center mt-4">
             <NavLink 
@@ -188,55 +199,71 @@ export const PhotoGallerySection: React.FC<PhotoGallerySectionProps> = ({ limit 
       </div>
 
       {/* LIGHTBOX PREVIEW MODAL */}
-      {lightboxIndex !== null && (
-        <div 
-          className="fixed inset-0 z-50 bg-black/95 flex flex-col justify-center items-center p-4 sm:p-10 select-none animate-fadeIn"
-          onClick={closeLightbox}
-        >
-          {/* Close trigger */}
-          <button 
-            onClick={closeLightbox} 
-            className="absolute top-6 right-6 p-2 rounded-full bg-white/10 hover:bg-white/20 text-white transition-colors cursor-pointer"
+      <AnimatePresence>
+        {lightboxIndex !== null && (
+          <motion.div 
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-50 bg-black/95 flex flex-col justify-center items-center p-4 sm:p-10 select-none cursor-pointer"
+            onClick={closeLightbox}
           >
-            <X className="w-6 h-6" />
-          </button>
+            {/* Close trigger */}
+            <button 
+              onClick={closeLightbox} 
+              className="absolute top-6 right-6 p-2 rounded-full bg-white/10 hover:bg-white/20 text-white transition-colors cursor-pointer"
+            >
+              <X className="w-6 h-6" />
+            </button>
 
-          {/* Left Navigation */}
-          <button 
-            onClick={prevLightbox} 
-            className="absolute left-4 p-3 rounded-full bg-white/5 hover:bg-white/15 text-white transition-colors cursor-pointer text-xl sm:text-2xl"
-          >
-            ‹
-          </button>
+            {/* Left Navigation */}
+            <button 
+              onClick={prevLightbox} 
+              className="absolute left-4 p-3 rounded-full bg-white/5 hover:bg-white/15 text-white transition-colors cursor-pointer text-xl sm:text-2xl"
+            >
+              ‹
+            </button>
 
-          {/* Large Image Frame */}
-          <div className="relative max-w-5xl max-h-[70vh] flex justify-center items-center">
-            <img 
-              src={galleryImages[lightboxIndex].url} 
-              alt="Gallery Snapshot" 
-              className="max-w-full max-h-[70vh] object-contain rounded-lg border border-white/5"
-            />
-          </div>
+            {/* Large Image Frame */}
+            <motion.div 
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.9, opacity: 0 }}
+              key={lightboxIndex}
+              className="relative max-w-5xl max-h-[70vh] flex justify-center items-center"
+            >
+              <img 
+                src={galleryImages[lightboxIndex].url} 
+                alt="Gallery Snapshot" 
+                className="max-w-full max-h-[70vh] object-contain rounded-lg border border-white/5"
+              />
+            </motion.div>
 
-          {/* Caption */}
-          <div className="mt-6 text-center max-w-2xl px-6">
-            <p className="text-white text-base sm:text-lg font-medium leading-relaxed">
-              {galleryImages[lightboxIndex].caption}
-            </p>
-            <span className="inline-block text-xs font-bold text-[#ffdd57] uppercase tracking-wider mt-2">
-              Category: {galleryImages[lightboxIndex].category}
-            </span>
-          </div>
+            {/* Caption */}
+            <motion.div 
+              initial={{ y: 15, opacity: 0 }}
+              animate={{ y: 0, opacity: 1 }}
+              key={`caption-${lightboxIndex}`}
+              className="mt-6 text-center max-w-2xl px-6"
+            >
+              <p className="text-white text-base sm:text-lg font-medium leading-relaxed">
+                {galleryImages[lightboxIndex].caption}
+              </p>
+              <span className="inline-block text-xs font-bold text-[#ffdd57] uppercase tracking-wider mt-2">
+                Category: {galleryImages[lightboxIndex].category}
+              </span>
+            </motion.div>
 
-          {/* Right Navigation */}
-          <button 
-            onClick={nextLightbox} 
-            className="absolute right-4 p-3 rounded-full bg-white/5 hover:bg-white/15 text-white transition-colors cursor-pointer text-xl sm:text-2xl"
-          >
-            ›
-          </button>
-        </div>
-      )}
+            {/* Right Navigation */}
+            <button 
+              onClick={nextLightbox} 
+              className="absolute right-4 p-3 rounded-full bg-white/5 hover:bg-white/15 text-white transition-colors cursor-pointer text-xl sm:text-2xl"
+            >
+              ›
+            </button>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </section>
   );
 };

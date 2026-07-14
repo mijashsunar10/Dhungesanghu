@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Gamepad2, Trophy, RefreshCw, Play, Sparkles, Timer, Check, X, Brain, Calculator, Award } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
 
 interface Question {
   question: string;
@@ -245,7 +246,12 @@ export const GameZone: React.FC = () => {
   };
 
   return (
-    <div className="w-full flex flex-col font-sans bg-slate-50 min-h-screen">
+    <motion.div 
+      initial={{ opacity: 0, y: 15 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.4 }}
+      className="w-full flex flex-col font-sans bg-slate-50 min-h-screen"
+    >
       {/* Header Banner */}
       <section className="bg-gradient-to-r from-[#652d90] to-[#4b1f6b] text-white py-16 px-6 text-center relative overflow-hidden">
         <div className="absolute top-[-50px] right-[-50px] w-48 h-48 rounded-full bg-white/5 pointer-events-none" />
@@ -272,351 +278,403 @@ export const GameZone: React.FC = () => {
         {activeTab !== 'home' && (
           <button 
             onClick={() => setActiveTab('home')}
-            className="mb-8 self-start flex items-center gap-2 text-sm font-semibold text-[#652d90] hover:text-[#4b1f6b] bg-white px-5 py-2.5 rounded-full shadow-sm border border-slate-200 transition-colors"
+            className="mb-8 self-start flex items-center gap-2 text-sm font-semibold text-[#652d90] hover:text-[#4b1f6b] bg-white px-5 py-2.5 rounded-full shadow-sm border border-slate-200 transition-colors cursor-pointer"
           >
             ← Back to Game Hub
           </button>
         )}
 
-        {/* HOME / GAME HUB */}
-        {activeTab === 'home' && (
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 w-full mt-4 flex-1">
-            
-            {/* Trivia Card */}
-            <div className="bg-white rounded-3xl p-8 border border-slate-200 shadow-lg flex flex-col items-center text-center justify-between group hover:-translate-y-2 transition-all duration-300">
-              <div className="flex flex-col items-center">
-                <div className="w-16 h-16 bg-purple-100 text-[#652d90] rounded-2xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
-                  <Brain className="h-8 w-8" />
-                </div>
-                <h3 className="text-2xl font-bold text-slate-800 font-serif mb-3">Trivia Challenge</h3>
-                <p className="text-slate-500 font-light text-sm leading-relaxed mb-6">
-                  Test your general knowledge, science, and history facts in this multi-topic trivia quiz!
-                </p>
-              </div>
-              <button 
-                onClick={() => { setActiveTab('trivia'); restartTrivia(); }}
-                className="w-full bg-[#652d90] hover:bg-[#4b1f6b] text-white font-bold py-3 px-6 rounded-2xl flex items-center justify-center gap-2 shadow-sm transition-all"
+        <AnimatePresence mode="wait">
+          {/* HOME / GAME HUB */}
+          {activeTab === 'home' && (
+            <motion.div 
+              key="home"
+              initial={{ opacity: 0, y: 15 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -15 }}
+              transition={{ duration: 0.3 }}
+              className="grid grid-cols-1 md:grid-cols-3 gap-8 w-full mt-4 flex-1"
+            >
+              {/* Trivia Card */}
+              <motion.div 
+                whileHover={{ y: -6 }}
+                className="bg-white rounded-3xl p-8 border border-slate-200 shadow-lg flex flex-col items-center text-center justify-between group transition-all duration-300"
               >
-                <Play className="h-4 w-4 fill-white" />
-                Play Trivia
-              </button>
-            </div>
-
-            {/* Math speed Card */}
-            <div className="bg-white rounded-3xl p-8 border border-slate-200 shadow-lg flex flex-col items-center text-center justify-between group hover:-translate-y-2 transition-all duration-300">
-              <div className="flex flex-col items-center">
-                <div className="w-16 h-16 bg-amber-100 text-amber-600 rounded-2xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
-                  <Calculator className="h-8 w-8" />
-                </div>
-                <h3 className="text-2xl font-bold text-slate-800 font-serif mb-3">Math Quick Quest</h3>
-                <p className="text-slate-500 font-light text-sm leading-relaxed mb-6">
-                  Solve as many equations as you can before the timer runs out. Accuracy is key!
-                </p>
-              </div>
-              <button 
-                onClick={() => { setActiveTab('math'); startMathGame(); }}
-                className="w-full bg-[#652d90] hover:bg-[#4b1f6b] text-white font-bold py-3 px-6 rounded-2xl flex items-center justify-center gap-2 shadow-sm transition-all"
-              >
-                <Play className="h-4 w-4 fill-white" />
-                Play Math
-              </button>
-            </div>
-
-            {/* Memory Card */}
-            <div className="bg-white rounded-3xl p-8 border border-slate-200 shadow-lg flex flex-col items-center text-center justify-between group hover:-translate-y-2 transition-all duration-300">
-              <div className="flex flex-col items-center">
-                <div className="w-16 h-16 bg-emerald-100 text-emerald-600 rounded-2xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
-                  <Gamepad2 className="h-8 w-8" />
-                </div>
-                <h3 className="text-2xl font-bold text-slate-800 font-serif mb-3">Memory Match</h3>
-                <p className="text-slate-500 font-light text-sm leading-relaxed mb-6">
-                  Match the card pairs with minimum moves. Focus, memorize, and clear the board.
-                </p>
-              </div>
-              <button 
-                onClick={() => { setActiveTab('memory'); initMemoryGame(); }}
-                className="w-full bg-[#652d90] hover:bg-[#4b1f6b] text-white font-bold py-3 px-6 rounded-2xl flex items-center justify-center gap-2 shadow-sm transition-all"
-              >
-                <Play className="h-4 w-4 fill-white" />
-                Play Memory
-              </button>
-            </div>
-
-          </div>
-        )}
-
-        {/* TRIVIA GAME */}
-        {activeTab === 'trivia' && (
-          <div className="max-w-2xl w-full mx-auto bg-white rounded-3xl border border-slate-200 shadow-2xl p-6 sm:p-10 flex flex-col gap-6 text-left">
-            {!triviaFinished ? (
-              <>
-                {/* Header Info */}
-                <div className="flex justify-between items-center pb-4 border-b border-slate-100">
-                  <span className="text-xs font-bold text-[#652d90] bg-purple-100 px-3.5 py-1.5 rounded-full">
-                    Question {currentQuestionIdx + 1} of {triviaQuestions.length}
-                  </span>
-                  <span className="text-sm font-semibold text-slate-500">Score: {score}</span>
-                </div>
-
-                {/* Progress bar */}
-                <div className="w-full h-2 bg-slate-100 rounded-full overflow-hidden">
-                  <div 
-                    className="h-full bg-gradient-to-r from-[#652d90] to-[#4b1f6b] transition-all duration-300"
-                    style={{ width: `${((currentQuestionIdx + 1) / triviaQuestions.length) * 100}%` }}
-                  />
-                </div>
-
-                {/* Question */}
-                <h3 className="text-xl sm:text-2xl font-bold text-slate-800 font-serif mt-2 leading-relaxed">
-                  {triviaQuestions[currentQuestionIdx].question}
-                </h3>
-
-                {/* Options List */}
-                <div className="flex flex-col gap-4 mt-2">
-                  {triviaQuestions[currentQuestionIdx].options.map((opt, idx) => {
-                    const isCorrect = idx === triviaQuestions[currentQuestionIdx].answer;
-                    const isSelected = idx === selectedOption;
-
-                    let btnStyle = "border-slate-200 hover:border-purple-300 bg-white text-slate-700 hover:bg-purple-50/20";
-                    let iconNode = null;
-
-                    if (answered) {
-                      if (isCorrect) {
-                        btnStyle = "border-emerald-500 bg-emerald-50 text-emerald-800";
-                        iconNode = <Check className="h-5 w-5 text-emerald-600 shrink-0" />;
-                      } else if (isSelected) {
-                        btnStyle = "border-rose-500 bg-rose-50 text-rose-800";
-                        iconNode = <X className="h-5 w-5 text-rose-600 shrink-0" />;
-                      } else {
-                        btnStyle = "border-slate-100 bg-slate-50/50 text-slate-400 opacity-60";
-                      }
-                    }
-
-                    return (
-                      <button
-                        key={idx}
-                        onClick={() => handleTriviaAnswer(idx)}
-                        disabled={answered}
-                        className={`w-full text-left p-4.5 rounded-2xl border-2 transition-all flex items-center justify-between text-base font-medium ${btnStyle}`}
-                      >
-                        <span>{opt}</span>
-                        {iconNode}
-                      </button>
-                    );
-                  })}
-                </div>
-
-                {/* Next button */}
-                {answered && (
-                  <button
-                    onClick={nextTriviaQuestion}
-                    className="mt-4 bg-[#652d90] hover:bg-[#4b1f6b] text-white font-bold py-3.5 px-8 rounded-2xl self-end flex items-center gap-2 transition-all"
-                  >
-                    Next Question →
-                  </button>
-                )}
-              </>
-            ) : (
-              /* Finish Screen */
-              <div className="text-center py-10 flex flex-col items-center gap-6">
-                <div className="w-20 h-20 bg-amber-100 text-amber-600 rounded-full flex items-center justify-center shadow-md animate-bounce">
-                  <Award className="h-10 w-10" />
-                </div>
-                <div>
-                  <h3 className="text-3xl font-bold text-slate-800 font-serif">Trivia Completed!</h3>
-                  <p className="text-slate-500 font-light mt-1.5">Here are your score details:</p>
-                </div>
-                <div className="bg-purple-50 rounded-2xl px-12 py-6 border border-purple-100 text-center">
-                  <span className="text-5xl font-black text-[#652d90]">{score}</span>
-                  <span className="text-slate-500 font-semibold block text-sm mt-1">out of {triviaQuestions.length} correct</span>
-                </div>
-                <div className="flex gap-4 mt-2">
-                  <button 
-                    onClick={restartTrivia}
-                    className="bg-[#652d90] hover:bg-[#4b1f6b] text-white font-bold py-3.5 px-8 rounded-2xl flex items-center gap-2 transition-all"
-                  >
-                    <RefreshCw className="h-4 w-4" />
-                    Play Again
-                  </button>
-                  <button 
-                    onClick={() => setActiveTab('home')}
-                    className="border border-slate-200 hover:bg-slate-50 font-bold py-3.5 px-8 rounded-2xl transition-all text-slate-700"
-                  >
-                    Select Game
-                  </button>
-                </div>
-              </div>
-            )}
-          </div>
-        )}
-
-        {/* MATH SPEED GAME */}
-        {activeTab === 'math' && (
-          <div className="max-w-2xl w-full mx-auto bg-white rounded-3xl border border-slate-200 shadow-2xl p-6 sm:p-10 flex flex-col gap-6 text-left">
-            {mathActive ? (
-              <>
-                {/* Header Info */}
-                <div className="flex justify-between items-center pb-4 border-b border-slate-100">
-                  <div className="flex items-center gap-2 font-bold text-rose-600 bg-rose-50 px-3.5 py-1.5 rounded-full text-sm">
-                    <Timer className="h-4 w-4" />
-                    <span>Time Left: {mathTimer}s</span>
+                <div className="flex flex-col items-center">
+                  <div className="w-16 h-16 bg-purple-100 text-[#652d90] rounded-2xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
+                    <Brain className="h-8 w-8" />
                   </div>
-                  <span className="text-lg font-bold text-slate-700">Score: {mathScore}</span>
+                  <h3 className="text-2xl font-bold text-slate-800 font-serif mb-3">Trivia Challenge</h3>
+                  <p className="text-slate-500 font-light text-sm leading-relaxed mb-6">
+                    Test your general knowledge, science, and history facts in this multi-topic trivia quiz!
+                  </p>
                 </div>
+                <button 
+                  onClick={() => { setActiveTab('trivia'); restartTrivia(); }}
+                  className="w-full bg-[#652d90] hover:bg-[#4b1f6b] text-white font-bold py-3 px-6 rounded-2xl flex items-center justify-center gap-2 shadow-sm transition-all cursor-pointer"
+                >
+                  <Play className="h-4 w-4 fill-white" />
+                  Play Trivia
+                </button>
+              </motion.div>
 
-                {/* Question Area */}
-                <div className="flex flex-col items-center justify-center bg-slate-50 border border-slate-200/50 rounded-2xl py-10 gap-3">
-                  <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">Solve this equation</span>
-                  <div className="text-4xl sm:text-5xl font-black text-[#652d90] font-mono tracking-wide">
-                    {numA} {operator === '*' ? '×' : operator} {numB} = ?
+              {/* Math speed Card */}
+              <motion.div 
+                whileHover={{ y: -6 }}
+                className="bg-white rounded-3xl p-8 border border-slate-200 shadow-lg flex flex-col items-center text-center justify-between group transition-all duration-300"
+              >
+                <div className="flex flex-col items-center">
+                  <div className="w-16 h-16 bg-amber-100 text-amber-600 rounded-2xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
+                    <Calculator className="h-8 w-8" />
                   </div>
+                  <h3 className="text-2xl font-bold text-slate-800 font-serif mb-3">Math Quick Quest</h3>
+                  <p className="text-slate-500 font-light text-sm leading-relaxed mb-6">
+                    Solve as many equations as you can before the timer runs out. Accuracy is key!
+                  </p>
                 </div>
+                <button 
+                  onClick={() => { setActiveTab('math'); startMathGame(); }}
+                  className="w-full bg-[#652d90] hover:bg-[#4b1f6b] text-white font-bold py-3 px-6 rounded-2xl flex items-center justify-center gap-2 shadow-sm transition-all cursor-pointer"
+                >
+                  <Play className="h-4 w-4 fill-white" />
+                  Play Math
+                </button>
+              </motion.div>
 
-                {/* Option Buttons */}
-                <div className="grid grid-cols-2 gap-4 mt-2">
-                  {mathOptions.map((opt, idx) => {
-                    let correctAns = 0;
-                    if (operator === '+') correctAns = numA + numB;
-                    else if (operator === '-') correctAns = numA - numB;
-                    else correctAns = numA * numB;
+              {/* Memory Card */}
+              <motion.div 
+                whileHover={{ y: -6 }}
+                className="bg-white rounded-3xl p-8 border border-slate-200 shadow-lg flex flex-col items-center text-center justify-between group transition-all duration-300"
+              >
+                <div className="flex flex-col items-center">
+                  <div className="w-16 h-16 bg-emerald-100 text-emerald-600 rounded-2xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
+                    <Gamepad2 className="h-8 w-8" />
+                  </div>
+                  <h3 className="text-2xl font-bold text-slate-800 font-serif mb-3">Memory Match</h3>
+                  <p className="text-slate-500 font-light text-sm leading-relaxed mb-6">
+                    Match the card pairs with minimum moves. Focus, memorize, and clear the board.
+                  </p>
+                </div>
+                <button 
+                  onClick={() => { setActiveTab('memory'); initMemoryGame(); }}
+                  className="w-full bg-[#652d90] hover:bg-[#4b1f6b] text-white font-bold py-3 px-6 rounded-2xl flex items-center justify-center gap-2 shadow-sm transition-all cursor-pointer"
+                >
+                  <Play className="h-4 w-4 fill-white" />
+                  Play Memory
+                </button>
+              </motion.div>
+            </motion.div>
+          )}
 
-                    const isCorrect = opt === correctAns;
-                    const isSelected = opt === mathSelected;
+          {/* TRIVIA GAME */}
+          {activeTab === 'trivia' && (
+            <motion.div 
+              key="trivia"
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.95 }}
+              transition={{ duration: 0.25 }}
+              className="max-w-2xl w-full mx-auto bg-white rounded-3xl border border-slate-200 shadow-2xl p-6 sm:p-10 flex flex-col gap-6 text-left"
+            >
+              {!triviaFinished ? (
+                <>
+                  {/* Header Info */}
+                  <div className="flex justify-between items-center pb-4 border-b border-slate-100">
+                    <span className="text-xs font-bold text-[#652d90] bg-purple-100 px-3.5 py-1.5 rounded-full">
+                      Question {currentQuestionIdx + 1} of {triviaQuestions.length}
+                    </span>
+                    <span className="text-sm font-semibold text-slate-500">Score: {score}</span>
+                  </div>
 
-                    let btnStyle = "border-slate-200 hover:border-purple-300 bg-white text-slate-700 hover:bg-purple-50/20";
-                    if (mathAnswered) {
-                      if (isCorrect) {
-                        btnStyle = "border-emerald-500 bg-emerald-50 text-emerald-800";
-                      } else if (isSelected) {
-                        btnStyle = "border-rose-500 bg-rose-50 text-rose-800";
-                      } else {
-                        btnStyle = "border-slate-100 opacity-60";
+                  {/* Progress bar */}
+                  <div className="w-full h-2 bg-slate-100 rounded-full overflow-hidden">
+                    <div 
+                      className="h-full bg-gradient-to-r from-[#652d90] to-[#4b1f6b] transition-all duration-300"
+                      style={{ width: `${((currentQuestionIdx + 1) / triviaQuestions.length) * 100}%` }}
+                    />
+                  </div>
+
+                  {/* Question */}
+                  <h3 className="text-xl sm:text-2xl font-bold text-slate-800 font-serif mt-2 leading-relaxed">
+                    {triviaQuestions[currentQuestionIdx].question}
+                  </h3>
+
+                  {/* Options List */}
+                  <div className="flex flex-col gap-4 mt-2">
+                    {triviaQuestions[currentQuestionIdx].options.map((opt, idx) => {
+                      const isCorrect = idx === triviaQuestions[currentQuestionIdx].answer;
+                      const isSelected = idx === selectedOption;
+
+                      let btnStyle = "border-slate-200 hover:border-purple-300 bg-white text-slate-700 hover:bg-purple-50/20";
+                      let iconNode = null;
+
+                      if (answered) {
+                        if (isCorrect) {
+                          btnStyle = "border-emerald-500 bg-emerald-50 text-emerald-800";
+                          iconNode = <Check className="h-5 w-5 text-emerald-600 shrink-0" />;
+                        } else if (isSelected) {
+                          btnStyle = "border-rose-500 bg-rose-50 text-rose-800";
+                          iconNode = <X className="h-5 w-5 text-rose-600 shrink-0" />;
+                        } else {
+                          btnStyle = "border-slate-100 bg-slate-50/50 text-slate-400 opacity-60";
+                        }
                       }
-                    }
 
-                    return (
-                      <button
-                        key={idx}
-                        onClick={() => handleMathAnswer(opt)}
-                        disabled={mathAnswered}
-                        className={`p-5 rounded-2xl border-2 text-xl font-bold font-mono transition-all text-center ${btnStyle}`}
-                      >
-                        {opt}
-                      </button>
-                    );
-                  })}
-                </div>
-              </>
-            ) : (
-              /* Finish Screen */
-              <div className="text-center py-10 flex flex-col items-center gap-6">
-                <div className="w-20 h-20 bg-rose-100 text-rose-600 rounded-full flex items-center justify-center shadow-md animate-pulse">
-                  <Trophy className="h-10 w-10" />
-                </div>
-                <div>
-                  <h3 className="text-3xl font-bold text-slate-800 font-serif">Time's Up!</h3>
-                  <p className="text-slate-500 font-light mt-1.5">You showed outstanding math speeds!</p>
-                </div>
-                <div className="bg-purple-50 rounded-2xl px-12 py-6 border border-purple-100 text-center">
-                  <span className="text-5xl font-black text-[#652d90]">{mathScore}</span>
-                  <span className="text-slate-500 font-semibold block text-sm mt-1">points gathered</span>
-                </div>
-                <div className="flex gap-4 mt-2">
-                  <button 
-                    onClick={startMathGame}
-                    className="bg-[#652d90] hover:bg-[#4b1f6b] text-white font-bold py-3.5 px-8 rounded-2xl flex items-center gap-2 transition-all"
-                  >
-                    <RefreshCw className="h-4 w-4" />
-                    Play Again
-                  </button>
-                  <button 
-                    onClick={() => setActiveTab('home')}
-                    className="border border-slate-200 hover:bg-slate-50 font-bold py-3.5 px-8 rounded-2xl transition-all text-slate-700"
-                  >
-                    Select Game
-                  </button>
-                </div>
-              </div>
-            )}
-          </div>
-        )}
+                      return (
+                        <button
+                          key={idx}
+                          onClick={() => handleTriviaAnswer(idx)}
+                          disabled={answered}
+                          className={`w-full text-left p-4.5 rounded-2xl border-2 transition-all flex items-center justify-between text-base font-medium cursor-pointer ${btnStyle}`}
+                        >
+                          <span>{opt}</span>
+                          {iconNode}
+                        </button>
+                      );
+                    })}
+                  </div>
 
-        {/* MEMORY MATCH GAME */}
-        {activeTab === 'memory' && (
-          <div className="max-w-2xl w-full mx-auto flex flex-col gap-6 text-center">
-            
-            {/* Header info */}
-            <div className="flex justify-between items-center bg-white px-6 py-4 rounded-2xl border border-slate-200 shadow-sm w-full">
-              <span className="text-base font-bold text-[#652d90]">Matches: {memoryMatches} / {memorySymbols.length}</span>
-              <span className="text-base font-bold text-slate-600">Moves: {memoryMoves}</span>
-            </div>
-
-            {!memoryFinished ? (
-              /* Memory Board */
-              <div className="grid grid-cols-4 gap-4 mt-2 max-w-md mx-auto w-full aspect-square">
-                {memoryCards.map((card) => {
-                  const showSymbol = card.isFlipped || card.isMatched;
-                  return (
-                    <button
-                      key={card.id}
-                      onClick={() => handleCardClick(card.id)}
-                      className={`aspect-square rounded-2xl flex items-center justify-center text-3xl transition-all duration-300 shadow-md ${
-                        card.isMatched 
-                          ? 'bg-emerald-50 border-emerald-300 text-emerald-700 opacity-60 cursor-default'
-                          : showSymbol
-                            ? 'bg-white border-2 border-[#652d90] scale-100'
-                            : 'bg-gradient-to-tr from-[#652d90] to-[#4b1f6b] hover:from-[#532477] hover:to-[#391752] text-white scale-98 active:scale-95'
-                      }`}
+                  {/* Next button */}
+                  {answered && (
+                    <motion.button
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      onClick={nextTriviaQuestion}
+                      className="mt-4 bg-[#652d90] hover:bg-[#4b1f6b] text-white font-bold py-3.5 px-8 rounded-2xl self-end flex items-center gap-2 transition-all cursor-pointer"
                     >
-                      {showSymbol ? card.symbol : "❓"}
+                      Next Question →
+                    </motion.button>
+                  )}
+                </>
+              ) : (
+                /* Finish Screen */
+                <div className="text-center py-10 flex flex-col items-center gap-6">
+                  <div className="w-20 h-20 bg-amber-100 text-amber-600 rounded-full flex items-center justify-center shadow-md animate-bounce">
+                    <Award className="h-10 w-10" />
+                  </div>
+                  <div>
+                    <h3 className="text-3xl font-bold text-slate-800 font-serif">Trivia Completed!</h3>
+                    <p className="text-slate-500 font-light mt-1.5">Here are your score details:</p>
+                  </div>
+                  <div className="bg-purple-50 rounded-2xl px-12 py-6 border border-purple-100 text-center">
+                    <span className="text-5xl font-black text-[#652d90]">{score}</span>
+                    <span className="text-slate-500 font-semibold block text-sm mt-1">out of {triviaQuestions.length} correct</span>
+                  </div>
+                  <div className="flex gap-4 mt-2">
+                    <button 
+                      onClick={restartTrivia}
+                      className="bg-[#652d90] hover:bg-[#4b1f6b] text-white font-bold py-3.5 px-8 rounded-2xl flex items-center gap-2 transition-all cursor-pointer"
+                    >
+                      <RefreshCw className="h-4 w-4" />
+                      Play Again
                     </button>
-                  );
-                })}
-              </div>
-            ) : (
-              /* Finish Screen */
-              <div className="bg-white rounded-3xl border border-slate-200 shadow-2xl p-10 py-12 flex flex-col items-center gap-6 max-w-md mx-auto w-full">
-                <div className="w-20 h-20 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center shadow-md animate-bounce">
-                  <Award className="h-10 w-10" />
-                </div>
-                <div>
-                  <h3 className="text-3xl font-bold text-slate-800 font-serif">Board Cleared!</h3>
-                  <p className="text-slate-500 font-light mt-1.5">You have amazing matching capabilities!</p>
-                </div>
-                <div className="bg-purple-50 rounded-2xl px-12 py-6 border border-purple-100 text-center w-full">
-                  <div className="flex justify-around items-center">
-                    <div>
-                      <span className="text-4xl font-black text-[#652d90]">{memoryMoves}</span>
-                      <span className="text-slate-500 font-semibold block text-xs mt-0.5">Moves taken</span>
-                    </div>
-                    <div className="h-10 w-[1px] bg-purple-200" />
-                    <div>
-                      <span className="text-4xl font-black text-emerald-600">100%</span>
-                      <span className="text-slate-500 font-semibold block text-xs mt-0.5">Accuracy</span>
-                    </div>
+                    <button 
+                      onClick={() => setActiveTab('home')}
+                      className="border border-slate-200 hover:bg-slate-50 font-bold py-3.5 px-8 rounded-2xl transition-all text-slate-700 cursor-pointer"
+                    >
+                      Select Game
+                    </button>
                   </div>
                 </div>
-                <div className="flex gap-4 mt-2 w-full justify-center">
-                  <button 
-                    onClick={initMemoryGame}
-                    className="bg-[#652d90] hover:bg-[#4b1f6b] text-white font-bold py-3 px-6 rounded-2xl flex items-center gap-2 transition-all text-sm"
-                  >
-                    <RefreshCw className="h-4 w-4" />
-                    Play Again
-                  </button>
-                  <button 
-                    onClick={() => setActiveTab('home')}
-                    className="border border-slate-200 hover:bg-slate-50 font-bold py-3 px-6 rounded-2xl transition-all text-slate-700 text-sm"
-                  >
-                    Select Game
-                  </button>
+              )}
+            </motion.div>
+          )}
+
+          {/* MATH SPEED GAME */}
+          {activeTab === 'math' && (
+            <motion.div 
+              key="math"
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.95 }}
+              transition={{ duration: 0.25 }}
+              className="max-w-2xl w-full mx-auto bg-white rounded-3xl border border-slate-200 shadow-2xl p-6 sm:p-10 flex flex-col gap-6 text-left"
+            >
+              {mathActive ? (
+                <>
+                  {/* Header Info */}
+                  <div className="flex justify-between items-center pb-4 border-b border-slate-100">
+                    <div className="flex items-center gap-2 font-bold text-rose-600 bg-rose-50 px-3.5 py-1.5 rounded-full text-sm">
+                      <Timer className="h-4 w-4" />
+                      <span>Time Left: {mathTimer}s</span>
+                    </div>
+                    <span className="text-lg font-bold text-slate-700">Score: {mathScore}</span>
+                  </div>
+
+                  {/* Question Area */}
+                  <div className="flex flex-col items-center justify-center bg-slate-50 border border-slate-200/50 rounded-2xl py-10 gap-3">
+                    <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">Solve this equation</span>
+                    <div className="text-4xl sm:text-5xl font-black text-[#652d90] font-mono tracking-wide">
+                      {numA} {operator === '*' ? '×' : operator} {numB} = ?
+                    </div>
+                  </div>
+
+                  {/* Option Buttons */}
+                  <div className="grid grid-cols-2 gap-4 mt-2">
+                    {mathOptions.map((opt, idx) => {
+                      let correctAns = 0;
+                      if (operator === '+') correctAns = numA + numB;
+                      else if (operator === '-') correctAns = numA - numB;
+                      else correctAns = numA * numB;
+
+                      const isCorrect = opt === correctAns;
+                      const isSelected = opt === mathSelected;
+
+                      let btnStyle = "border-slate-200 hover:border-purple-300 bg-white text-slate-700 hover:bg-purple-50/20";
+                      if (mathAnswered) {
+                        if (isCorrect) {
+                          btnStyle = "border-emerald-500 bg-emerald-50 text-emerald-800";
+                        } else if (isSelected) {
+                          btnStyle = "border-rose-500 bg-rose-50 text-rose-800";
+                        } else {
+                          btnStyle = "border-slate-100 opacity-60";
+                        }
+                      }
+
+                      return (
+                        <button
+                          key={idx}
+                          onClick={() => handleMathAnswer(opt)}
+                          disabled={mathAnswered}
+                          className={`p-5 rounded-2xl border-2 text-xl font-bold font-mono transition-all text-center cursor-pointer ${btnStyle}`}
+                        >
+                          {opt}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </>
+              ) : (
+                /* Finish Screen */
+                <div className="text-center py-10 flex flex-col items-center gap-6">
+                  <div className="w-20 h-20 bg-rose-100 text-rose-600 rounded-full flex items-center justify-center shadow-md animate-pulse">
+                    <Trophy className="h-10 w-10" />
+                  </div>
+                  <div>
+                    <h3 className="text-3xl font-bold text-slate-800 font-serif">Time's Up!</h3>
+                    <p className="text-slate-500 font-light mt-1.5">You showed outstanding math speeds!</p>
+                  </div>
+                  <div className="bg-purple-50 rounded-2xl px-12 py-6 border border-purple-100 text-center">
+                    <span className="text-5xl font-black text-[#652d90]">{mathScore}</span>
+                    <span className="text-slate-500 font-semibold block text-sm mt-1">points gathered</span>
+                  </div>
+                  <div className="flex gap-4 mt-2">
+                    <button 
+                      onClick={startMathGame}
+                      className="bg-[#652d90] hover:bg-[#4b1f6b] text-white font-bold py-3.5 px-8 rounded-2xl flex items-center gap-2 transition-all cursor-pointer"
+                    >
+                      <RefreshCw className="h-4 w-4" />
+                      Play Again
+                    </button>
+                    <button 
+                      onClick={() => setActiveTab('home')}
+                      className="border border-slate-200 hover:bg-slate-50 font-bold py-3.5 px-8 rounded-2xl transition-all text-slate-700 cursor-pointer"
+                    >
+                      Select Game
+                    </button>
+                  </div>
                 </div>
+              )}
+            </motion.div>
+          )}
+
+          {/* MEMORY MATCH GAME */}
+          {activeTab === 'memory' && (
+            <motion.div 
+              key="memory"
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.95 }}
+              transition={{ duration: 0.25 }}
+              className="max-w-2xl w-full mx-auto flex flex-col gap-6 text-center"
+            >
+              {/* Header info */}
+              <div className="flex justify-between items-center bg-white px-6 py-4 rounded-2xl border border-slate-200 shadow-sm w-full">
+                <span className="text-base font-bold text-[#652d90]">Matches: {memoryMatches} / {memorySymbols.length}</span>
+                <span className="text-base font-bold text-slate-600">Moves: {memoryMoves}</span>
               </div>
-            )}
-          </div>
-        )}
+
+              {!memoryFinished ? (
+                /* Memory Board */
+                <div className="grid grid-cols-4 gap-4 mt-2 max-w-md mx-auto w-full aspect-square [perspective:1000px]">
+                  {memoryCards.map((card) => {
+                    const showSymbol = card.isFlipped || card.isMatched;
+                    return (
+                      <motion.button
+                        layout
+                        key={card.id}
+                        onClick={() => handleCardClick(card.id)}
+                        whileHover={{ scale: card.isMatched ? 1 : 1.05 }}
+                        whileTap={{ scale: card.isMatched ? 1 : 0.95 }}
+                        animate={{ rotateY: showSymbol ? 180 : 0 }}
+                        transition={{ duration: 0.35, ease: "easeInOut" }}
+                        className={`aspect-square rounded-2xl flex items-center justify-center text-3xl transition-all duration-300 shadow-md cursor-pointer ${
+                          card.isMatched 
+                            ? 'bg-emerald-50 border-emerald-300 text-emerald-700 opacity-60 cursor-default'
+                            : showSymbol
+                              ? 'bg-white border-2 border-[#652d90]'
+                              : 'bg-gradient-to-tr from-[#652d90] to-[#4b1f6b] hover:from-[#532477] hover:to-[#391752] text-white'
+                        }`}
+                        style={{ transformStyle: 'preserve-3d' }}
+                      >
+                        <span 
+                          style={{ 
+                            transform: showSymbol ? 'rotateY(180deg)' : 'none',
+                            backfaceVisibility: 'hidden'
+                          }} 
+                          className="inline-block"
+                        >
+                          {showSymbol ? card.symbol : "❓"}
+                        </span>
+                      </motion.button>
+                    );
+                  })}
+                </div>
+              ) : (
+                /* Finish Screen */
+                <div className="bg-white rounded-3xl border border-slate-200 shadow-2xl p-10 py-12 flex flex-col items-center gap-6 max-w-md mx-auto w-full">
+                  <div className="w-20 h-20 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center shadow-md animate-bounce">
+                    <Award className="h-10 w-10" />
+                  </div>
+                  <div>
+                    <h3 className="text-3xl font-bold text-slate-800 font-serif">Board Cleared!</h3>
+                    <p className="text-slate-500 font-light mt-1.5">You have amazing matching capabilities!</p>
+                  </div>
+                  <div className="bg-purple-50 rounded-2xl px-12 py-6 border border-purple-100 text-center w-full">
+                    <div className="flex justify-around items-center">
+                      <div>
+                        <span className="text-4xl font-black text-[#652d90]">{memoryMoves}</span>
+                        <span className="text-slate-500 font-semibold block text-xs mt-0.5">Moves taken</span>
+                      </div>
+                      <div className="h-10 w-[1px] bg-purple-200" />
+                      <div>
+                        <span className="text-4xl font-black text-emerald-600">100%</span>
+                        <span className="text-slate-500 font-semibold block text-xs mt-0.5">Accuracy</span>
+                      </div>
+                    </div>
+                  </div>
+                  <div className="flex gap-4 mt-2 w-full justify-center">
+                    <button 
+                      onClick={initMemoryGame}
+                      className="bg-[#652d90] hover:bg-[#4b1f6b] text-white font-bold py-3 px-6 rounded-2xl flex items-center gap-2 transition-all text-sm cursor-pointer"
+                    >
+                      <RefreshCw className="h-4 w-4" />
+                      Play Again
+                    </button>
+                    <button 
+                      onClick={() => setActiveTab('home')}
+                      className="border border-slate-200 hover:bg-slate-50 font-bold py-3 px-6 rounded-2xl transition-all text-slate-700 text-sm cursor-pointer"
+                    >
+                      Select Game
+                    </button>
+                  </div>
+                </div>
+              )}
+            </motion.div>
+          )}
+        </AnimatePresence>
 
       </div>
-    </div>
+    </motion.div>
   );
 };

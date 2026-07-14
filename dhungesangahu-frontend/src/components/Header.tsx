@@ -1,10 +1,26 @@
 import React, { useState, useEffect } from 'react';
 import { NavLink } from 'react-router-dom';
-import { MapPin, Phone, Mail, Menu, X, LogIn } from 'lucide-react';
+import { MapPin, Phone, Mail, Menu, X, LogIn, Sun, Moon } from 'lucide-react';
 
 export const Header: React.FC = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isFixed, setIsFixed] = useState(false);
+
+  // Dark Mode States
+  const [isDarkMode, setIsDarkMode] = useState<boolean>(() => {
+    return document.documentElement.classList.contains('dark') || 
+      localStorage.getItem('theme') === 'dark';
+  });
+
+  useEffect(() => {
+    if (isDarkMode) {
+      document.documentElement.classList.add('dark');
+      localStorage.setItem('theme', 'dark');
+    } else {
+      document.documentElement.classList.remove('dark');
+      localStorage.setItem('theme', 'light');
+    }
+  }, [isDarkMode]);
 
   useEffect(() => {
     const handleScroll = () => {
@@ -152,6 +168,15 @@ export const Header: React.FC = () => {
               <LogIn className="h-4 w-4" />
               Login
             </a>
+
+            {/* Theme Toggle Button */}
+            <button
+              onClick={() => setIsDarkMode(!isDarkMode)}
+              className="p-1.5 rounded-full hover:bg-white/10 text-purple-100 hover:text-[#ffdd57] transition-all cursor-pointer select-none"
+              title="Toggle Light/Dark Theme"
+            >
+              {isDarkMode ? <Sun className="h-5 w-5 text-amber-400" /> : <Moon className="h-5 w-5" />}
+            </button>
           </nav>
 
           <NavLink 
@@ -184,12 +209,21 @@ export const Header: React.FC = () => {
           {/* Header */}
           <div className="flex items-center justify-between border-b border-purple-800 pb-4 mb-6">
             <span className="font-serif font-bold text-lg text-[#ffdd57]">Navigation</span>
-            <button 
-              onClick={() => setIsMenuOpen(false)}
-              className="p-1 rounded-full bg-purple-900/50 hover:bg-purple-950 transition-colors"
-            >
-              <X className="h-5 w-5" />
-            </button>
+            <div className="flex items-center gap-3">
+              <button
+                onClick={() => setIsDarkMode(!isDarkMode)}
+                className="p-1.5 rounded-full bg-purple-900/50 hover:bg-purple-950 transition-colors cursor-pointer select-none"
+                aria-label="Toggle theme"
+              >
+                {isDarkMode ? <Sun className="h-4.5 w-4.5 text-amber-400" /> : <Moon className="h-4.5 w-4.5" />}
+              </button>
+              <button 
+                onClick={() => setIsMenuOpen(false)}
+                className="p-1 rounded-full bg-purple-900/50 hover:bg-purple-950 transition-colors cursor-pointer"
+              >
+                <X className="h-5 w-5" />
+              </button>
+            </div>
           </div>
 
           {/* Links */}

@@ -1,9 +1,26 @@
 import React, { useState } from 'react';
 import { MapPin, Phone, Mail, Clock, Send, CheckCircle2, MessageSquare } from 'lucide-react';
+import { motion, type Variants } from 'framer-motion';
 
 interface ContactSectionProps {
   isPage?: boolean;
 }
+
+const fadeInUp: Variants = {
+  hidden: { opacity: 0, y: 30 },
+  visible: { opacity: 1, y: 0, transition: { duration: 0.6, ease: "easeOut" } }
+};
+
+const staggerContainer: Variants = {
+  hidden: { opacity: 0 },
+  visible: {
+    opacity: 1,
+    transition: {
+      staggerChildren: 0.1,
+      delayChildren: 0.05
+    }
+  }
+};
 
 export const ContactSection: React.FC<ContactSectionProps> = ({ isPage = false }) => {
   const [formSubmitted, setFormSubmitted] = useState(false);
@@ -35,7 +52,13 @@ export const ContactSection: React.FC<ContactSectionProps> = ({ isPage = false }
       <div className="max-w-7xl mx-auto px-6 lg:px-8">
         
         {/* SECTION HEADER */}
-        <div className="text-center max-w-3xl mx-auto mb-16 flex flex-col items-center gap-3">
+        <motion.div 
+          initial={{ opacity: 0, y: -20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true, amount: 0.2 }}
+          transition={{ duration: 0.5 }}
+          className="text-center max-w-3xl mx-auto mb-16 flex flex-col items-center gap-3"
+        >
           <span className="inline-flex items-center gap-1.5 px-4 py-1.5 bg-[#652d90]/10 text-[#652d90] font-bold text-xs uppercase tracking-wider rounded-full">
             <MessageSquare className="h-3.5 w-3.5" />
             Connect With Us
@@ -46,16 +69,25 @@ export const ContactSection: React.FC<ContactSectionProps> = ({ isPage = false }
           <p className="text-slate-500 font-light text-sm sm:text-base leading-relaxed">
             Have queries about admissions, schedules, or school policies? Our administrative team is here to assist you. Drop us a message or visit our campus.
           </p>
-        </div>
+        </motion.div>
 
         {/* CONTENT GRID */}
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 items-start">
           
           {/* LEFT COLUMN: CONTACT DETAILS */}
-          <div className="lg:col-span-5 flex flex-col gap-6 w-full">
+          <motion.div 
+            initial="hidden"
+            whileInView="visible"
+            viewport={{ once: true, amount: 0.15 }}
+            variants={staggerContainer}
+            className="lg:col-span-5 flex flex-col gap-6 w-full"
+          >
             
             {/* Card 1: Location */}
-            <div className="group bg-white p-6 rounded-2xl border border-slate-200/60 shadow-sm hover:shadow-md hover:border-[#652d90]/40 transition-all duration-300 flex gap-5 items-start">
+            <motion.div 
+              variants={fadeInUp}
+              className="group bg-white p-6 rounded-2xl border border-slate-200/60 shadow-sm hover:shadow-md hover:border-[#652d90]/40 transition-all duration-300 flex gap-5 items-start"
+            >
               <div className="p-4 bg-[#652d90]/10 text-[#652d90] rounded-2xl group-hover:bg-[#652d90] group-hover:text-white transition-all duration-300 shrink-0">
                 <MapPin className="h-6 w-6" />
               </div>
@@ -73,10 +105,11 @@ export const ContactSection: React.FC<ContactSectionProps> = ({ isPage = false }
                   View on Google Maps →
                 </a>
               </div>
-            </div>
+            </motion.div>
 
             {/* Card 2: Call */}
-            <a 
+            <motion.a 
+              variants={fadeInUp}
               href="tel:061-402039"
               className="group bg-white p-6 rounded-2xl border border-slate-200/60 shadow-sm hover:shadow-md hover:border-[#652d90]/40 transition-all duration-300 flex gap-5 items-start"
             >
@@ -90,27 +123,31 @@ export const ContactSection: React.FC<ContactSectionProps> = ({ isPage = false }
                 </p>
                 <span className="text-xs text-slate-400 font-light mt-1">Tap to dial school telephone</span>
               </div>
-            </a>
+            </motion.a>
 
             {/* Card 3: Email */}
-            <a 
+            <motion.a 
+              variants={fadeInUp}
               href="mailto:dhungesanghuschool@gmail.com"
               className="group bg-white p-6 rounded-2xl border border-slate-200/60 shadow-sm hover:shadow-md hover:border-[#652d90]/40 transition-all duration-300 flex gap-5 items-start"
             >
               <div className="p-4 bg-[#652d90]/10 text-[#652d90] rounded-2xl group-hover:bg-[#652d90] group-hover:text-white transition-all duration-300 shrink-0">
                 <Mail className="h-6 w-6" />
               </div>
-              <div className="flex flex-col text-left-0 text-left">
+              <div className="flex flex-col text-left">
                 <h4 className="font-extrabold text-slate-800 text-sm sm:text-base uppercase tracking-wide">Email School</h4>
                 <p className="text-slate-600 text-sm sm:text-base mt-1.5 font-light break-all hover:text-[#652d90] transition-colors">
                   dhungesanghuschool@gmail.com
                 </p>
                 <span className="text-xs text-slate-400 font-light mt-1">Send administrative emails</span>
               </div>
-            </a>
+            </motion.a>
 
             {/* Card 4: Hours */}
-            <div className="group bg-white p-6 rounded-2xl border border-slate-200/60 shadow-sm hover:shadow-md hover:border-[#652d90]/40 transition-all duration-300 flex gap-5 items-start">
+            <motion.div 
+              variants={fadeInUp}
+              className="group bg-white p-6 rounded-2xl border border-slate-200/60 shadow-sm hover:shadow-md hover:border-[#652d90]/40 transition-all duration-300 flex gap-5 items-start"
+            >
               <div className="p-4 bg-[#652d90]/10 text-[#652d90] rounded-2xl group-hover:bg-[#652d90] group-hover:text-white transition-all duration-300 shrink-0">
                 <Clock className="h-6 w-6" />
               </div>
@@ -121,12 +158,18 @@ export const ContactSection: React.FC<ContactSectionProps> = ({ isPage = false }
                 </p>
                 <span className="text-xs text-[#d97706] font-semibold mt-1">Closed on Saturdays & public holidays</span>
               </div>
-            </div>
+            </motion.div>
 
-          </div>
+          </motion.div>
 
           {/* RIGHT COLUMN: CONTACT FORM */}
-          <div className="lg:col-span-7 w-full bg-white border border-slate-200/70 rounded-3xl p-6 sm:p-10 shadow-lg relative overflow-hidden">
+          <motion.div 
+            initial={{ opacity: 0, x: 30 }}
+            whileInView={{ opacity: 1, x: 0 }}
+            viewport={{ once: true, amount: 0.15 }}
+            transition={{ duration: 0.6, ease: "easeOut" }}
+            className="lg:col-span-7 w-full bg-white border border-slate-200/70 rounded-3xl p-6 sm:p-10 shadow-lg relative overflow-hidden"
+          >
             <div className="absolute top-0 left-0 w-full h-2 bg-gradient-to-r from-[#652d90] to-[#d97706]" />
             
             {formSubmitted ? (
@@ -209,7 +252,7 @@ export const ContactSection: React.FC<ContactSectionProps> = ({ isPage = false }
                   {/* Submit Button */}
                   <button 
                     type="submit"
-                    className="w-full bg-[#652d90] hover:bg-[#4b1f6b] text-white font-bold py-3.5 rounded-xl shadow-md hover:shadow-lg transition-all active:scale-[0.99] flex items-center justify-center gap-2 text-sm sm:text-base mt-2"
+                    className="w-full bg-[#652d90] hover:bg-[#4b1f6b] text-white font-bold py-3.5 rounded-xl shadow-md hover:shadow-lg transition-all active:scale-[0.99] flex items-center justify-center gap-2 text-sm sm:text-base mt-2 cursor-pointer"
                   >
                     <Send className="h-4 w-4" />
                     Submit Message
@@ -218,12 +261,18 @@ export const ContactSection: React.FC<ContactSectionProps> = ({ isPage = false }
               </>
             )}
 
-          </div>
+          </motion.div>
 
         </div>
 
         {/* MAP ROW */}
-        <div className="mt-16 w-full">
+        <motion.div 
+          initial={{ opacity: 0, y: 30 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true, amount: 0.15 }}
+          transition={{ duration: 0.6, delay: 0.1 }}
+          className="mt-16 w-full"
+        >
           <div className="rounded-3xl overflow-hidden shadow-xl border-4 border-white bg-slate-100 h-[380px] w-full relative">
             <iframe 
               title="Dhungesanghu Boarding School Google Maps Location"
@@ -234,7 +283,7 @@ export const ContactSection: React.FC<ContactSectionProps> = ({ isPage = false }
               referrerPolicy="no-referrer-when-downgrade"
             />
           </div>
-        </div>
+        </motion.div>
 
       </div>
     </section>
