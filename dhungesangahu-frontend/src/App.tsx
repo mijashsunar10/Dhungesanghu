@@ -2,6 +2,7 @@ import { BrowserRouter as Router, Routes, Route, Navigate, Link } from 'react-ro
 
 import { Header } from './components/Header';
 import { AppDownload } from './components/AppDownload';
+import { ImageWithFallback } from './components/ImageWithFallback';
 import { Home } from './pages/Home';
 import { AboutUs } from './pages/AboutUs';
 import { Services } from './pages/Services';
@@ -50,9 +51,10 @@ function App() {
             <div className="footer-box footer-about">
               <div className="logo-wrapper">
                 <div className="logo-bg"></div>
-                <img 
+                <ImageWithFallback 
                   src="https://dhungesanghuschool.edu.np/wp-content/uploads/2026/01/Untitled-design-10.png" 
                   alt="Dhungesanghu Boarding School Logo" 
+                  fallbackType="school"
                   className="footer-logo"
                 />
               </div>

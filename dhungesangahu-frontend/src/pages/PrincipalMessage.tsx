@@ -1,6 +1,7 @@
 import React from 'react';
 import { Mail, GraduationCap, Award, Compass, Heart } from 'lucide-react';
 import { motion } from 'framer-motion';
+import { ImageWithFallback } from '../components/ImageWithFallback';
 
 export const PrincipalMessage: React.FC = () => {
   return (
@@ -44,9 +45,10 @@ export const PrincipalMessage: React.FC = () => {
           {/* Principal Card */}
           <div className="bg-white border border-slate-200 rounded-3xl overflow-hidden shadow-md p-6 text-center flex flex-col items-center">
             <div className="w-48 h-48 sm:w-56 sm:h-56 rounded-full overflow-hidden border-8 border-slate-100 shadow-xl mb-6">
-              <img 
+              <ImageWithFallback 
                 src="https://dhungesanghuschool.edu.np/wp-content/uploads/2026/02/BishnuGcPrincipal.jpeg" 
                 alt="Principal Bishnu G.C." 
+                fallbackType="user"
                 className="w-full h-full object-cover transition-transform duration-500 hover:scale-103"
               />
             </div>

@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { NavLink } from 'react-router-dom';
 import { X, Folder, Image as ImageIcon } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { ImageWithFallback } from './ImageWithFallback';
 
 interface PhotoGallerySectionProps {
   limit?: number;
@@ -172,9 +173,10 @@ export const PhotoGallerySection: React.FC<PhotoGallerySectionProps> = ({ limit 
                     isMobileHidden ? 'hidden md:block' : 'block'
                   }`}
                 >
-                  <img 
+                  <ImageWithFallback 
                     src={img.url} 
                     alt={img.caption} 
+                    fallbackType="gallery"
                     className="w-full h-full object-cover transition-transform duration-500 ease-out group-hover:scale-103"
                     loading="lazy"
                   />
@@ -232,9 +234,10 @@ export const PhotoGallerySection: React.FC<PhotoGallerySectionProps> = ({ limit 
               key={lightboxIndex}
               className="relative max-w-5xl max-h-[70vh] flex justify-center items-center"
             >
-              <img 
+              <ImageWithFallback 
                 src={galleryImages[lightboxIndex].url} 
                 alt="Gallery Snapshot" 
+                fallbackType="gallery"
                 className="max-w-full max-h-[70vh] object-contain rounded-lg border border-white/5"
               />
             </motion.div>

@@ -1,6 +1,7 @@
 import React from 'react';
 import { NavLink } from 'react-router-dom';
 import { motion, type Variants } from 'framer-motion';
+import { ImageWithFallback } from './ImageWithFallback';
 
 interface FacilitiesSectionProps {
   limit?: number;
@@ -92,9 +93,10 @@ export const FacilitiesSection: React.FC<FacilitiesSectionProps> = ({ limit }) =
             >
               {/* IMAGE ICON */}
               <div className="w-28 h-28 rounded-full overflow-hidden border-4 border-slate-200 shadow-md mb-6 shrink-0">
-                <img 
+                <ImageWithFallback 
                   src={facility.image} 
                   alt={facility.title} 
+                  fallbackType="school"
                   className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 ease-out"
                 />
               </div>

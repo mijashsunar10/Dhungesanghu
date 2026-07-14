@@ -3,6 +3,7 @@ import { MissionVisionGoals } from '../components/MissionVisionGoals';
 import { RulesSection } from '../components/RulesSection';
 import { Sparkles, ChevronLeft, ChevronRight, GraduationCap } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { ImageWithFallback } from '../components/ImageWithFallback';
 
 interface TimelineEvent {
   year: string;
@@ -259,9 +260,10 @@ export const AboutUs: React.FC = () => {
           </div>
           
           <div className="lg:col-span-5 h-[260px] rounded-3xl overflow-hidden border border-slate-200 shadow-md">
-            <img 
+            <ImageWithFallback 
               src="https://dhungesanghuschool.edu.np/wp-content/uploads/2026/06/711446612_1619901500136886_2783704930028341872_n.jpg" 
               alt="Students Activity" 
+              fallbackType="gallery"
               className="w-full h-full object-cover hover:scale-105 transition-transform duration-500 ease-out"
             />
           </div>
@@ -306,9 +308,10 @@ export const AboutUs: React.FC = () => {
                 {/* Left Photo & Badges */}
                 <div className="md:col-span-4 flex flex-col items-center text-center gap-3">
                   <div className="w-36 h-36 sm:w-40 sm:h-40 rounded-full overflow-hidden border-4 border-slate-100 shadow-md">
-                    <img 
+                    <ImageWithFallback 
                       src={alumniList[activeAlumniIdx].image} 
                       alt={alumniList[activeAlumniIdx].name} 
+                      fallbackType="user"
                       className="w-full h-full object-cover"
                     />
                   </div>

@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { NavLink } from 'react-router-dom';
 import { MapPin, Phone, Mail, Menu, X, LogIn, Sun, Moon } from 'lucide-react';
+import { ImageWithFallback } from './ImageWithFallback';
 
 export const Header: React.FC = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -55,9 +56,10 @@ export const Header: React.FC = () => {
           
           {/* LOGO + NAME LEFT */}
           <div className="flex items-center gap-3">
-            <img 
+            <ImageWithFallback 
               src="https://rainbowacademic.edu.np/wp-content/uploads/2026/01/d2.png" 
               alt="Dhungesanghu Boarding School Logo" 
+              fallbackType="school"
               className="h-16 w-auto object-contain transition-transform duration-300 hover:scale-105"
             />
             <div className="flex flex-col font-serif">

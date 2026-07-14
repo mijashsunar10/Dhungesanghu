@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { NavLink } from 'react-router-dom';
 import { School } from 'lucide-react';
+import { ImageWithFallback } from '../components/ImageWithFallback';
 import { MissionVisionGoals } from '../components/MissionVisionGoals';
 import { RulesSection } from '../components/RulesSection';
 import { FacilitiesSection } from '../components/FacilitiesSection';
@@ -175,19 +176,22 @@ export const Home: React.FC = () => {
             className="lg:col-span-6 w-full"
           >
             <div className="flex overflow-x-auto snap-x snap-mandatory gap-4 pb-4 md:pb-0 md:grid md:grid-cols-2 md:gap-4 md:auto-rows-[180px]">
-              <img 
+              <ImageWithFallback 
                 src="https://dhungesanghuschool.edu.np/wp-content/uploads/2026/06/726495301_27214325098227711_5095630771598862657_n.jpeg" 
                 alt="School Program" 
+                fallbackType="gallery"
                 className="snap-start min-w-full md:min-w-0 md:row-span-2 h-[240px] md:h-full w-full object-cover rounded-2xl shadow-md border border-slate-100"
               />
-              <img 
+              <ImageWithFallback 
                 src="https://dhungesanghuschool.edu.np/wp-content/uploads/2026/06/709708868_1615055323954837_6000510963209356473_n.jpg" 
                 alt="School Event" 
+                fallbackType="gallery"
                 className="snap-start min-w-full md:min-w-0 h-[240px] md:h-full w-full object-cover rounded-2xl shadow-md border border-slate-100"
               />
-              <img 
+              <ImageWithFallback 
                 src="https://dhungesanghuschool.edu.np/wp-content/uploads/2026/06/711446612_1619901500136886_2783704930028341872_n.jpg" 
                 alt="Students Activity" 
+                fallbackType="gallery"
                 className="snap-start min-w-full md:min-w-0 h-[240px] md:h-full w-full object-cover rounded-2xl shadow-md border border-slate-100"
               />
             </div>
@@ -331,9 +335,10 @@ export const Home: React.FC = () => {
             transition={{ duration: 0.6, ease: "easeOut" }}
             className="md:col-span-4 flex justify-center w-full"
           >
-            <img 
+            <ImageWithFallback 
               src="https://dhungesanghuschool.edu.np/wp-content/uploads/2026/02/BishnuGcPrincipal.jpeg" 
               alt="Principal Bishnu G.C." 
+              fallbackType="user"
               className="w-[280px] h-[280px] sm:w-[360px] sm:h-[360px] object-cover rounded-full border-8 border-white shadow-2xl transition-all duration-500 ease-out hover:scale-103 hover:shadow-3xl"
             />
           </motion.div>

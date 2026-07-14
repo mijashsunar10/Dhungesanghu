@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Sparkles, Mail, ShieldCheck, Award } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { ImageWithFallback } from '../components/ImageWithFallback';
 
 
 interface Official {
@@ -168,9 +169,10 @@ export const Officials: React.FC = () => {
               >
                 {/* Image with overlay info */}
                 <div className="relative aspect-[3/4] overflow-hidden bg-slate-100 shrink-0">
-                  <img 
+                  <ImageWithFallback 
                     src={official.image} 
                     alt={official.name}
+                    fallbackType="user"
                     className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 ease-out"
                   />
                   {/* Category tag absolute */}

@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { PhotoGallerySection } from '../components/PhotoGallerySection';
 import { Sparkles, Map, Image as ImageIcon, MapPin } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { ImageWithFallback } from '../components/ImageWithFallback';
 
 interface CampusArea {
   id: string;
@@ -216,9 +217,10 @@ export const Gallery: React.FC = () => {
                       <div className="flex flex-col gap-4">
                         {/* Photo Thumbnail */}
                         <div className="relative aspect-[16/10] bg-slate-100 rounded-2xl overflow-hidden shadow-inner border border-slate-100">
-                          <img 
+                          <ImageWithFallback 
                             src={activeArea.image} 
                             alt={activeArea.name} 
+                            fallbackType="school"
                             className="w-full h-full object-cover"
                           />
                           <div className="absolute top-3 left-3 bg-[#ffdd57] text-[#4b1f6b] font-extrabold text-[10px] uppercase tracking-wider px-3 py-1 rounded-full shadow-sm">
