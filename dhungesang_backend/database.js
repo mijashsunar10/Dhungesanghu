@@ -56,9 +56,27 @@ const ContactMessageSchema = new mongoose.Schema({
 
 export const ContactMessage = mongoose.model('ContactMessage', ContactMessageSchema);
 
+// 4. Admin Schema & Model
+const AdminSchema = new mongoose.Schema({
+  username: { type: String, required: true, unique: true },
+  password: { type: String, required: true }
+});
+
+export const Admin = mongoose.model('Admin', AdminSchema);
+
 // Initial Seeding Logic
 async function seedDatabase() {
   try {
+    // Seed Admin Accounts
+    const adminCount = await Admin.countDocuments();
+    if (adminCount === 0) {
+      await Admin.create({
+        username: 'admin',
+        password: 'admin123'
+      });
+      console.log('Seeded default admin account to MongoDB.');
+    }
+
     // Seed Notices
     const noticesCount = await Notice.countDocuments();
     if (noticesCount === 0) {
