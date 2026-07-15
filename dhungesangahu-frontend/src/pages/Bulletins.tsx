@@ -1,28 +1,8 @@
-import React, { useState } from 'react';
-import { Search, Calendar, Printer, X, ChevronLeft, ChevronRight, Info } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { Search, Calendar, Printer, X, ChevronLeft, ChevronRight, Info, Loader2 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { PageBanner } from '../components/PageBanner';
-
-
-interface Notice {
-  id: number;
-  date: string;
-  month: string;
-  day: string;
-  category: 'exams' | 'events' | 'admin';
-  categoryLabel: string;
-  title: string;
-  desc: string;
-  fullContent?: string;
-  author?: string;
-}
-
-interface CalendarEvent {
-  day: number;
-  type: 'holiday' | 'exam' | 'activity' | 'meeting';
-  title: string;
-  description: string;
-}
+import { getNotices, getCalendarEvents, type Notice, type CalendarEvent } from '../api';
 
 interface MonthData {
   name: string;
@@ -42,56 +22,31 @@ export const Bulletins: React.FC = () => {
   const [selectedMonthIdx, setSelectedMonthIdx] = useState<number>(3); // Defaults to Shrawan (July-August)
   const [selectedDay, setSelectedDay] = useState<number | null>(15);
 
-  const notices: Notice[] = [
-    {
-      id: 1,
-      date: '2026-07-10',
-      month: 'JUL',
-      day: '10',
-      category: 'exams',
-      categoryLabel: 'Exams & Academics',
-      title: 'First Term Examination Schedule Released',
-      desc: 'The first term exam begins on Shrawan 15. Students can collect their admit cards from the account desk.',
-      fullContent: `This is to inform all students and parents that the First Terminal Examinations for the academic year 2083 (2026) will commence on Shrawan 15. Detailed subject-wise schedules have been posted on classroom bulletin boards and sent via school SMS. Admit cards are mandatory to enter the examination hall. Admit cards will be distributed from Shrawan 10 onwards, subject to fee clearance of the first term. Please contact the administrative department for any queries.`,
-      author: 'Examination Controller'
-    },
-    {
-      id: 2,
-      date: '2026-06-25',
-      month: 'JUN',
-      day: '25',
-      category: 'events',
-      categoryLabel: 'Events & Holiday',
-      title: 'Parent-Teacher Meeting (PTM) Notice',
-      desc: 'PTM for Grades PG to 10 has been scheduled for Saturday, Ashad 20, from 11:00 AM onwards.',
-      fullContent: `Dear Parents and Guardians, you are cordially invited to the first Parent-Teacher Meeting (PTM) of this term scheduled for Saturday, Ashad 20. The meeting will run from 11:00 AM to 3:00 PM. Teachers will discuss student academics progress, behavioral observations, and creative achievements. We highly value your feedback and request your mandatory presence to review test performance sheets.`,
-      author: 'Academic Coordinator'
-    },
-    {
-      id: 3,
-      date: '2026-06-15',
-      month: 'JUN',
-      day: '15',
-      category: 'admin',
-      categoryLabel: 'Administrative',
-      title: 'Admission Notice: Re-openings for Grade 11',
-      desc: 'A few scholarship seats are available for outstanding students in Science and Management streams.',
-      fullContent: `Dhungesanghu Boarding School announces open registration for the remaining few scholarship seats in Grade 11 (Science and Management Streams) for the session 2083/84. Deserving candidates with a minimum GPA of 3.2 in SEE are eligible to sit for the scholarship testing exam scheduled for Ashad 10. Forms can be collected from the administration office during working hours.`,
-      author: 'Admissions Desk'
-    },
-    {
-      id: 4,
-      date: '2026-05-18',
-      month: 'MAY',
-      day: '18',
-      category: 'events',
-      categoryLabel: 'Events & Holiday',
-      title: 'Inter-House Sports Meet Postponement',
-      desc: 'Due to forecasted heavy rainfalls, the Inter-House Athletics meet has been postponed to Jestha 12.',
-      fullContent: `This is to notify all house captains, sports coaches, and students that the Annual Inter-House Athletics and Track meet originally scheduled for Jestha 5 has been postponed to Jestha 12 due to predictions of heavy rainfall. Routine classroom teachings will continue as normal on Jestha 5. Modified training schedules for participants will be active in morning shifts.`,
-      author: 'Sports Committee Head'
+  const [notices, setNotices] = useState<Notice[]>([]);
+  const [calendarEvents, setCalendarEvents] = useState<CalendarEvent[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    async function loadData() {
+      try {
+        setLoading(true);
+        setError(null);
+        const [fetchedNotices, fetchedEvents] = await Promise.all([
+          getNotices(),
+          getCalendarEvents()
+        ]);
+        setNotices(fetchedNotices);
+        setCalendarEvents(fetchedEvents);
+      } catch (err: any) {
+        console.error('Failed to load bulletins data:', err);
+        setError('Could not connect to the school database server. Please ensure the backend is running.');
+      } finally {
+        setLoading(false);
+      }
     }
-  ];
+    loadData();
+  }, []);
 
   const calendarMonths: MonthData[] = [
     {
@@ -99,66 +54,45 @@ export const Bulletins: React.FC = () => {
       englishPeriod: "April - May",
       daysCount: 31,
       startOffset: 2, // Tuesday
-      events: [
-        { day: 1, type: "holiday", title: "New Year's Day", description: "Bikram Sambat New Year 2083 celebration. School closed." },
-        { day: 15, type: "meeting", title: "PTM & Report Cards", description: "Parents-teacher meet to distribute previous final exam result reports." }
-      ]
+      events: calendarEvents.filter(e => e.monthName === 'Baishakh')
     },
     {
       name: "Jestha",
       englishPeriod: "May - June",
       daysCount: 32,
       startOffset: 5, // Friday
-      events: [
-        { day: 10, type: "activity", title: "Inter-House Football", description: "Football selection and league match series starts on school playground." },
-        { day: 12, type: "activity", title: "Sports Meet Day 2", description: "Athletics, high jump, and relay running races." },
-        { day: 25, type: "exam", title: "First Unit Test Starts", description: "Unit examinations for Grades 1 to 10. Test shifts run for 1 hour." }
-      ]
+      events: calendarEvents.filter(e => e.monthName === 'Jestha')
     },
     {
       name: "Ashad",
       englishPeriod: "June - July",
       daysCount: 31,
       startOffset: 1, // Monday
-      events: [
-        { day: 12, type: "activity", title: "Science Fair & Exhibition", description: "Students from Grade 5 to 10 display customized working science models." },
-        { day: 20, type: "meeting", title: "Parent-Teacher Meeting", description: "Detailed review of academic performance and unit test evaluations." },
-        { day: 29, type: "holiday", title: "Bhanu Jayanti Celebration", description: "Poetry and cultural celebrations on the occasion of Bhanu Jayanti. Half day holiday." }
-      ]
+      events: calendarEvents.filter(e => e.monthName === 'Ashad')
     },
     {
       name: "Shrawan",
       englishPeriod: "July - August",
       daysCount: 32,
       startOffset: 4, // Thursday
-      events: [
-        { day: 10, type: "meeting", title: "Admit Card Distribution", description: "Distribution of First Term Examination admit cards at the account desk." },
-        { day: 15, type: "exam", title: "First Term Exam Starts", description: "First Terminal examinations commence for PG to Grade 10." },
-        { day: 26, type: "exam", title: "Term Exam Ends", description: "Conclusion of examinations. Routine regular classes resume." },
-        { day: 30, type: "meeting", title: "First Term Result Day", description: "Parents review and card collection for the First Terminal Exam." }
-      ]
+      events: calendarEvents.filter(e => e.monthName === 'Shrawan')
     },
     {
       name: "Bhadra",
       englishPeriod: "August - September",
       daysCount: 31,
       startOffset: 0, // Sunday
-      events: [
-        { day: 8, type: "holiday", title: "Teej Festival Holiday", description: "School remains closed on the occasion of Haritalika Teej." },
-        { day: 22, type: "activity", title: "Teachers Day Celebrations", description: "Special student performance, songs, and cards honoring teachers." }
-      ]
+      events: calendarEvents.filter(e => e.monthName === 'Bhadra')
     },
     {
       name: "Ashoj",
       englishPeriod: "September - October",
       daysCount: 30,
       startOffset: 3, // Wednesday
-      events: [
-        { day: 10, type: "holiday", title: "Dashain Vacation Begins", description: "Festival holidays start for Dashain. School closed." },
-        { day: 28, type: "holiday", title: "School Re-opens", description: "Re-opening of school after Dashain festival vacation. Standard timing." }
-      ]
+      events: calendarEvents.filter(e => e.monthName === 'Ashoj')
     }
   ];
+
 
   const noticeCategories = [
     { id: 'all', label: 'All Notices' },
@@ -235,7 +169,27 @@ export const Bulletins: React.FC = () => {
         </div>
 
         {/* VIEW 1: NOTICES BOARD VS CALENDAR TAB SWITCH ANIMATION */}
-        <AnimatePresence mode="wait">
+        {loading ? (
+          <div className="flex flex-col items-center justify-center py-24 gap-4 bg-white rounded-3xl border border-slate-200/60 shadow-sm">
+            <Loader2 className="h-10 w-10 text-[#652d90] animate-spin" />
+            <p className="text-slate-500 font-light text-sm">Fetching school updates...</p>
+          </div>
+        ) : error ? (
+          <div className="bg-rose-50/50 border border-rose-200/60 rounded-3xl p-10 max-w-2xl mx-auto text-center flex flex-col items-center gap-4 shadow-sm">
+            <div className="p-3.5 bg-rose-100/60 text-rose-600 rounded-full">
+              <Info className="h-7 w-7" />
+            </div>
+            <h3 className="text-xl font-bold text-rose-900 font-serif">Connection Issue</h3>
+            <p className="text-rose-700 text-sm font-light leading-relaxed max-w-md">{error}</p>
+            <button
+              onClick={() => window.location.reload()}
+              className="mt-2 bg-[#652d90] hover:bg-[#4b1f6b] text-white px-7 py-3 rounded-xl font-bold text-xs sm:text-sm shadow-md active:scale-95 transition-all cursor-pointer"
+            >
+              Try Reconnecting
+            </button>
+          </div>
+        ) : (
+          <AnimatePresence mode="wait">
           {activeView === 'notices' ? (
             <motion.div
               key="notices"
@@ -516,6 +470,7 @@ export const Bulletins: React.FC = () => {
             </motion.div>
           )}
         </AnimatePresence>
+        )}
 
       </div>
 

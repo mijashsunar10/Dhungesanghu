@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
-import { MapPin, Phone, Mail, Clock, Send, CheckCircle2, MessageSquare } from 'lucide-react';
+import { MapPin, Phone, Mail, Clock, Send, CheckCircle2, MessageSquare, Loader2, AlertCircle } from 'lucide-react';
 import { motion, type Variants } from 'framer-motion';
+import { submitContactForm } from '../api';
 
 interface ContactSectionProps {
   isPage?: boolean;
@@ -24,6 +25,8 @@ const staggerContainer: Variants = {
 
 export const ContactSection: React.FC<ContactSectionProps> = ({ isPage = false }) => {
   const [formSubmitted, setFormSubmitted] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -36,14 +39,24 @@ export const ContactSection: React.FC<ContactSectionProps> = ({ isPage = false }
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (formData.name && formData.email && formData.message) {
-      setFormSubmitted(true);
-      setTimeout(() => {
+      try {
+        setIsSubmitting(true);
+        setError(null);
+        await submitContactForm(formData);
+        setFormSubmitted(true);
         setFormData({ name: '', email: '', subject: '', message: '' });
-        setFormSubmitted(false);
-      }, 5000);
+        setTimeout(() => {
+          setFormSubmitted(false);
+        }, 5000);
+      } catch (err: any) {
+        console.error('Contact submit error:', err);
+        setError('Failed to send message. Please ensure the backend server is running and try again.');
+      } finally {
+        setIsSubmitting(false);
+      }
     }
   };
 
@@ -249,13 +262,30 @@ export const ContactSection: React.FC<ContactSectionProps> = ({ isPage = false }
                     />
                   </div>
 
+                  {error && (
+                    <div className="flex items-center gap-2.5 text-rose-600 bg-rose-50 border border-rose-100 p-4.5 rounded-xl text-xs sm:text-sm font-light select-none">
+                      <AlertCircle className="h-4.5 w-4.5 shrink-0" />
+                      <span>{error}</span>
+                    </div>
+                  )}
+
                   {/* Submit Button */}
                   <button 
                     type="submit"
-                    className="w-full bg-[#652d90] hover:bg-[#4b1f6b] text-white font-bold py-3.5 rounded-xl shadow-md hover:shadow-lg transition-all active:scale-[0.99] flex items-center justify-center gap-2 text-sm sm:text-base mt-2 cursor-pointer"
+                    disabled={isSubmitting}
+                    className="w-full bg-[#652d90] hover:bg-[#4b1f6b] disabled:bg-slate-300 disabled:cursor-not-allowed text-white font-bold py-3.5 rounded-xl shadow-md hover:shadow-lg transition-all active:scale-[0.99] flex items-center justify-center gap-2 text-sm sm:text-base mt-2 cursor-pointer"
                   >
-                    <Send className="h-4 w-4" />
-                    Submit Message
+                    {isSubmitting ? (
+                      <>
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                        Sending Message...
+                      </>
+                    ) : (
+                      <>
+                        <Send className="h-4 w-4" />
+                        Submit Message
+                      </>
+                    )}
                   </button>
                 </form>
               </>
