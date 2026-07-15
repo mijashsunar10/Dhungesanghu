@@ -83,6 +83,25 @@ app.delete('/api/notices/:id', async (req, res) => {
   }
 });
 
+// 2c. Update a Notice
+app.put('/api/notices/:id', async (req, res) => {
+  const { title, desc, fullContent, category, categoryLabel, author } = req.body;
+  try {
+    const updated = await Notice.findByIdAndUpdate(
+      req.params.id,
+      { title, desc, fullContent, category, categoryLabel, author },
+      { new: true }
+    );
+    if (!updated) {
+      return res.status(404).json({ error: 'Notice not found.' });
+    }
+    res.json(updated);
+  } catch (err) {
+    console.error('Error updating notice:', err.message);
+    res.status(500).json({ error: 'Database error updating notice' });
+  }
+});
+
 // 3. Get Calendar Events
 app.get('/api/calendar', async (req, res) => {
   try {
@@ -123,6 +142,25 @@ app.delete('/api/calendar/:id', async (req, res) => {
   } catch (err) {
     console.error('Error deleting event:', err.message);
     res.status(500).json({ error: 'Database error deleting event' });
+  }
+});
+
+// 3d. Update a Calendar Event
+app.put('/api/calendar/:id', async (req, res) => {
+  const { monthName, day, type, title, description } = req.body;
+  try {
+    const updated = await CalendarEvent.findByIdAndUpdate(
+      req.params.id,
+      { monthName, day: Number(day), type, title, description },
+      { new: true }
+    );
+    if (!updated) {
+      return res.status(404).json({ error: 'Event not found.' });
+    }
+    res.json(updated);
+  } catch (err) {
+    console.error('Error updating calendar event:', err.message);
+    res.status(500).json({ error: 'Database error updating calendar event' });
   }
 });
 

@@ -89,6 +89,22 @@ export async function deleteNotice(id: string): Promise<void> {
   }
 }
 
+export async function updateNotice(id: string, notice: Omit<Notice, 'id'>): Promise<Notice> {
+  const res = await fetch(`${API_URL}/notices/${id}`, {
+    method: 'PUT',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(notice),
+  });
+  if (!res.ok) {
+    throw new Error('Failed to update notice');
+  }
+  const data = await res.json();
+  return { ...data, id: data._id || data.id };
+}
+
+
 export async function getCalendarEvents(): Promise<CalendarEvent[]> {
   const res = await fetch(`${API_URL}/calendar`);
   if (!res.ok) {
@@ -124,6 +140,22 @@ export async function deleteCalendarEvent(id: string): Promise<void> {
     throw new Error('Failed to delete calendar event');
   }
 }
+
+export async function updateCalendarEvent(id: string, event: Omit<CalendarEvent, 'id'>): Promise<CalendarEvent> {
+  const res = await fetch(`${API_URL}/calendar/${id}`, {
+    method: 'PUT',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(event),
+  });
+  if (!res.ok) {
+    throw new Error('Failed to update calendar event');
+  }
+  const data = await res.json();
+  return { ...data, id: data._id || data.id };
+}
+
 
 export async function submitContactForm(formData: ContactFormData): Promise<void> {
   const res = await fetch(`${API_URL}/contact`, {

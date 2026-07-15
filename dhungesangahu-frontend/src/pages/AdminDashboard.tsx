@@ -4,6 +4,7 @@ import {
   LogOut, 
   Plus, 
   Trash2, 
+  Edit,
   Megaphone, 
   Calendar, 
   Inbox, 
@@ -21,8 +22,10 @@ import {
   getContactMessages, 
   createNotice, 
   deleteNotice, 
+  updateNotice,
   createCalendarEvent, 
   deleteCalendarEvent, 
+  updateCalendarEvent,
   deleteContactMessage,
   type Notice,
   type CalendarEvent,
@@ -48,6 +51,8 @@ export const AdminDashboard: React.FC = () => {
   const [showNoticeModal, setShowNoticeModal] = useState(false);
   const [showEventModal, setShowEventModal] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [editingNoticeId, setEditingNoticeId] = useState<string | null>(null);
+  const [editingEventId, setEditingEventId] = useState<string | null>(null);
 
   // New Form Data states
   const [newNotice, setNewNotice] = useState({
@@ -125,27 +130,60 @@ export const AdminDashboard: React.FC = () => {
 
     try {
       setIsSubmitting(true);
-      const created = await createNotice({
-        date: formattedDate,
-        month: shortMonth,
-        day: dayStr,
-        category: newNotice.category,
-        categoryLabel,
-        title: newNotice.title,
-        desc: newNotice.desc,
-        fullContent: newNotice.fullContent,
-        author: newNotice.author
-      });
-      setNotices([created, ...notices]);
-      setShowNoticeModal(false);
-      setNewNotice({ title: '', desc: '', fullContent: '', category: 'admin', author: 'Administration' });
-      triggerSuccess('Notice announced successfully!');
+      if (editingNoticeId) {
+        // Edit Mode
+        const updated = await updateNotice(editingNoticeId, {
+          date: notices.find(n => n.id === editingNoticeId)?.date || formattedDate,
+          month: notices.find(n => n.id === editingNoticeId)?.month || shortMonth,
+          day: notices.find(n => n.id === editingNoticeId)?.day || dayStr,
+          category: newNotice.category,
+          categoryLabel,
+          title: newNotice.title,
+          desc: newNotice.desc,
+          fullContent: newNotice.fullContent,
+          author: newNotice.author
+        });
+        setNotices(notices.map(item => item.id === editingNoticeId ? updated : item));
+        setEditingNoticeId(null);
+        setShowNoticeModal(false);
+        setNewNotice({ title: '', desc: '', fullContent: '', category: 'admin', author: 'Administration' });
+        triggerSuccess('Notice updated successfully!');
+      } else {
+        // Create Mode
+        const created = await createNotice({
+          date: formattedDate,
+          month: shortMonth,
+          day: dayStr,
+          category: newNotice.category,
+          categoryLabel,
+          title: newNotice.title,
+          desc: newNotice.desc,
+          fullContent: newNotice.fullContent,
+          author: newNotice.author
+        });
+        setNotices([created, ...notices]);
+        setShowNoticeModal(false);
+        setNewNotice({ title: '', desc: '', fullContent: '', category: 'admin', author: 'Administration' });
+        triggerSuccess('Notice announced successfully!');
+      }
     } catch (err) {
-      console.error('Failed to create notice:', err);
-      alert('Error creating notice.');
+      console.error('Failed to save notice:', err);
+      alert('Error saving notice.');
     } finally {
       setIsSubmitting(false);
     }
+  };
+
+  const handleEditNotice = (notice: Notice) => {
+    setEditingNoticeId(notice.id);
+    setNewNotice({
+      title: notice.title,
+      desc: notice.desc,
+      fullContent: notice.fullContent || '',
+      category: notice.category,
+      author: notice.author || 'Administration'
+    });
+    setShowNoticeModal(true);
   };
 
   const handleDeleteNotice = async (id: string) => {
@@ -165,17 +203,40 @@ export const AdminDashboard: React.FC = () => {
     e.preventDefault();
     try {
       setIsSubmitting(true);
-      const created = await createCalendarEvent(newEvent);
-      setEvents([...events, created].sort((a, b) => a.day - b.day));
-      setShowEventModal(false);
-      setNewEvent({ monthName: 'Baishakh', day: 1, type: 'activity', title: '', description: '' });
-      triggerSuccess('Academic event scheduled successfully!');
+      if (editingEventId) {
+        // Edit Mode
+        const updated = await updateCalendarEvent(editingEventId, newEvent);
+        setEvents(events.map(item => item.id === editingEventId ? updated : item).sort((a, b) => a.day - b.day));
+        setEditingEventId(null);
+        setShowEventModal(false);
+        setNewEvent({ monthName: 'Baishakh', day: 1, type: 'activity', title: '', description: '' });
+        triggerSuccess('Academic event updated successfully!');
+      } else {
+        // Create Mode
+        const created = await createCalendarEvent(newEvent);
+        setEvents([...events, created].sort((a, b) => a.day - b.day));
+        setShowEventModal(false);
+        setNewEvent({ monthName: 'Baishakh', day: 1, type: 'activity', title: '', description: '' });
+        triggerSuccess('Academic event scheduled successfully!');
+      }
     } catch (err) {
-      console.error('Failed to create event:', err);
-      alert('Error scheduling event.');
+      console.error('Failed to save event:', err);
+      alert('Error saving event.');
     } finally {
       setIsSubmitting(false);
     }
+  };
+
+  const handleEditEvent = (event: CalendarEvent) => {
+    setEditingEventId(event.id);
+    setNewEvent({
+      monthName: event.monthName,
+      day: event.day,
+      type: event.type,
+      title: event.title,
+      description: event.description
+    });
+    setShowEventModal(true);
   };
 
   const handleDeleteEvent = async (id: string) => {
@@ -368,13 +429,22 @@ export const AdminDashboard: React.FC = () => {
                           </div>
                         </div>
 
-                        <button
-                          onClick={() => handleDeleteNotice(notice.id)}
-                          className="p-3.5 bg-rose-50 text-rose-600 hover:bg-rose-100 rounded-xl transition-all border border-rose-200/30 cursor-pointer shrink-0"
-                          title="Delete Notice"
-                        >
-                          <Trash2 className="h-4.5 w-4.5" />
-                        </button>
+                        <div className="flex gap-2 shrink-0">
+                          <button
+                            onClick={() => handleEditNotice(notice)}
+                            className="p-3.5 bg-purple-50 text-[#652d90] hover:bg-purple-100 rounded-xl transition-all border border-purple-200/30 cursor-pointer"
+                            title="Edit Notice"
+                          >
+                            <Edit className="h-4.5 w-4.5" />
+                          </button>
+                          <button
+                            onClick={() => handleDeleteNotice(notice.id)}
+                            className="p-3.5 bg-rose-50 text-rose-600 hover:bg-rose-100 rounded-xl transition-all border border-rose-200/30 cursor-pointer shrink-0"
+                            title="Delete Notice"
+                          >
+                            <Trash2 className="h-4.5 w-4.5" />
+                          </button>
+                        </div>
                       </div>
                     ))
                   )}
@@ -436,13 +506,22 @@ export const AdminDashboard: React.FC = () => {
                               <td className="py-4.5 font-semibold text-slate-800">{e.title}</td>
                               <td className="py-4.5 text-slate-500 max-w-xs truncate">{e.description}</td>
                               <td className="py-4.5 text-right pr-4">
-                                <button
-                                  onClick={() => handleDeleteEvent(e.id)}
-                                  className="text-rose-600 hover:text-rose-900 p-1.5 hover:bg-rose-50 rounded-lg transition-colors cursor-pointer"
-                                  title="Delete Event"
-                                >
-                                  <Trash2 className="h-4.5 w-4.5" />
-                                </button>
+                                <div className="flex justify-end gap-1.5">
+                                  <button
+                                    onClick={() => handleEditEvent(e)}
+                                    className="text-[#652d90] hover:text-purple-900 p-1.5 hover:bg-purple-50 rounded-lg transition-colors cursor-pointer"
+                                    title="Edit Event"
+                                  >
+                                    <Edit className="h-4.5 w-4.5" />
+                                  </button>
+                                  <button
+                                    onClick={() => handleDeleteEvent(e.id)}
+                                    className="text-rose-600 hover:text-rose-900 p-1.5 hover:bg-rose-50 rounded-lg transition-colors cursor-pointer"
+                                    title="Delete Event"
+                                  >
+                                    <Trash2 className="h-4.5 w-4.5" />
+                                  </button>
+                                </div>
                               </td>
                             </tr>
                           ))}
@@ -522,8 +601,15 @@ export const AdminDashboard: React.FC = () => {
               className="bg-white border border-slate-200 shadow-2xl rounded-3xl w-full max-w-xl p-6 sm:p-7 relative z-50 text-left"
             >
               <div className="flex justify-between items-center border-b border-slate-100 pb-3 mb-5">
-                <h3 className="text-lg font-black text-slate-800 font-serif">Publish Board Notice</h3>
-                <button onClick={() => setShowNoticeModal(false)} className="p-1 hover:bg-slate-100 rounded-lg cursor-pointer">
+                <h3 className="text-lg font-black text-slate-800 font-serif">{editingNoticeId ? 'Edit Board Notice' : 'Publish Board Notice'}</h3>
+                <button 
+                  onClick={() => {
+                    setShowNoticeModal(false);
+                    setEditingNoticeId(null);
+                    setNewNotice({ title: '', desc: '', fullContent: '', category: 'admin', author: 'Administration' });
+                  }} 
+                  className="p-1 hover:bg-slate-100 rounded-lg cursor-pointer"
+                >
                   <X className="h-5 w-5 text-slate-400" />
                 </button>
               </div>
@@ -601,7 +687,11 @@ export const AdminDashboard: React.FC = () => {
                 <div className="flex gap-3 justify-end mt-2">
                   <button
                     type="button"
-                    onClick={() => setShowNoticeModal(false)}
+                    onClick={() => {
+                      setShowNoticeModal(false);
+                      setEditingNoticeId(null);
+                      setNewNotice({ title: '', desc: '', fullContent: '', category: 'admin', author: 'Administration' });
+                    }}
                     className="px-5 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-600 rounded-xl text-xs sm:text-sm font-bold transition-all cursor-pointer"
                   >
                     Cancel
@@ -614,10 +704,10 @@ export const AdminDashboard: React.FC = () => {
                     {isSubmitting ? (
                       <>
                         <Loader2 className="h-4 w-4 animate-spin" />
-                        Publishing...
+                        Saving...
                       </>
                     ) : (
-                      'Publish Announcement'
+                      editingNoticeId ? 'Save Changes' : 'Publish Announcement'
                     )}
                   </button>
                 </div>
@@ -639,8 +729,15 @@ export const AdminDashboard: React.FC = () => {
               className="bg-white border border-slate-200 shadow-2xl rounded-3xl w-full max-w-xl p-6 sm:p-7 relative z-50 text-left"
             >
               <div className="flex justify-between items-center border-b border-slate-100 pb-3 mb-5">
-                <h3 className="text-lg font-black text-slate-800 font-serif">Schedule Academic Event</h3>
-                <button onClick={() => setShowEventModal(false)} className="p-1 hover:bg-slate-100 rounded-lg cursor-pointer">
+                <h3 className="text-lg font-black text-slate-800 font-serif">{editingEventId ? 'Edit Scheduled Event' : 'Schedule Academic Event'}</h3>
+                <button 
+                  onClick={() => {
+                    setShowEventModal(false);
+                    setEditingEventId(null);
+                    setNewEvent({ monthName: 'Baishakh', day: 1, type: 'activity', title: '', description: '' });
+                  }} 
+                  className="p-1 hover:bg-slate-100 rounded-lg cursor-pointer"
+                >
                   <X className="h-5 w-5 text-slate-400" />
                 </button>
               </div>
@@ -727,7 +824,11 @@ export const AdminDashboard: React.FC = () => {
                 <div className="flex gap-3 justify-end mt-2">
                   <button
                     type="button"
-                    onClick={() => setShowEventModal(false)}
+                    onClick={() => {
+                      setShowEventModal(false);
+                      setEditingEventId(null);
+                      setNewEvent({ monthName: 'Baishakh', day: 1, type: 'activity', title: '', description: '' });
+                    }}
                     className="px-5 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-600 rounded-xl text-xs sm:text-sm font-bold transition-all cursor-pointer"
                   >
                     Cancel
@@ -740,10 +841,10 @@ export const AdminDashboard: React.FC = () => {
                     {isSubmitting ? (
                       <>
                         <Loader2 className="h-4 w-4 animate-spin" />
-                        Scheduling...
+                        Saving...
                       </>
                     ) : (
-                      'Schedule Event'
+                      editingEventId ? 'Save Changes' : 'Schedule Event'
                     )}
                   </button>
                 </div>
