@@ -1,70 +1,83 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { NavLink } from 'react-router-dom';
-import { X, Folder, Image as ImageIcon } from 'lucide-react';
+import { X, Folder, Image as ImageIcon, Loader2 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ImageWithFallback } from './ImageWithFallback';
+import { getGalleryImages, type GalleryImage } from '../api';
 
 interface PhotoGallerySectionProps {
   limit?: number;
 }
 
-const galleryImages = [
+const staticFallbackImages: GalleryImage[] = [
   {
+    id: 's1',
     url: 'https://dhungesanghuschool.edu.np/wp-content/uploads/2026/01/dbs6.jpg',
     category: 'activities',
     caption: 'Student Presentation & Group Activities'
   },
   {
+    id: 's2',
     url: 'https://dhungesanghuschool.edu.np/wp-content/uploads/2026/06/726495301_27214325098227711_5095630771598862657_n.jpeg',
     category: 'classroom',
     caption: 'Modern Classroom Fun and Engaged Learnings'
   },
   {
+    id: 's3',
     url: 'https://dhungesanghuschool.edu.np/wp-content/uploads/2026/06/724005185_1657741765516585_8558043736622738972_n.jpeg',
     category: 'classroom',
     caption: 'Dedicated Science Experiments and Study Time'
   },
   {
+    id: 's4',
     url: 'https://dhungesanghuschool.edu.np/wp-content/uploads/2026/06/721951060_2878261705852991_6275585639119925637_n.jpeg',
     category: 'activities',
     caption: 'Creative Indoor Drawing & Arts Craft Play'
   },
   {
+    id: 's5',
     url: 'https://dhungesanghuschool.edu.np/wp-content/uploads/2026/06/711814583_1619901360136900_4141375761681313767_n.jpg',
     category: 'activities',
     caption: 'Outdoor Playground and Collaborative Team Exercises'
   },
   {
+    id: 's6',
     url: 'https://dhungesanghuschool.edu.np/wp-content/uploads/2026/06/709708868_1615055323954837_6000510963209356473_n.jpg',
     category: 'events',
     caption: 'Annual Cultural Festival and Happy Performances'
   },
   {
+    id: 's7',
     url: 'https://images.unsplash.com/photo-1546410531-bb4caa6b424d?q=80&w=600',
     category: 'classroom',
     caption: 'Junior Chemistry & Biology Science Lab Experiments'
   },
   {
+    id: 's8',
     url: 'https://images.unsplash.com/photo-1588072432836-e10032774350?q=80&w=600',
     category: 'classroom',
     caption: 'Primary Level Language Studies Classroom Deskwork'
   },
   {
+    id: 's9',
     url: 'https://images.unsplash.com/photo-1577896851231-70ee18881754?q=80&w=600',
     category: 'events',
     caption: 'Annual Track & Field Sports Meet Running Events'
   },
   {
+    id: 's10',
     url: 'https://images.unsplash.com/photo-1509062522246-3755977927d7?q=80&w=600',
     category: 'activities',
     caption: 'Advanced Information Technology and Keyboard Skills'
   },
   {
+    id: 's11',
     url: 'https://images.unsplash.com/photo-1497633762265-9d179a990aa6?q=80&w=600',
     category: 'classroom',
     caption: 'Hobby Book Reading in Quiet Campus Study Library'
   },
   {
+    id: 's12',
     url: 'https://images.unsplash.com/photo-1516627145497-ae6968895b74?q=80&w=600',
     category: 'events',
     caption: 'Pre-Primary Kindergarten Play Ground and Toys Activity'
@@ -79,8 +92,29 @@ const categories = [
 ];
 
 export const PhotoGallerySection: React.FC<PhotoGallerySectionProps> = ({ limit }) => {
+  const [galleryImages, setGalleryImages] = useState<GalleryImage[]>([]);
+  const [loading, setLoading] = useState(true);
   const [activeCategory, setActiveCategory] = useState('all');
   const [lightboxIndex, setLightboxIndex] = useState<number | null>(null);
+
+  useEffect(() => {
+    async function fetchImages() {
+      try {
+        const data = await getGalleryImages();
+        if (data && data.length > 0) {
+          setGalleryImages(data);
+        } else {
+          setGalleryImages(staticFallbackImages);
+        }
+      } catch (err) {
+        console.error('Failed to fetch gallery images, using fallback', err);
+        setGalleryImages(staticFallbackImages);
+      } finally {
+        setLoading(false);
+      }
+    }
+    fetchImages();
+  }, []);
 
   // Filter images based on active tab
   const filteredImages = activeCategory === 'all'
@@ -112,6 +146,14 @@ export const PhotoGallerySection: React.FC<PhotoGallerySectionProps> = ({ limit 
       setLightboxIndex((prev) => (prev === null ? null : (prev + 1) % galleryImages.length));
     }
   };
+
+  if (loading) {
+    return (
+      <div className="flex justify-center items-center py-20 w-full bg-white">
+        <Loader2 className="w-8 h-8 text-[#652d90] animate-spin" />
+      </div>
+    );
+  }
 
   return (
     <section className="relative py-16 px-6 overflow-hidden bg-white font-sans w-full">

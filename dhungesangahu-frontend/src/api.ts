@@ -249,3 +249,61 @@ export async function deleteService(id: string): Promise<void> {
   }
 }
 
+export interface GalleryImage {
+  id: string;
+  url: string;
+  category: 'classroom' | 'activities' | 'events';
+  caption: string;
+}
+
+export async function getGalleryImages(): Promise<GalleryImage[]> {
+  const res = await fetch(`${API_URL}/gallery`);
+  if (!res.ok) {
+    throw new Error('Failed to fetch gallery images');
+  }
+  const data = await res.json();
+  return data.map((item: any) => ({
+    ...item,
+    id: item._id || item.id
+  }));
+}
+
+export async function createGalleryImage(image: Omit<GalleryImage, 'id'>): Promise<GalleryImage> {
+  const res = await fetch(`${API_URL}/gallery`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(image),
+  });
+  if (!res.ok) {
+    throw new Error('Failed to create gallery image');
+  }
+  const data = await res.json();
+  return { ...data, id: data._id || data.id };
+}
+
+export async function updateGalleryImage(id: string, image: Omit<GalleryImage, 'id'>): Promise<GalleryImage> {
+  const res = await fetch(`${API_URL}/gallery/${id}`, {
+    method: 'PUT',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(image),
+  });
+  if (!res.ok) {
+    throw new Error('Failed to update gallery image');
+  }
+  const data = await res.json();
+  return { ...data, id: data._id || data.id };
+}
+
+export async function deleteGalleryImage(id: string): Promise<void> {
+  const res = await fetch(`${API_URL}/gallery/${id}`, {
+    method: 'DELETE',
+  });
+  if (!res.ok) {
+    throw new Error('Failed to delete gallery image');
+  }
+}
+

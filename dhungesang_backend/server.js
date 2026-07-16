@@ -2,7 +2,7 @@ import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
 import './database.js'; // Imports connection & seeds database
-import { Notice, CalendarEvent, ContactMessage, Admin, Service } from './database.js';
+import { Notice, CalendarEvent, ContactMessage, Admin, Service, GalleryImage } from './database.js';
 
 dotenv.config();
 
@@ -11,7 +11,8 @@ const PORT = process.env.PORT || 5000;
 
 // Middleware
 app.use(cors());
-app.use(express.json());
+app.use(express.json({ limit: '10mb' }));
+app.use(express.urlencoded({ limit: '10mb', extended: true }));
 
 // Routes
 
@@ -266,6 +267,70 @@ app.delete('/api/services/:id', async (req, res) => {
   } catch (err) {
     console.error('Error deleting service:', err.message);
     res.status(500).json({ error: 'Database error deleting service' });
+  }
+});
+
+// 7. Gallery Images APIs
+
+// 7a. Get All Gallery Images
+app.get('/api/gallery', async (req, res) => {
+  try {
+    const images = await GalleryImage.find();
+    res.json(images);
+  } catch (err) {
+    console.error('Error fetching gallery images:', err.message);
+    res.status(500).json({ error: 'Database error fetching gallery images' });
+  }
+});
+
+// 7b. Post a Gallery Image
+app.post('/api/gallery', async (req, res) => {
+  const { url, category, caption } = req.body;
+
+  if (!url || !category || !caption) {
+    return res.status(400).json({ error: 'Please provide url, category, and caption.' });
+  }
+
+  try {
+    const newImage = new GalleryImage({ url, category, caption });
+    const saved = await newImage.save();
+    res.status(201).json(saved);
+  } catch (err) {
+    console.error('Error saving gallery image:', err.message);
+    res.status(500).json({ error: 'Database error saving gallery image' });
+  }
+});
+
+// 7c. Update a Gallery Image
+app.put('/api/gallery/:id', async (req, res) => {
+  const { url, category, caption } = req.body;
+  try {
+    const updated = await GalleryImage.findByIdAndUpdate(
+      req.params.id,
+      { url, category, caption },
+      { new: true }
+    );
+    if (!updated) {
+      return res.status(404).json({ error: 'Gallery image not found.' });
+    }
+    res.json(updated);
+  } catch (err) {
+    console.error('Error updating gallery image:', err.message);
+    res.status(500).json({ error: 'Database error updating gallery image' });
+  }
+});
+
+// 7d. Delete a Gallery Image
+app.delete('/api/gallery/:id', async (req, res) => {
+  try {
+    const deleted = await GalleryImage.findByIdAndDelete(req.params.id);
+    if (!deleted) {
+      return res.status(404).json({ error: 'Gallery image not found.' });
+    }
+    res.json({ success: true, message: 'Gallery image deleted successfully' });
+  } catch (err) {
+    console.error('Error deleting gallery image:', err.message);
+    res.status(500).json({ error: 'Database error deleting gallery image' });
   }
 });
 

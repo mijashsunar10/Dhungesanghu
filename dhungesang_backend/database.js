@@ -73,6 +73,15 @@ const ServiceSchema = new mongoose.Schema({
 
 export const Service = mongoose.model('Service', ServiceSchema);
 
+// 6. Gallery Image Schema & Model
+const GalleryImageSchema = new mongoose.Schema({
+  url: { type: String, required: true },
+  category: { type: String, required: true, enum: ['classroom', 'activities', 'events'] },
+  caption: { type: String, required: true }
+});
+
+export const GalleryImage = mongoose.model('GalleryImage', GalleryImageSchema);
+
 // Initial Seeding Logic
 async function seedDatabase() {
   try {
@@ -201,6 +210,75 @@ async function seedDatabase() {
       ];
       await Service.insertMany(mockServices);
       console.log('Seeded default school services to MongoDB Atlas.');
+    }
+
+    // Seed Gallery Images
+    const galleryCount = await GalleryImage.countDocuments();
+    if (galleryCount === 0) {
+      const mockGallery = [
+        {
+          url: 'https://dhungesanghuschool.edu.np/wp-content/uploads/2026/01/dbs6.jpg',
+          category: 'activities',
+          caption: 'Student Presentation & Group Activities'
+        },
+        {
+          url: 'https://dhungesanghuschool.edu.np/wp-content/uploads/2026/06/726495301_27214325098227711_5095630771598862657_n.jpeg',
+          category: 'classroom',
+          caption: 'Modern Classroom Fun and Engaged Learnings'
+        },
+        {
+          url: 'https://dhungesanghuschool.edu.np/wp-content/uploads/2026/06/724005185_1657741765516585_8558043736622738972_n.jpeg',
+          category: 'classroom',
+          caption: 'Dedicated Science Experiments and Study Time'
+        },
+        {
+          url: 'https://dhungesanghuschool.edu.np/wp-content/uploads/2026/06/721951060_2878261705852991_6275585639119925637_n.jpeg',
+          category: 'activities',
+          caption: 'Creative Indoor Drawing & Arts Craft Play'
+        },
+        {
+          url: 'https://dhungesanghuschool.edu.np/wp-content/uploads/2026/06/711814583_1619901360136900_4141375761681313767_n.jpg',
+          category: 'activities',
+          caption: 'Outdoor Playground and Collaborative Team Exercises'
+        },
+        {
+          url: 'https://dhungesanghuschool.edu.np/wp-content/uploads/2026/06/709708868_1615055323954837_6000510963209356473_n.jpg',
+          category: 'events',
+          caption: 'Annual Cultural Festival and Happy Performances'
+        },
+        {
+          url: 'https://images.unsplash.com/photo-1546410531-bb4caa6b424d?q=80&w=600',
+          category: 'classroom',
+          caption: 'Junior Chemistry & Biology Science Lab Experiments'
+        },
+        {
+          url: 'https://images.unsplash.com/photo-1588072432836-e10032774350?q=80&w=600',
+          category: 'classroom',
+          caption: 'Primary Level Language Studies Classroom Deskwork'
+        },
+        {
+          url: 'https://images.unsplash.com/photo-1577896851231-70ee18881754?q=80&w=600',
+          category: 'events',
+          caption: 'Annual Track & Field Sports Meet Running Events'
+        },
+        {
+          url: 'https://images.unsplash.com/photo-1509062522246-3755977927d7?q=80&w=600',
+          category: 'activities',
+          caption: 'Advanced Information Technology and Keyboard Skills'
+        },
+        {
+          url: 'https://images.unsplash.com/photo-1497633762265-9d179a990aa6?q=80&w=600',
+          category: 'classroom',
+          caption: 'Hobby Book Reading in Quiet Campus Study Library'
+        },
+        {
+          url: 'https://images.unsplash.com/photo-1516627145497-ae6968895b74?q=80&w=600',
+          category: 'events',
+          caption: 'Pre-Primary Kindergarten Play Ground and Toys Activity'
+        }
+      ];
+      await GalleryImage.insertMany(mockGallery);
+      console.log('Seeded default gallery images to MongoDB Atlas.');
     }
   } catch (err) {
     console.error('Error seeding MongoDB Atlas:', err.message);

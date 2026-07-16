@@ -14,7 +14,8 @@ import {
   Loader2, 
   AlertCircle, 
   ExternalLink,
-  Wrench
+  Wrench,
+  Image as ImageIcon
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
@@ -32,15 +33,20 @@ import {
   createService,
   deleteService,
   updateService,
+  getGalleryImages,
+  createGalleryImage,
+  updateGalleryImage,
+  deleteGalleryImage,
   type Notice,
   type CalendarEvent,
   type ContactMessage,
-  type Service
+  type Service,
+  type GalleryImage
 } from '../api';
 
 export const AdminDashboard: React.FC = () => {
   const navigate = useNavigate();
-  const [activeTab, setActiveTab] = useState<'notices' | 'calendar' | 'inbox' | 'services'>('notices');
+  const [activeTab, setActiveTab] = useState<'notices' | 'calendar' | 'inbox' | 'services' | 'gallery'>('notices');
   const [adminUser, setAdminUser] = useState('Admin');
   
   // Data States
@@ -48,6 +54,7 @@ export const AdminDashboard: React.FC = () => {
   const [events, setEvents] = useState<CalendarEvent[]>([]);
   const [messages, setMessages] = useState<ContactMessage[]>([]);
   const [services, setServices] = useState<Service[]>([]);
+  const [galleryImages, setGalleryImages] = useState<GalleryImage[]>([]);
   
   // UX States
   const [loading, setLoading] = useState(true);
@@ -62,6 +69,8 @@ export const AdminDashboard: React.FC = () => {
   const [editingNoticeId, setEditingNoticeId] = useState<string | null>(null);
   const [editingEventId, setEditingEventId] = useState<string | null>(null);
   const [editingServiceId, setEditingServiceId] = useState<string | null>(null);
+  const [editingGalleryId, setEditingGalleryId] = useState<string | null>(null);
+  const [showGalleryModal, setShowGalleryModal] = useState(false);
   const [imageInputMode, setImageInputMode] = useState<'upload' | 'url'>('upload');
 
   // New Form Data states
@@ -87,6 +96,12 @@ export const AdminDashboard: React.FC = () => {
     desc: ''
   });
 
+  const [newGalleryImage, setNewGalleryImage] = useState({
+    url: '',
+    category: 'classroom' as 'classroom' | 'activities' | 'events',
+    caption: ''
+  });
+
   // Verify authentication on mount
   useEffect(() => {
     const token = localStorage.getItem('admin_token');
@@ -103,16 +118,18 @@ export const AdminDashboard: React.FC = () => {
     try {
       setLoading(true);
       setError(null);
-      const [nList, eList, mList, sList] = await Promise.all([
+      const [nList, eList, mList, sList, gList] = await Promise.all([
         getNotices(),
         getCalendarEvents(),
         getContactMessages(),
-        getServices()
+        getServices(),
+        getGalleryImages()
       ]);
       setNotices(nList);
       setEvents(eList);
       setMessages(mList);
       setServices(sList);
+      setGalleryImages(gList);
     } catch (err: any) {
       console.error('Error fetching admin data:', err);
       setError('Could not load data. Ensure the database server is running.');
@@ -359,6 +376,83 @@ export const AdminDashboard: React.FC = () => {
     }
   };
 
+  // GALLERY HANDLERS
+  const handleCreateGallerySubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    try {
+      setIsSubmitting(true);
+      if (editingGalleryId) {
+        // Edit Mode
+        const updated = await updateGalleryImage(editingGalleryId, newGalleryImage);
+        setGalleryImages(galleryImages.map(item => item.id === editingGalleryId ? updated : item));
+        setEditingGalleryId(null);
+        setShowGalleryModal(false);
+        setNewGalleryImage({ url: '', category: 'classroom', caption: '' });
+        triggerSuccess('Gallery photo updated successfully!');
+      } else {
+        // Create Mode
+        const created = await createGalleryImage(newGalleryImage);
+        setGalleryImages([...galleryImages, created]);
+        setShowGalleryModal(false);
+        setNewGalleryImage({ url: '', category: 'classroom', caption: '' });
+        triggerSuccess('New gallery photo uploaded successfully!');
+      }
+    } catch (err) {
+      console.error('Failed to save gallery image:', err);
+      alert('Error saving gallery image.');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleGalleryImageFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (file.size > 3 * 1024 * 1024) {
+      alert('File size exceeds 3MB. Please select a smaller image.');
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      if (typeof reader.result === 'string') {
+        setNewGalleryImage(prev => ({ ...prev, url: reader.result as string }));
+      }
+    };
+    reader.onerror = () => {
+      alert('Error reading local file.');
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const handleEditGallery = (img: GalleryImage) => {
+    setEditingGalleryId(img.id);
+    setNewGalleryImage({
+      url: img.url,
+      category: img.category,
+      caption: img.caption
+    });
+    if (img.url && img.url.startsWith('data:image')) {
+      setImageInputMode('upload');
+    } else {
+      setImageInputMode('url');
+    }
+    setShowGalleryModal(true);
+  };
+
+  const handleDeleteGallery = async (id: string) => {
+    if (!window.confirm('Are you sure you want to delete this gallery image?')) return;
+    try {
+      await deleteGalleryImage(id);
+      setGalleryImages(galleryImages.filter(item => item.id !== id));
+      triggerSuccess('Gallery image removed successfully.');
+    } catch (err) {
+      console.error(err);
+      alert('Error deleting gallery image.');
+    }
+  };
+
   return (
     <div className="min-h-screen bg-slate-50 flex flex-col font-sans text-slate-800">
       
@@ -474,6 +568,18 @@ export const AdminDashboard: React.FC = () => {
           >
             <Inbox className="h-4 w-4" />
             Inbox Inquiries ({messages.length})
+          </button>
+
+          <button
+            onClick={() => setActiveTab('gallery')}
+            className={`px-5 py-3 rounded-xl font-bold text-xs sm:text-sm flex items-center gap-2.5 transition-all cursor-pointer ${
+              activeTab === 'gallery'
+                ? 'bg-[#652d90] text-white shadow-sm'
+                : 'bg-white border border-slate-200 text-slate-600 hover:bg-slate-50'
+            }`}
+          >
+            <ImageIcon className="h-4 w-4" />
+            Gallery Manager ({galleryImages.length})
           </button>
         </div>
 
@@ -757,6 +863,85 @@ export const AdminDashboard: React.FC = () => {
                               onClick={() => handleDeleteService(service.id)}
                               className="px-3 py-1.5 bg-rose-50 text-rose-600 hover:bg-rose-100 rounded-lg text-xs font-bold transition-all border border-rose-200/30 cursor-pointer flex items-center gap-1"
                               title="Delete Service"
+                            >
+                              <Trash2 className="h-3.5 w-3.5" /> Delete
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    ))
+                  )}
+                </div>
+              </div>
+            )}
+
+            {/* TAB 5: GALLERY VIEW */}
+            {activeTab === 'gallery' && (
+              <div className="flex flex-col gap-6">
+                <div className="flex justify-between items-center bg-white p-5 rounded-3xl border border-slate-200 shadow-sm">
+                  <div className="text-left">
+                    <h2 className="text-lg font-black text-slate-800 font-serif">Photo Gallery Manager</h2>
+                    <p className="text-slate-400 text-xs sm:text-sm font-light mt-0.5">Manage live photos, activities, and sports events snapshots posted on the website.</p>
+                  </div>
+                  <button
+                    onClick={() => {
+                      setEditingGalleryId(null);
+                      setNewGalleryImage({ url: '', category: 'classroom', caption: '' });
+                      setImageInputMode('upload');
+                      setShowGalleryModal(true);
+                    }}
+                    className="flex items-center gap-2 px-5 py-3 bg-[#652d90] hover:bg-[#4b1f6b] text-white rounded-xl text-xs sm:text-sm font-bold shadow-md hover:shadow-lg transition-all active:scale-95 cursor-pointer shrink-0"
+                  >
+                    <Plus className="h-4.5 w-4.5" />
+                    New Photo
+                  </button>
+                </div>
+
+                {/* Gallery Grid */}
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                  {galleryImages.length === 0 ? (
+                    <div className="col-span-full bg-white border border-slate-200/60 p-16 rounded-3xl text-center text-slate-400 font-light">
+                      No gallery photos found in the database. Click "New Photo" to upload one.
+                    </div>
+                  ) : (
+                    galleryImages.map((img) => (
+                      <div 
+                        key={img.id}
+                        className="bg-white border border-slate-200/80 rounded-2xl overflow-hidden shadow-sm hover:shadow-md transition-all flex flex-col text-left group"
+                      >
+                        {/* Gallery Thumbnail */}
+                        <div className="h-44 w-full bg-slate-100 overflow-hidden relative border-b border-slate-100">
+                          <img 
+                            src={img.url} 
+                            alt={img.caption} 
+                            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 ease-out"
+                            onError={(e) => {
+                              (e.target as HTMLImageElement).src = 'https://images.unsplash.com/photo-1546410531-bb4caa6b424d?q=80&w=400';
+                            }}
+                          />
+                          <span className="absolute top-3 left-3 bg-white/90 backdrop-blur-sm text-[#652d90] font-extrabold text-[10px] uppercase tracking-wider px-2.5 py-1 rounded-full border border-purple-100 shadow-sm">
+                            {img.category}
+                          </span>
+                        </div>
+
+                        {/* Details */}
+                        <div className="p-5 flex-1 flex flex-col justify-between gap-4">
+                          <div>
+                            <p className="text-slate-700 text-xs sm:text-sm font-semibold leading-relaxed line-clamp-3">"{img.caption}"</p>
+                          </div>
+
+                          <div className="flex gap-2 justify-end pt-3 border-t border-slate-100">
+                            <button
+                              onClick={() => handleEditGallery(img)}
+                              className="px-3 py-1.5 bg-purple-50 text-[#652d90] hover:bg-purple-100 rounded-lg text-xs font-bold transition-all border border-purple-200/30 cursor-pointer flex items-center gap-1"
+                              title="Edit Photo"
+                            >
+                              <Edit className="h-3.5 w-3.5" /> Edit
+                            </button>
+                            <button
+                              onClick={() => handleDeleteGallery(img.id)}
+                              className="px-3 py-1.5 bg-rose-50 text-rose-600 hover:bg-rose-100 rounded-lg text-xs font-bold transition-all border border-rose-200/30 cursor-pointer flex items-center gap-1"
+                              title="Delete Photo"
                             >
                               <Trash2 className="h-3.5 w-3.5" /> Delete
                             </button>
@@ -1227,6 +1412,203 @@ export const AdminDashboard: React.FC = () => {
                       </>
                     ) : (
                       editingServiceId ? 'Save Changes' : 'Add Service'
+                    )}
+                  </button>
+                </div>
+
+              </form>
+            </motion.div>
+          </div>
+        )}
+
+        {/* 5. GALLERY MODAL FORM */}
+        {showGalleryModal && (
+          <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex justify-center items-center p-4">
+            <motion.div 
+              initial={{ scale: 0.95, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.95, opacity: 0 }}
+              className="bg-white border border-slate-200 shadow-2xl rounded-3xl w-full max-w-xl p-6 sm:p-7 relative z-50 text-left"
+            >
+              <div className="flex justify-between items-center border-b border-slate-100 pb-3 mb-5">
+                <h3 className="text-lg font-black text-slate-800 font-serif">{editingGalleryId ? 'Edit Photo Details' : 'Upload Gallery Photo'}</h3>
+                <button 
+                  onClick={() => {
+                    setShowGalleryModal(false);
+                    setEditingGalleryId(null);
+                    setNewGalleryImage({ url: '', category: 'classroom', caption: '' });
+                  }} 
+                  className="p-1 hover:bg-slate-100 rounded-lg cursor-pointer"
+                >
+                  <X className="h-5 w-5 text-slate-400" />
+                </button>
+              </div>
+
+              <form onSubmit={handleCreateGallerySubmit} className="flex flex-col gap-4">
+                
+                {/* Caption */}
+                <div className="flex flex-col gap-1">
+                  <label className="text-xs font-bold text-slate-600 uppercase tracking-wider pl-0.5">Photo Caption</label>
+                  <input 
+                    type="text" 
+                    placeholder="e.g. Modern Classroom Fun and Engaged Learnings..." 
+                    value={newGalleryImage.caption}
+                    onChange={e => setNewGalleryImage({...newGalleryImage, caption: e.target.value})}
+                    required
+                    className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 focus:border-[#652d90] rounded-xl text-xs sm:text-sm font-light focus:outline-none transition-all duration-300"
+                  />
+                </div>
+
+                {/* Category */}
+                <div className="flex flex-col gap-1">
+                  <label className="text-xs font-bold text-slate-600 uppercase tracking-wider pl-0.5">Photo Category</label>
+                  <select
+                    value={newGalleryImage.category}
+                    onChange={e => setNewGalleryImage({...newGalleryImage, category: e.target.value as any})}
+                    className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 focus:border-[#652d90] rounded-xl text-xs sm:text-sm font-light focus:outline-none transition-all duration-300 cursor-pointer"
+                  >
+                    <option value="classroom">Classroom & Study</option>
+                    <option value="activities">Student Activities</option>
+                    <option value="events">Events & Sports</option>
+                  </select>
+                </div>
+
+                {/* Image Selection Tabs */}
+                <div className="flex flex-col gap-1.5">
+                  <label className="text-xs font-bold text-slate-600 uppercase tracking-wider pl-0.5">Photo Image Source</label>
+                  <div className="flex gap-2 bg-slate-100 p-1 rounded-xl w-fit">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setImageInputMode('upload');
+                        if (newGalleryImage.url && !newGalleryImage.url.startsWith('data:image')) {
+                          setNewGalleryImage(prev => ({ ...prev, url: '' }));
+                        }
+                      }}
+                      className={`px-4 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+                        imageInputMode === 'upload' ? 'bg-white text-[#652d90] shadow-sm' : 'text-slate-500 hover:text-slate-700'
+                      }`}
+                    >
+                      Upload File
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setImageInputMode('url');
+                        if (newGalleryImage.url && newGalleryImage.url.startsWith('data:image')) {
+                          setNewGalleryImage(prev => ({ ...prev, url: '' }));
+                        }
+                      }}
+                      className={`px-4 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+                        imageInputMode === 'url' ? 'bg-white text-[#652d90] shadow-sm' : 'text-slate-500 hover:text-slate-700'
+                      }`}
+                    >
+                      Image URL link
+                    </button>
+                  </div>
+
+                  {imageInputMode === 'upload' ? (
+                    <div className="flex flex-col gap-2">
+                      <div className="flex items-center gap-3">
+                        <label className="px-4 py-2.5 bg-[#652d90] hover:bg-[#4b1f6b] text-white rounded-xl text-xs font-bold transition-all cursor-pointer shadow-sm active:scale-95">
+                          Choose Image File
+                          <input
+                            type="file"
+                            accept="image/*"
+                            onChange={handleGalleryImageFileChange}
+                            className="hidden"
+                          />
+                        </label>
+                        <span className="text-xs text-slate-400 font-light truncate max-w-[260px]">
+                          {newGalleryImage.url && newGalleryImage.url.startsWith('data:image') 
+                            ? '✓ Image loaded from local computer' 
+                            : 'No file selected (Supports JPEG, PNG, WEBP)'}
+                        </span>
+                      </div>
+                    </div>
+                  ) : (
+                    <input 
+                      type="url" 
+                      placeholder="e.g. https://images.unsplash.com/photo-..." 
+                      value={newGalleryImage.url.startsWith('data:image') ? '' : newGalleryImage.url}
+                      onChange={e => setNewGalleryImage({...newGalleryImage, url: e.target.value})}
+                      required
+                      className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 focus:border-[#652d90] rounded-xl text-xs sm:text-sm font-light focus:outline-none transition-all duration-300"
+                    />
+                  )}
+                </div>
+
+                {/* Image Preview Box */}
+                <div className="flex flex-col gap-1">
+                  <label className="text-xs font-bold text-slate-600 uppercase tracking-wider pl-0.5">Image Preview</label>
+                  <div className="w-full h-40 bg-slate-50 border-2 border-dashed border-slate-200 rounded-2xl overflow-hidden flex items-center justify-center relative shadow-inner">
+                    {newGalleryImage.url && (newGalleryImage.url.startsWith('http') || newGalleryImage.url.startsWith('data:image')) ? (
+                      <img 
+                        src={newGalleryImage.url} 
+                        alt="Preview" 
+                        className="w-full h-full object-cover"
+                        onError={(e) => {
+                          (e.target as HTMLImageElement).style.display = 'none';
+                          const fallbackNode = e.currentTarget.parentElement?.querySelector('.preview-error');
+                          if (fallbackNode) (fallbackNode as HTMLElement).style.display = 'flex';
+                        }}
+                        onLoad={(e) => {
+                          (e.target as HTMLImageElement).style.display = 'block';
+                          const fallbackNode = e.currentTarget.parentElement?.querySelector('.preview-error');
+                          if (fallbackNode) (fallbackNode as HTMLElement).style.display = 'none';
+                        }}
+                      />
+                    ) : null}
+                    
+                    {/* Placeholder when URL/File is empty */}
+                    {(!newGalleryImage.url || (!newGalleryImage.url.startsWith('http') && !newGalleryImage.url.startsWith('data:image'))) && (
+                      <div className="flex flex-col items-center justify-center text-slate-400 gap-1.5 p-4 text-center">
+                        <svg className="w-8 h-8 text-slate-300 animate-pulse" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                        </svg>
+                        <span className="text-[11px] font-semibold uppercase tracking-wider text-slate-400/80">No image loaded</span>
+                        <span className="text-[10px] text-slate-400 font-light">
+                          {imageInputMode === 'upload' ? 'Upload an image from your computer to preview it here' : 'Paste a valid image URL link above to preview'}
+                        </span>
+                      </div>
+                    )}
+                    
+                    {/* Error display if load fails */}
+                    <div className="preview-error hidden absolute inset-0 bg-rose-50/90 flex flex-col items-center justify-center text-center p-4 text-rose-600 gap-1">
+                      <svg className="w-7 h-7 text-rose-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                      </svg>
+                      <span className="text-[11px] font-bold uppercase tracking-wider">Invalid Image Source</span>
+                      <span className="text-[10px] text-rose-500 font-light">Unable to load or render the image provided</span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Buttons */}
+                <div className="flex gap-3 justify-end mt-2">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setShowGalleryModal(false);
+                      setEditingGalleryId(null);
+                      setNewGalleryImage({ url: '', category: 'classroom', caption: '' });
+                    }}
+                    className="px-5 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-600 rounded-xl text-xs sm:text-sm font-bold transition-all cursor-pointer"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={isSubmitting}
+                    className="px-6 py-2.5 bg-[#652d90] hover:bg-[#4b1f6b] disabled:bg-slate-300 text-white rounded-xl text-xs sm:text-sm font-bold shadow-md transition-all cursor-pointer flex items-center gap-1.5"
+                  >
+                    {isSubmitting ? (
+                      <>
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                        Saving...
+                      </>
+                    ) : (
+                      editingGalleryId ? 'Save Changes' : 'Upload Photo'
                     )}
                   </button>
                 </div>
