@@ -15,7 +15,20 @@ import {
   AlertCircle, 
   ExternalLink,
   Wrench,
-  Image as ImageIcon
+  Folder,
+  Image as ImageIcon,
+  LayoutDashboard,
+  Menu,
+  Users,
+  Award,
+  Sparkles,
+  Clock,
+  Shield,
+  BookOpen,
+  HelpCircle,
+  Activity,
+  FileText,
+  BarChart3
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
@@ -37,16 +50,20 @@ import {
   createGalleryImage,
   updateGalleryImage,
   deleteGalleryImage,
+  getGalleryCategories,
+  createGalleryCategory,
+  deleteGalleryCategory,
   type Notice,
   type CalendarEvent,
   type ContactMessage,
   type Service,
-  type GalleryImage
+  type GalleryImage,
+  type GalleryCategory
 } from '../api';
 
 export const AdminDashboard: React.FC = () => {
   const navigate = useNavigate();
-  const [activeTab, setActiveTab] = useState<'notices' | 'calendar' | 'inbox' | 'services' | 'gallery'>('notices');
+  const [activeTab, setActiveTab] = useState<'overview' | 'notices' | 'calendar' | 'inbox' | 'services' | 'gallery'>('overview');
   const [adminUser, setAdminUser] = useState('Admin');
   
   // Data States
@@ -55,6 +72,7 @@ export const AdminDashboard: React.FC = () => {
   const [messages, setMessages] = useState<ContactMessage[]>([]);
   const [services, setServices] = useState<Service[]>([]);
   const [galleryImages, setGalleryImages] = useState<GalleryImage[]>([]);
+  const [galleryCategories, setGalleryCategories] = useState<GalleryCategory[]>([]);
   
   // UX States
   const [loading, setLoading] = useState(true);
@@ -71,7 +89,9 @@ export const AdminDashboard: React.FC = () => {
   const [editingServiceId, setEditingServiceId] = useState<string | null>(null);
   const [editingGalleryId, setEditingGalleryId] = useState<string | null>(null);
   const [showGalleryModal, setShowGalleryModal] = useState(false);
+  const [showCategoryModal, setShowCategoryModal] = useState(false);
   const [imageInputMode, setImageInputMode] = useState<'upload' | 'url'>('upload');
+  const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
 
   // New Form Data states
   const [newNotice, setNewNotice] = useState({
@@ -98,9 +118,12 @@ export const AdminDashboard: React.FC = () => {
 
   const [newGalleryImage, setNewGalleryImage] = useState({
     url: '',
-    category: 'classroom' as 'classroom' | 'activities' | 'events',
+    category: '',
     caption: ''
   });
+
+  const [newCategoryName, setNewCategoryName] = useState('');
+  const [newCategoryId, setNewCategoryId] = useState('');
 
   // Verify authentication on mount
   useEffect(() => {
@@ -118,18 +141,20 @@ export const AdminDashboard: React.FC = () => {
     try {
       setLoading(true);
       setError(null);
-      const [nList, eList, mList, sList, gList] = await Promise.all([
+      const [nList, eList, mList, sList, gList, gcList] = await Promise.all([
         getNotices(),
         getCalendarEvents(),
         getContactMessages(),
         getServices(),
-        getGalleryImages()
+        getGalleryImages(),
+        getGalleryCategories()
       ]);
       setNotices(nList);
       setEvents(eList);
       setMessages(mList);
       setServices(sList);
       setGalleryImages(gList);
+      setGalleryCategories(gcList);
     } catch (err: any) {
       console.error('Error fetching admin data:', err);
       setError('Could not load data. Ensure the database server is running.');
@@ -453,144 +478,579 @@ export const AdminDashboard: React.FC = () => {
     }
   };
 
+  const handleCreateCategorySubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newCategoryName.trim()) return;
+
+    const categoryId = newCategoryId.trim() 
+      ? newCategoryId.trim().toLowerCase().replace(/[^a-z0-9-]/g, '')
+      : newCategoryName.trim().toLowerCase().replace(/[^a-z0-9-]/g, '-').replace(/-+/g, '-');
+
+    if (!categoryId) {
+      alert('Invalid Category ID.');
+      return;
+    }
+
+    try {
+      setIsSubmitting(true);
+      const created = await createGalleryCategory({ categoryId, name: newCategoryName });
+      setGalleryCategories([...galleryCategories, created]);
+      setNewCategoryName('');
+      setNewCategoryId('');
+      setShowCategoryModal(false);
+      triggerSuccess('New gallery category added successfully!');
+    } catch (err: any) {
+      console.error(err);
+      alert(err.message || 'Error saving category.');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleDeleteCategory = async (cat: GalleryCategory) => {
+    if (['classroom', 'activities', 'events'].includes(cat.categoryId)) {
+      alert('Default categories cannot be deleted.');
+      return;
+    }
+    if (!window.confirm(`Are you sure you want to delete category "${cat.name}"? Gallery images using this category will remain, but the category filter will be removed.`)) return;
+
+    try {
+      await deleteGalleryCategory(cat.id);
+      setGalleryCategories(galleryCategories.filter(item => item.id !== cat.id));
+      triggerSuccess('Gallery category deleted.');
+    } catch (err) {
+      console.error(err);
+      alert('Error deleting category.');
+    }
+  };
+
   return (
-    <div className="min-h-screen bg-slate-50 flex flex-col font-sans text-slate-800">
+    <div className="min-h-screen bg-slate-50 flex font-sans text-slate-800 relative overflow-hidden">
       
-      {/* 1. Header */}
-      <header className="bg-white border-b border-slate-200 sticky top-0 z-40 px-6 py-4 shadow-sm flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <div className="h-10 w-10 bg-[#652d90] rounded-xl flex items-center justify-center text-white font-black text-lg shadow-md shadow-purple-600/10">
-            D
+      {/* Mobile Sidebar backdrop */}
+      {isMobileSidebarOpen && (
+        <div 
+          onClick={() => setIsMobileSidebarOpen(false)}
+          className="fixed inset-0 bg-black/60 backdrop-blur-sm z-40 lg:hidden cursor-pointer"
+        />
+      )}
+
+      {/* Left Sidebar */}
+      <aside className={`fixed inset-y-0 left-0 z-55 w-72 bg-slate-900 text-slate-300 transform ${isMobileSidebarOpen ? 'translate-x-0' : '-translate-x-full'} lg:translate-x-0 lg:static transition-transform duration-300 ease-in-out flex flex-col border-r border-slate-800 h-screen shrink-0`}>
+        {/* Sidebar Branding Header */}
+        <div className="p-6 border-b border-slate-800 flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="h-10 w-10 bg-[#8c52ff] rounded-xl flex items-center justify-center text-white font-black text-lg shadow-lg shadow-purple-900/50">
+              D
+            </div>
+            <div className="text-left">
+              <h1 className="text-sm font-black text-white tracking-tight leading-none">Dhungesanghu</h1>
+              <p className="text-[10px] text-purple-400 font-bold uppercase tracking-wider mt-1">Admin Panel</p>
+            </div>
           </div>
+          <button 
+            onClick={() => setIsMobileSidebarOpen(false)}
+            className="lg:hidden p-1.5 hover:bg-slate-800 rounded-lg text-slate-400 cursor-pointer"
+          >
+            <X className="h-5 w-5" />
+          </button>
+        </div>
+
+        {/* Sidebar Nav Items */}
+        <div className="flex-1 overflow-y-auto py-6 px-4 space-y-7 scrollbar-thin">
           <div>
-            <h1 className="text-md sm:text-lg font-black text-slate-800 tracking-tight leading-none">Dhungesanghu School</h1>
-            <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider mt-1">Management Portal</p>
+            <h3 className="px-3 text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-3 text-left">Core Modules</h3>
+            <nav className="space-y-1">
+              <button
+                onClick={() => { setActiveTab('overview'); setIsMobileSidebarOpen(false); }}
+                className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl font-bold text-xs sm:text-sm transition-all cursor-pointer text-left ${
+                  activeTab === 'overview'
+                    ? 'bg-[#652d90] text-white shadow-md shadow-purple-900/30'
+                    : 'hover:bg-slate-800 hover:text-white text-slate-400'
+                }`}
+              >
+                <LayoutDashboard className="h-4.5 w-4.5" />
+                Overview
+              </button>
+              
+              <button
+                onClick={() => { setActiveTab('notices'); setIsMobileSidebarOpen(false); }}
+                className={`w-full flex items-center justify-between px-4 py-3 rounded-xl font-bold text-xs sm:text-sm transition-all cursor-pointer text-left ${
+                  activeTab === 'notices'
+                    ? 'bg-[#652d90] text-white shadow-md shadow-purple-900/30'
+                    : 'hover:bg-slate-800 hover:text-white text-slate-400'
+                }`}
+              >
+                <span className="flex items-center gap-3">
+                  <Megaphone className="h-4.5 w-4.5" />
+                  Notices Board
+                </span>
+                <span className="bg-slate-800 text-slate-300 text-[10px] font-extrabold px-2 py-0.5 rounded-full">
+                  {notices.length}
+                </span>
+              </button>
+
+              <button
+                onClick={() => { setActiveTab('calendar'); setIsMobileSidebarOpen(false); }}
+                className={`w-full flex items-center justify-between px-4 py-3 rounded-xl font-bold text-xs sm:text-sm transition-all cursor-pointer text-left ${
+                  activeTab === 'calendar'
+                    ? 'bg-[#652d90] text-white shadow-md shadow-purple-900/30'
+                    : 'hover:bg-slate-800 hover:text-white text-slate-400'
+                }`}
+              >
+                <span className="flex items-center gap-3">
+                  <Calendar className="h-4.5 w-4.5" />
+                  Calendar Events
+                </span>
+                <span className="bg-slate-800 text-slate-300 text-[10px] font-extrabold px-2 py-0.5 rounded-full">
+                  {events.length}
+                </span>
+              </button>
+
+              <button
+                onClick={() => { setActiveTab('services'); setIsMobileSidebarOpen(false); }}
+                className={`w-full flex items-center justify-between px-4 py-3 rounded-xl font-bold text-xs sm:text-sm transition-all cursor-pointer text-left ${
+                  activeTab === 'services'
+                    ? 'bg-[#652d90] text-white shadow-md shadow-purple-900/30'
+                    : 'hover:bg-slate-800 hover:text-white text-slate-400'
+                }`}
+              >
+                <span className="flex items-center gap-3">
+                  <Wrench className="h-4.5 w-4.5" />
+                  Services & Facilities
+                </span>
+                <span className="bg-slate-800 text-slate-300 text-[10px] font-extrabold px-2 py-0.5 rounded-full">
+                  {services.length}
+                </span>
+              </button>
+
+              <button
+                onClick={() => { setActiveTab('gallery'); setIsMobileSidebarOpen(false); }}
+                className={`w-full flex items-center justify-between px-4 py-3 rounded-xl font-bold text-xs sm:text-sm transition-all cursor-pointer text-left ${
+                  activeTab === 'gallery'
+                    ? 'bg-[#652d90] text-white shadow-md shadow-purple-900/30'
+                    : 'hover:bg-slate-800 hover:text-white text-slate-400'
+                }`}
+              >
+                <span className="flex items-center gap-3">
+                  <ImageIcon className="h-4.5 w-4.5" />
+                  Photo Gallery
+                </span>
+                <span className="bg-slate-800 text-slate-300 text-[10px] font-extrabold px-2 py-0.5 rounded-full">
+                  {galleryImages.length}
+                </span>
+              </button>
+
+              <button
+                onClick={() => { setActiveTab('inbox'); setIsMobileSidebarOpen(false); }}
+                className={`w-full flex items-center justify-between px-4 py-3 rounded-xl font-bold text-xs sm:text-sm transition-all cursor-pointer text-left ${
+                  activeTab === 'inbox'
+                    ? 'bg-[#652d90] text-white shadow-md shadow-purple-900/30'
+                    : 'hover:bg-slate-800 hover:text-white text-slate-400'
+                }`}
+              >
+                <span className="flex items-center gap-3">
+                  <Inbox className="h-4.5 w-4.5" />
+                  Inbox Inquiries
+                </span>
+                <span className="bg-rose-950 text-rose-300 text-[10px] font-extrabold px-2 py-0.5 rounded-full">
+                  {messages.length}
+                </span>
+              </button>
+            </nav>
+          </div>
+
+          <div>
+            <h3 className="px-3 text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-3 text-left">Other Modules Plan</h3>
+            <div className="space-y-1.5 text-left">
+              {[
+                { name: 'School Team & Officials', icon: Users, status: 'Active (Next)' },
+                { name: 'Home Hero Slides', icon: Sparkles, status: 'Planned' },
+                { name: 'Key Stats Counter', icon: BarChart3, status: 'Planned' },
+                { name: 'Parent Testimonials', icon: HelpCircle, status: 'Planned' },
+                { name: 'Principal\'s Quote', icon: User, status: 'Planned' },
+                { name: 'Alumni Success Network', icon: Award, status: 'Planned' },
+                { name: 'Milestones Timeline', icon: Clock, status: 'Planned' },
+                { name: 'School Rules & Policies', icon: Shield, status: 'Planned' },
+                { name: 'Academic Programs', icon: BookOpen, status: 'Planned' },
+                { name: 'Admission Journey Steps', icon: FileText, status: 'Planned' },
+                { name: 'Admission FAQs', icon: HelpCircle, status: 'Planned' },
+                { name: 'Trivia Game Questions', icon: Activity, status: 'Planned' }
+              ].map((m, idx) => (
+                <div key={idx} className="flex items-center justify-between px-4 py-2 rounded-xl text-xs font-bold text-slate-500 bg-slate-800/20 border border-slate-800/10">
+                  <span className="flex items-center gap-3">
+                    <m.icon className="h-4.5 w-4.5 shrink-0 text-slate-600" />
+                    <span className="truncate max-w-[130px]">{m.name}</span>
+                  </span>
+                  <span className={`text-[8px] font-extrabold px-1.5 py-0.5 rounded shrink-0 ${m.status === 'Active (Next)' ? 'bg-purple-950 text-purple-300' : 'bg-slate-800 text-slate-500'}`}>
+                    {m.status}
+                  </span>
+                </div>
+              ))}
+            </div>
           </div>
         </div>
 
-        <div className="flex items-center gap-4">
-          <div className="hidden sm:flex items-center gap-2 px-3 py-1.5 bg-slate-100 rounded-lg text-xs font-semibold text-slate-600 select-none">
-            <User className="h-4 w-4 text-[#652d90]" />
-            Logged in as: <span className="text-[#652d90] font-black">{adminUser}</span>
+        {/* Sidebar Bottom Profile */}
+        <div className="p-6 border-t border-slate-800 bg-slate-950 flex flex-col gap-4 text-left">
+          <div className="flex items-center gap-3">
+            <div className="h-9 w-9 rounded-full bg-slate-800 flex items-center justify-center text-slate-300 border border-slate-700 font-extrabold">
+              {adminUser[0]?.toUpperCase() || 'A'}
+            </div>
+            <div className="truncate text-left">
+              <p className="text-xs font-bold text-white leading-none">{adminUser}</p>
+              <p className="text-[10px] text-slate-500 mt-1 font-mono">Dhungesanghu Admin</p>
+            </div>
           </div>
-
-          <button
-            onClick={() => navigate('/')}
-            className="flex items-center gap-1.5 text-xs text-[#652d90] hover:underline font-bold"
-          >
-            Go to Site <ExternalLink className="h-3 w-3" />
-          </button>
-
           <button
             onClick={handleLogout}
-            className="flex items-center gap-2 px-4 py-2 bg-rose-50 text-rose-600 hover:bg-rose-100 rounded-xl text-xs font-bold transition-all border border-rose-200/40 active:scale-95 cursor-pointer"
+            className="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-rose-950/40 text-rose-400 hover:bg-rose-950/60 rounded-xl text-xs font-bold transition-all border border-rose-900/30 active:scale-95 cursor-pointer"
           >
             <LogOut className="h-4 w-4" />
-            Logout
+            Log Out Session
           </button>
         </div>
-      </header>
+      </aside>
 
-      {/* Main Panel Content */}
-      <div className="flex-1 max-w-7xl w-full mx-auto p-6 flex flex-col gap-6">
-
-        {/* Success / Error Banners */}
-        <AnimatePresence>
-          {successMsg && (
-            <motion.div 
-              initial={{ opacity: 0, y: -10 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -10 }}
-              className="flex items-center gap-3 bg-emerald-50 border border-emerald-200 text-emerald-800 p-4.5 rounded-2xl shadow-sm text-sm"
+      {/* Main Workspace Right */}
+      <div className="flex-1 flex flex-col min-w-0 h-screen overflow-hidden">
+        
+        {/* Header */}
+        <header className="bg-white border-b border-slate-200 px-6 py-4 shadow-sm flex items-center justify-between shrink-0">
+          <div className="flex items-center gap-3">
+            <button 
+              onClick={() => setIsMobileSidebarOpen(true)}
+              className="lg:hidden p-2 hover:bg-slate-100 rounded-lg text-slate-600 cursor-pointer"
             >
-              <CheckCircle className="h-5 w-5 text-emerald-600 shrink-0" />
-              <span className="font-medium">{successMsg}</span>
-            </motion.div>
-          )}
-
-          {error && (
-            <motion.div 
-              initial={{ opacity: 0, y: -10 }}
-              animate={{ opacity: 1, y: 0 }}
-              className="flex items-center gap-3 bg-rose-50 border border-rose-200 text-rose-800 p-4.5 rounded-2xl shadow-sm text-sm"
-            >
-              <AlertCircle className="h-5 w-5 text-rose-600 shrink-0" />
-              <span className="font-medium">{error}</span>
-            </motion.div>
-          )}
-        </AnimatePresence>
-
-        {/* Tab Controls */}
-        <div className="flex flex-wrap gap-2.5 border-b border-slate-200 pb-3">
-          <button
-            onClick={() => setActiveTab('notices')}
-            className={`px-5 py-3 rounded-xl font-bold text-xs sm:text-sm flex items-center gap-2.5 transition-all cursor-pointer ${
-              activeTab === 'notices'
-                ? 'bg-[#652d90] text-white shadow-sm'
-                : 'bg-white border border-slate-200 text-slate-600 hover:bg-slate-50'
-            }`}
-          >
-            <Megaphone className="h-4 w-4" />
-            Notices Manager ({notices.length})
-          </button>
-
-          <button
-            onClick={() => setActiveTab('calendar')}
-            className={`px-5 py-3 rounded-xl font-bold text-xs sm:text-sm flex items-center gap-2.5 transition-all cursor-pointer ${
-              activeTab === 'calendar'
-                ? 'bg-[#652d90] text-white shadow-sm'
-                : 'bg-white border border-slate-200 text-slate-600 hover:bg-slate-50'
-            }`}
-          >
-            <Calendar className="h-4 w-4" />
-            Calendar Events ({events.length})
-          </button>
-
-          <button
-            onClick={() => setActiveTab('services')}
-            className={`px-5 py-3 rounded-xl font-bold text-xs sm:text-sm flex items-center gap-2.5 transition-all cursor-pointer ${
-              activeTab === 'services'
-                ? 'bg-[#652d90] text-white shadow-sm'
-                : 'bg-white border border-slate-200 text-slate-600 hover:bg-slate-50'
-            }`}
-          >
-            <Wrench className="h-4 w-4" />
-            Services Manager ({services.length})
-          </button>
-
-          <button
-            onClick={() => setActiveTab('inbox')}
-            className={`px-5 py-3 rounded-xl font-bold text-xs sm:text-sm flex items-center gap-2.5 transition-all cursor-pointer ${
-              activeTab === 'inbox'
-                ? 'bg-[#652d90] text-white shadow-sm'
-                : 'bg-white border border-slate-200 text-slate-600 hover:bg-slate-50'
-            }`}
-          >
-            <Inbox className="h-4 w-4" />
-            Inbox Inquiries ({messages.length})
-          </button>
-
-          <button
-            onClick={() => setActiveTab('gallery')}
-            className={`px-5 py-3 rounded-xl font-bold text-xs sm:text-sm flex items-center gap-2.5 transition-all cursor-pointer ${
-              activeTab === 'gallery'
-                ? 'bg-[#652d90] text-white shadow-sm'
-                : 'bg-white border border-slate-200 text-slate-600 hover:bg-slate-50'
-            }`}
-          >
-            <ImageIcon className="h-4 w-4" />
-            Gallery Manager ({galleryImages.length})
-          </button>
-        </div>
-
-        {/* Main Content Area */}
-        {loading ? (
-          <div className="flex-1 flex flex-col items-center justify-center py-32 gap-3 bg-white rounded-3xl border border-slate-200 shadow-sm">
-            <Loader2 className="h-10 w-10 text-[#652d90] animate-spin" />
-            <p className="text-slate-500 font-light text-sm">Syncing admin dashboard databases...</p>
+              <Menu className="h-5.5 w-5.5" />
+            </button>
+            
+            <div className="text-left">
+              <h1 className="text-md sm:text-lg font-black text-slate-800 tracking-tight leading-none uppercase">
+                {activeTab === 'overview' ? 'Dashboard Overview' : `${activeTab} manager`}
+              </h1>
+              <div className="text-[10px] text-slate-400 font-bold uppercase tracking-wider mt-1.5 flex items-center gap-1.5">
+                <span>Portal</span>
+                <span>/</span>
+                <span className="text-[#652d90] font-black">{activeTab}</span>
+              </div>
+            </div>
           </div>
-        ) : (
-          <div className="flex-1 flex flex-col gap-6">
+
+          <div className="flex items-center gap-4 text-left">
+            <button
+              onClick={() => navigate('/')}
+              className="hidden sm:flex items-center gap-1.5 text-xs text-[#652d90] hover:underline font-bold px-3 py-1.5 hover:bg-purple-50 rounded-lg transition-all"
+            >
+              Go to Site <ExternalLink className="h-3 w-3" />
+            </button>
+          </div>
+        </header>
+
+        {/* Content area scrollable */}
+        <main className="flex-1 p-6 overflow-y-auto">
+          
+          {/* Success / Error Banners */}
+          <AnimatePresence>
+            {successMsg && (
+              <motion.div 
+                initial={{ opacity: 0, y: -10 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -10 }}
+                className="flex items-center gap-3 bg-emerald-50 border border-emerald-200 text-emerald-800 p-4.5 rounded-2xl shadow-sm text-sm mb-6 text-left"
+              >
+                <CheckCircle className="h-5 w-5 text-emerald-600 shrink-0" />
+                <span className="font-medium">{successMsg}</span>
+              </motion.div>
+            )}
+
+            {error && (
+              <motion.div 
+                initial={{ opacity: 0, y: -10 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="flex items-center gap-3 bg-rose-50 border border-rose-200 text-rose-800 p-4.5 rounded-2xl shadow-sm text-sm mb-6 text-left"
+              >
+                <AlertCircle className="h-5 w-5 text-rose-600 shrink-0" />
+                <span className="font-medium">{error}</span>
+              </motion.div>
+            )}
+          </AnimatePresence>
+
+          {loading ? (
+            <div className="flex-1 flex flex-col items-center justify-center py-32 gap-3 bg-white rounded-3xl border border-slate-200 shadow-sm">
+              <Loader2 className="h-10 w-10 text-[#652d90] animate-spin" />
+              <p className="text-slate-500 font-light text-sm">Syncing admin dashboard databases...</p>
+            </div>
+          ) : (
+            <div className="flex-1 flex flex-col gap-6">
+
+              {/* TAB 0: OVERVIEW/DASHBOARD VIEW */}
+              {activeTab === 'overview' && (
+                <div className="flex flex-col gap-6">
+                  
+                  {/* Stats Grid */}
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
+                    {/* Card 1 */}
+                    <div className="bg-white border border-slate-200/80 rounded-2xl p-5 shadow-sm text-left flex items-center gap-4 hover:shadow-md transition-all">
+                      <div className="h-12 w-12 bg-purple-50 text-[#652d90] rounded-xl flex items-center justify-center shrink-0">
+                        <Megaphone className="h-6 w-6" />
+                      </div>
+                      <div>
+                        <p className="text-[10px] uppercase font-bold text-slate-400 tracking-wider">Notices</p>
+                        <h4 className="text-2xl font-black text-slate-800 leading-none mt-1">{notices.length}</h4>
+                        <p className="text-[10px] text-slate-400 font-medium mt-1">Announcements</p>
+                      </div>
+                    </div>
+
+                    {/* Card 2 */}
+                    <div className="bg-white border border-slate-200/80 rounded-2xl p-5 shadow-sm text-left flex items-center gap-4 hover:shadow-md transition-all">
+                      <div className="h-12 w-12 bg-blue-50 text-blue-600 rounded-xl flex items-center justify-center shrink-0">
+                        <Calendar className="h-6 w-6" />
+                      </div>
+                      <div>
+                        <p className="text-[10px] uppercase font-bold text-slate-400 tracking-wider">Events</p>
+                        <h4 className="text-2xl font-black text-slate-800 leading-none mt-1">{events.length}</h4>
+                        <p className="text-[10px] text-slate-400 font-medium mt-1">Baishakh-Baishakh</p>
+                      </div>
+                    </div>
+
+                    {/* Card 3 */}
+                    <div className="bg-white border border-slate-200/80 rounded-2xl p-5 shadow-sm text-left flex items-center gap-4 hover:shadow-md transition-all">
+                      <div className="h-12 w-12 bg-teal-50 text-teal-600 rounded-xl flex items-center justify-center shrink-0">
+                        <Wrench className="h-6 w-6" />
+                      </div>
+                      <div>
+                        <p className="text-[10px] uppercase font-bold text-slate-400 tracking-wider">Services</p>
+                        <h4 className="text-2xl font-black text-slate-800 leading-none mt-1">{services.length}</h4>
+                        <p className="text-[10px] text-slate-400 font-medium mt-1">Offered Facilities</p>
+                      </div>
+                    </div>
+
+                    {/* Card 4 */}
+                    <div className="bg-white border border-slate-200/80 rounded-2xl p-5 shadow-sm text-left flex items-center gap-4 hover:shadow-md transition-all">
+                      <div className="h-12 w-12 bg-rose-50 text-rose-600 rounded-xl flex items-center justify-center shrink-0">
+                        <Inbox className="h-6 w-6" />
+                      </div>
+                      <div>
+                        <p className="text-[10px] uppercase font-bold text-slate-400 tracking-wider">Inbox</p>
+                        <h4 className="text-2xl font-black text-slate-800 leading-none mt-1">{messages.length}</h4>
+                        <p className="text-[10px] text-rose-500 font-bold mt-1">Pending Inquiries</p>
+                      </div>
+                    </div>
+
+                    {/* Card 5 */}
+                    <div className="bg-white border border-slate-200/80 rounded-2xl p-5 shadow-sm text-left flex items-center gap-4 hover:shadow-md transition-all">
+                      <div className="h-12 w-12 bg-amber-50 text-amber-600 rounded-xl flex items-center justify-center shrink-0">
+                        <ImageIcon className="h-6 w-6" />
+                      </div>
+                      <div>
+                        <p className="text-[10px] uppercase font-bold text-slate-400 tracking-wider">Gallery</p>
+                        <h4 className="text-2xl font-black text-slate-800 leading-none mt-1">{galleryImages.length}</h4>
+                        <p className="text-[10px] text-slate-400 font-medium mt-1">{galleryCategories.length} Categories</p>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Analytical Charts */}
+                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    {/* Chart Card 1 */}
+                    <div className="bg-white border border-slate-200/80 rounded-3xl p-6 shadow-sm text-left">
+                      <div className="mb-4">
+                        <h3 className="text-sm font-black text-slate-800 uppercase tracking-wider">System Database Volumes</h3>
+                        <p className="text-slate-400 text-xs font-light">Distribution of different components across databases</p>
+                      </div>
+                      <div className="h-64 flex flex-col justify-center items-center">
+                        {/* Responsive SVG Chart */}
+                        <svg viewBox="0 0 400 200" className="w-full h-full max-h-[180px]">
+                          {/* Define gradients for dynamic styling */}
+                          <defs>
+                            <linearGradient id="purpleGrad" x1="0" y1="0" x2="1" y2="0">
+                              <stop offset="0%" stopColor="#8c52ff" />
+                              <stop offset="100%" stopColor="#652d90" />
+                            </linearGradient>
+                            <linearGradient id="blueGrad" x1="0" y1="0" x2="1" y2="0">
+                              <stop offset="0%" stopColor="#3b82f6" />
+                              <stop offset="100%" stopColor="#1d4ed8" />
+                            </linearGradient>
+                            <linearGradient id="tealGrad" x1="0" y1="0" x2="1" y2="0">
+                              <stop offset="0%" stopColor="#0d9488" />
+                              <stop offset="100%" stopColor="#0f766e" />
+                            </linearGradient>
+                            <linearGradient id="roseGrad" x1="0" y1="0" x2="1" y2="0">
+                              <stop offset="0%" stopColor="#f43f5e" />
+                              <stop offset="100%" stopColor="#be123c" />
+                            </linearGradient>
+                            <linearGradient id="amberGrad" x1="0" y1="0" x2="1" y2="0">
+                              <stop offset="0%" stopColor="#f59e0b" />
+                              <stop offset="100%" stopColor="#b45309" />
+                            </linearGradient>
+                          </defs>
+
+                          {/* Chart Bars */}
+                          {(() => {
+                            const items = [
+                              { label: 'Notices', count: notices.length, grad: 'url(#purpleGrad)' },
+                              { label: 'Events', count: events.length, grad: 'url(#blueGrad)' },
+                              { label: 'Services', count: services.length, grad: 'url(#tealGrad)' },
+                              { label: 'Inbox', count: messages.length, grad: 'url(#roseGrad)' },
+                              { label: 'Gallery', count: galleryImages.length, grad: 'url(#amberGrad)' }
+                            ];
+                            const maxCount = Math.max(...items.map(i => i.count), 5);
+                            return items.map((item, idx) => {
+                              const barWidth = (item.count / maxCount) * 250;
+                              const yPos = 20 + idx * 35;
+                              return (
+                                <g key={idx}>
+                                  <text x="10" y={yPos + 12} fill="#64748b" className="text-[10px] font-bold uppercase">{item.label}</text>
+                                  <rect x="90" y={yPos} width="250" height="18" rx="6" fill="#f1f5f9" />
+                                  <rect x="90" y={yPos} width={Math.max(barWidth, 8)} height="18" rx="6" fill={item.grad} />
+                                  <text x={100 + barWidth} y={yPos + 13} fill="#0f172a" className="text-[10px] font-extrabold">{item.count}</text>
+                                </g>
+                              );
+                            });
+                          })()}
+                        </svg>
+                      </div>
+                    </div>
+
+                    {/* Chart Card 2 */}
+                    <div className="bg-white border border-slate-200/80 rounded-3xl p-6 shadow-sm text-left">
+                      <div className="mb-4">
+                        <h3 className="text-sm font-black text-slate-800 uppercase tracking-wider">Notices Mix by Category</h3>
+                        <p className="text-slate-400 text-xs font-light">Count of announcements distributed across active labels</p>
+                      </div>
+                      <div className="h-64 flex flex-col justify-center items-center">
+                        <svg viewBox="0 0 400 200" className="w-full h-full max-h-[180px]">
+                          {(() => {
+                            const categoriesMap = notices.reduce((acc: any, cur) => {
+                              const cat = cur.category || 'admin';
+                              acc[cat] = (acc[cat] || 0) + 1;
+                              return acc;
+                            }, { academic: 0, sports: 0, exams: 0, events: 0, admin: 0 });
+
+                            const mix = [
+                              { name: 'Academic', val: categoriesMap.academic, color: '#8c52ff' },
+                              { name: 'Sports', val: categoriesMap.sports, color: '#3b82f6' },
+                              { name: 'Exams', val: categoriesMap.exams, color: '#f59e0b' },
+                              { name: 'Events', val: categoriesMap.events, color: '#10b981' },
+                              { name: 'Admin', val: categoriesMap.admin, color: '#64748b' }
+                            ];
+                            const maxVal = Math.max(...mix.map(m => m.val), 2);
+                            return (
+                              <g>
+                                {mix.map((item, idx) => {
+                                  const barHeight = (item.val / maxVal) * 120;
+                                  const xPos = 40 + idx * 75;
+                                  return (
+                                    <g key={idx}>
+                                      <text x={xPos + 18} y={150 - barHeight - 8} fill="#0f172a" textAnchor="middle" className="text-[10px] font-extrabold">{item.val}</text>
+                                      <rect x={xPos} y="30" width="36" height="120" rx="6" fill="#f8fafc" />
+                                      <rect x={xPos} y={150 - barHeight} width="36" height={Math.max(barHeight, 4)} rx="6" fill={item.color} />
+                                      <text x={xPos + 18} y="170" fill="#64748b" textAnchor="middle" className="text-[9px] font-bold uppercase tracking-wider">{item.name}</text>
+                                    </g>
+                                  );
+                                })}
+                                <line x1="20" y1="150" x2="380" y2="150" stroke="#cbd5e1" strokeWidth="1.5" />
+                              </g>
+                            );
+                          })()}
+                        </svg>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Grid 3: Quick Tasks & Recent Items */}
+                  <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                    
+                    {/* Left: Quick Actions */}
+                    <div className="bg-white border border-slate-200/80 rounded-3xl p-6 shadow-sm text-left flex flex-col justify-between">
+                      <div>
+                        <h3 className="text-sm font-black text-slate-800 uppercase tracking-wider mb-1">Quick Actions</h3>
+                        <p className="text-slate-400 text-xs font-light mb-5">Frequently performed admin duties in one place</p>
+                        
+                        <div className="grid grid-cols-1 gap-2.5">
+                          <button 
+                            onClick={() => { setActiveTab('notices'); setShowNoticeModal(true); }}
+                            className="w-full flex items-center gap-3 px-4 py-2.5 bg-purple-50 text-[#652d90] hover:bg-purple-100 rounded-xl text-xs font-bold transition-all border border-purple-200/20 text-left cursor-pointer"
+                          >
+                            <Megaphone className="h-4 w-4" /> Publish New Notice
+                          </button>
+                          <button 
+                            onClick={() => { setActiveTab('calendar'); setShowEventModal(true); }}
+                            className="w-full flex items-center gap-3 px-4 py-2.5 bg-blue-50 text-blue-600 hover:bg-blue-100 rounded-xl text-xs font-bold transition-all border border-blue-200/20 text-left cursor-pointer"
+                          >
+                            <Calendar className="h-4 w-4" /> Schedule Calendar Event
+                          </button>
+                          <button 
+                            onClick={() => { setActiveTab('gallery'); setShowGalleryModal(true); }}
+                            className="w-full flex items-center gap-3 px-4 py-2.5 bg-amber-50 text-amber-600 hover:bg-amber-100 rounded-xl text-xs font-bold transition-all border border-amber-200/20 text-left cursor-pointer"
+                          >
+                            <ImageIcon className="h-4 w-4" /> Upload Gallery Photo
+                          </button>
+                          <button 
+                            onClick={() => { setActiveTab('gallery'); setShowCategoryModal(true); }}
+                            className="w-full flex items-center gap-3 px-4 py-2.5 bg-teal-50 text-teal-600 hover:bg-teal-100 rounded-xl text-xs font-bold transition-all border border-teal-200/20 text-left cursor-pointer"
+                          >
+                            <Folder className="h-4 w-4" /> Manage Photo Categories
+                          </button>
+                        </div>
+                      </div>
+
+                      <div className="mt-6 pt-4 border-t border-slate-100">
+                        <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Environment Status</p>
+                        <div className="flex items-center gap-2 mt-2">
+                          <span className="h-2 w-2 bg-emerald-500 rounded-full animate-ping" />
+                          <span className="text-xs text-slate-600 font-semibold">Active Development Mode</span>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Right: Recent Inbox Messages */}
+                    <div className="bg-white border border-slate-200/80 rounded-3xl p-6 shadow-sm text-left lg:col-span-2">
+                      <div className="flex justify-between items-center mb-4">
+                        <div>
+                          <h3 className="text-sm font-black text-slate-800 uppercase tracking-wider">Recent Inbox Inquiries</h3>
+                          <p className="text-slate-400 text-xs font-light">Latest contact forms received from the website visitors</p>
+                        </div>
+                        <button 
+                          onClick={() => setActiveTab('inbox')}
+                          className="text-xs text-[#652d90] font-bold hover:underline cursor-pointer"
+                        >
+                          View All
+                        </button>
+                      </div>
+
+                      <div className="flex flex-col gap-3">
+                        {messages.length === 0 ? (
+                          <p className="text-slate-400 text-xs font-light text-center py-10">No inquiries in your inbox.</p>
+                        ) : (
+                          messages.slice(0, 3).map(msg => (
+                            <div 
+                              key={msg.id}
+                              className="bg-slate-50 border border-slate-100 rounded-xl p-4 flex flex-col sm:flex-row justify-between sm:items-center gap-3 hover:bg-slate-100/50 transition-all cursor-pointer"
+                              onClick={() => setActiveTab('inbox')}
+                            >
+                              <div className="text-left">
+                                <span className="text-[9px] font-bold text-rose-600 bg-rose-50 border border-rose-100 px-2 py-0.5 rounded-full">
+                                  {msg.subject || 'General Inquiry'}
+                                </span>
+                                <h4 className="text-xs sm:text-sm font-bold text-slate-700 mt-1.5">{msg.name}</h4>
+                                <p className="text-[11px] text-slate-400 font-light truncate max-w-sm sm:max-w-md mt-0.5">"{msg.message}"</p>
+                              </div>
+                              <div className="text-right shrink-0">
+                                <p className="text-[10px] text-slate-400 font-medium">{msg.email}</p>
+                                <p className="text-[9px] text-slate-400 font-bold mt-1 font-mono">{msg.phone || 'No Phone'}</p>
+                              </div>
+                            </div>
+                          ))
+                        )}
+                      </div>
+                    </div>
+
+                  </div>
+
+                </div>
+              )}
 
             {/* TAB 1: NOTICES VIEW */}
             {activeTab === 'notices' && (
@@ -878,23 +1338,32 @@ export const AdminDashboard: React.FC = () => {
             {/* TAB 5: GALLERY VIEW */}
             {activeTab === 'gallery' && (
               <div className="flex flex-col gap-6">
-                <div className="flex justify-between items-center bg-white p-5 rounded-3xl border border-slate-200 shadow-sm">
+                <div className="flex flex-col sm:flex-row gap-4 justify-between items-start sm:items-center bg-white p-5 rounded-3xl border border-slate-200 shadow-sm">
                   <div className="text-left">
                     <h2 className="text-lg font-black text-slate-800 font-serif">Photo Gallery Manager</h2>
-                    <p className="text-slate-400 text-xs sm:text-sm font-light mt-0.5">Manage live photos, activities, and sports events snapshots posted on the website.</p>
+                    <p className="text-slate-400 text-xs sm:text-sm font-light mt-0.5">Manage live photos, categories, and sports events snapshots posted on the website.</p>
                   </div>
-                  <button
-                    onClick={() => {
-                      setEditingGalleryId(null);
-                      setNewGalleryImage({ url: '', category: 'classroom', caption: '' });
-                      setImageInputMode('upload');
-                      setShowGalleryModal(true);
-                    }}
-                    className="flex items-center gap-2 px-5 py-3 bg-[#652d90] hover:bg-[#4b1f6b] text-white rounded-xl text-xs sm:text-sm font-bold shadow-md hover:shadow-lg transition-all active:scale-95 cursor-pointer shrink-0"
-                  >
-                    <Plus className="h-4.5 w-4.5" />
-                    New Photo
-                  </button>
+                  <div className="flex gap-2">
+                    <button
+                      onClick={() => setShowCategoryModal(true)}
+                      className="flex items-center gap-2 px-5 py-3 bg-purple-50 text-[#652d90] hover:bg-purple-100 rounded-xl text-xs sm:text-sm font-bold shadow-sm transition-all active:scale-95 cursor-pointer shrink-0 border border-purple-200/50"
+                    >
+                      <Folder className="h-4.5 w-4.5" />
+                      Manage Categories
+                    </button>
+                    <button
+                      onClick={() => {
+                        setEditingGalleryId(null);
+                        setNewGalleryImage({ url: '', category: galleryCategories[0]?.categoryId || 'classroom', caption: '' });
+                        setImageInputMode('upload');
+                        setShowGalleryModal(true);
+                      }}
+                      className="flex items-center gap-2 px-5 py-3 bg-[#652d90] hover:bg-[#4b1f6b] text-white rounded-xl text-xs sm:text-sm font-bold shadow-md hover:shadow-lg transition-all active:scale-95 cursor-pointer shrink-0"
+                    >
+                      <Plus className="h-4.5 w-4.5" />
+                      New Photo
+                    </button>
+                  </div>
                 </div>
 
                 {/* Gallery Grid */}
@@ -956,7 +1425,7 @@ export const AdminDashboard: React.FC = () => {
 
           </div>
         )}
-
+        </main>
       </div>
 
       {/* 2. NOTICE MODAL FORM */}
@@ -1436,7 +1905,7 @@ export const AdminDashboard: React.FC = () => {
                   onClick={() => {
                     setShowGalleryModal(false);
                     setEditingGalleryId(null);
-                    setNewGalleryImage({ url: '', category: 'classroom', caption: '' });
+                    setNewGalleryImage({ url: '', category: galleryCategories[0]?.categoryId || 'classroom', caption: '' });
                   }} 
                   className="p-1 hover:bg-slate-100 rounded-lg cursor-pointer"
                 >
@@ -1464,12 +1933,14 @@ export const AdminDashboard: React.FC = () => {
                   <label className="text-xs font-bold text-slate-600 uppercase tracking-wider pl-0.5">Photo Category</label>
                   <select
                     value={newGalleryImage.category}
-                    onChange={e => setNewGalleryImage({...newGalleryImage, category: e.target.value as any})}
+                    onChange={e => setNewGalleryImage({...newGalleryImage, category: e.target.value})}
                     className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 focus:border-[#652d90] rounded-xl text-xs sm:text-sm font-light focus:outline-none transition-all duration-300 cursor-pointer"
                   >
-                    <option value="classroom">Classroom & Study</option>
-                    <option value="activities">Student Activities</option>
-                    <option value="events">Events & Sports</option>
+                    {galleryCategories.map(cat => (
+                      <option key={cat.id} value={cat.categoryId}>
+                        {cat.name}
+                      </option>
+                    ))}
                   </select>
                 </div>
 
@@ -1613,6 +2084,132 @@ export const AdminDashboard: React.FC = () => {
                   </button>
                 </div>
 
+              </form>
+            </motion.div>
+          </div>
+        )}
+
+        {/* 6. MANAGE CATEGORIES MODAL */}
+        {showCategoryModal && (
+          <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex justify-center items-center p-4">
+            <motion.div 
+              initial={{ scale: 0.95, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.95, opacity: 0 }}
+              className="bg-white border border-slate-200 shadow-2xl rounded-3xl w-full max-w-lg p-6 sm:p-7 relative z-50 text-left flex flex-col gap-5"
+            >
+              <div className="flex justify-between items-center border-b border-slate-100 pb-3">
+                <h3 className="text-lg font-black text-slate-800 font-serif">Manage Photo Categories</h3>
+                <button 
+                  onClick={() => {
+                    setShowCategoryModal(false);
+                    setNewCategoryName('');
+                    setNewCategoryId('');
+                  }} 
+                  className="p-1 hover:bg-slate-100 rounded-lg cursor-pointer"
+                >
+                  <X className="h-5 w-5 text-slate-400" />
+                </button>
+              </div>
+
+              {/* Existing Categories List */}
+              <div className="flex flex-col gap-2 max-h-60 overflow-y-auto pr-1">
+                <label className="text-xs font-bold text-slate-600 uppercase tracking-wider pl-0.5">Existing Categories</label>
+                {galleryCategories.length === 0 ? (
+                  <p className="text-slate-400 text-xs font-light">No categories created yet.</p>
+                ) : (
+                  <div className="flex flex-col gap-2">
+                    {galleryCategories.map((cat) => {
+                      const isDefault = ['classroom', 'activities', 'events'].includes(cat.categoryId);
+                      return (
+                        <div 
+                          key={cat.id} 
+                          className="flex justify-between items-center bg-slate-50 border border-slate-100 px-4 py-2.5 rounded-xl hover:bg-slate-100/80 transition-all"
+                        >
+                          <div>
+                            <span className="text-xs sm:text-sm font-bold text-slate-700">{cat.name}</span>
+                            <span className="text-[10px] text-slate-400 bg-white border border-slate-200 px-2 py-0.5 rounded-md ml-2 font-mono">
+                              {cat.categoryId}
+                            </span>
+                          </div>
+                          {!isDefault ? (
+                            <button
+                              type="button"
+                              onClick={() => handleDeleteCategory(cat)}
+                              className="p-1.5 text-rose-600 hover:bg-rose-50 rounded-lg transition-colors cursor-pointer"
+                              title="Delete Category"
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </button>
+                          ) : (
+                            <span className="text-[9px] font-bold text-slate-400 uppercase tracking-wider">System Default</span>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+
+              {/* Add Category Form */}
+              <form onSubmit={handleCreateCategorySubmit} className="flex flex-col gap-4 border-t border-slate-100 pt-4">
+                <div className="text-left">
+                  <h4 className="text-xs font-black text-slate-800 uppercase tracking-wider pl-0.5">Add New Category</h4>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div className="flex flex-col gap-1">
+                    <label className="text-[10px] font-bold text-slate-600 uppercase tracking-wider pl-0.5">Category Name</label>
+                    <input 
+                      type="text" 
+                      placeholder="e.g. Sports Day" 
+                      value={newCategoryName}
+                      onChange={e => setNewCategoryName(e.target.value)}
+                      required
+                      className="w-full px-3 py-2 bg-slate-50 border border-slate-200 focus:border-[#652d90] rounded-xl text-xs font-light focus:outline-none"
+                    />
+                  </div>
+
+                  <div className="flex flex-col gap-1">
+                    <label className="text-[10px] font-bold text-slate-600 uppercase tracking-wider pl-0.5">Unique ID (Optional)</label>
+                    <input 
+                      type="text" 
+                      placeholder="e.g. sports-day (Auto generated if blank)" 
+                      value={newCategoryId}
+                      onChange={e => setNewCategoryId(e.target.value)}
+                      className="w-full px-3 py-2 bg-slate-50 border border-slate-200 focus:border-[#652d90] rounded-xl text-xs font-light focus:outline-none"
+                    />
+                  </div>
+                </div>
+
+                {/* Buttons */}
+                <div className="flex gap-3 justify-end mt-2">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setShowCategoryModal(false);
+                      setNewCategoryName('');
+                      setNewCategoryId('');
+                    }}
+                    className="px-5 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-600 rounded-xl text-xs font-bold transition-all cursor-pointer"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={isSubmitting || !newCategoryName.trim()}
+                    className="px-6 py-2.5 bg-[#652d90] hover:bg-[#4b1f6b] disabled:bg-slate-300 text-white rounded-xl text-xs font-bold shadow-md transition-all cursor-pointer flex items-center gap-1.5"
+                  >
+                    {isSubmitting ? (
+                      <>
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                        Adding...
+                      </>
+                    ) : (
+                      'Add Category'
+                    )}
+                  </button>
+                </div>
               </form>
             </motion.div>
           </div>

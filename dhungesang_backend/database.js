@@ -76,11 +76,19 @@ export const Service = mongoose.model('Service', ServiceSchema);
 // 6. Gallery Image Schema & Model
 const GalleryImageSchema = new mongoose.Schema({
   url: { type: String, required: true },
-  category: { type: String, required: true, enum: ['classroom', 'activities', 'events'] },
+  category: { type: String, required: true },
   caption: { type: String, required: true }
 });
 
 export const GalleryImage = mongoose.model('GalleryImage', GalleryImageSchema);
+
+// 6b. Gallery Category Schema & Model
+const GalleryCategorySchema = new mongoose.Schema({
+  categoryId: { type: String, required: true, unique: true },
+  name: { type: String, required: true }
+});
+
+export const GalleryCategory = mongoose.model('GalleryCategory', GalleryCategorySchema);
 
 // Initial Seeding Logic
 async function seedDatabase() {
@@ -279,6 +287,18 @@ async function seedDatabase() {
       ];
       await GalleryImage.insertMany(mockGallery);
       console.log('Seeded default gallery images to MongoDB Atlas.');
+    }
+
+    // Seed Gallery Categories
+    const categoryCount = await GalleryCategory.countDocuments();
+    if (categoryCount === 0) {
+      const mockCategories = [
+        { categoryId: 'classroom', name: 'Classroom & Study' },
+        { categoryId: 'activities', name: 'Student Activities' },
+        { categoryId: 'events', name: 'Events & Sports' }
+      ];
+      await GalleryCategory.insertMany(mockCategories);
+      console.log('Seeded default gallery categories to MongoDB Atlas.');
     }
   } catch (err) {
     console.error('Error seeding MongoDB Atlas:', err.message);

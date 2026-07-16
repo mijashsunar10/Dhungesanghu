@@ -307,3 +307,47 @@ export async function deleteGalleryImage(id: string): Promise<void> {
   }
 }
 
+export interface GalleryCategory {
+  id: string;
+  categoryId: string;
+  name: string;
+}
+
+export async function getGalleryCategories(): Promise<GalleryCategory[]> {
+  const res = await fetch(`${API_URL}/gallery-categories`);
+  if (!res.ok) {
+    throw new Error('Failed to fetch gallery categories');
+  }
+  const data = await res.json();
+  return data.map((item: any) => ({
+    ...item,
+    id: item._id || item.id
+  }));
+}
+
+export async function createGalleryCategory(cat: Omit<GalleryCategory, 'id'>): Promise<GalleryCategory> {
+  const res = await fetch(`${API_URL}/gallery-categories`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(cat),
+  });
+  if (!res.ok) {
+    const errorData = await res.json().catch(() => ({}));
+    throw new Error(errorData.error || 'Failed to create gallery category');
+  }
+  const data = await res.json();
+  return { ...data, id: data._id || data.id };
+}
+
+export async function deleteGalleryCategory(id: string): Promise<void> {
+  const res = await fetch(`${API_URL}/gallery-categories/${id}`, {
+    method: 'DELETE',
+  });
+  if (!res.ok) {
+    throw new Error('Failed to delete gallery category');
+  }
+}
+
+

@@ -3,7 +3,7 @@ import { NavLink } from 'react-router-dom';
 import { X, Folder, Image as ImageIcon, Loader2 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ImageWithFallback } from './ImageWithFallback';
-import { getGalleryImages, type GalleryImage } from '../api';
+import { getGalleryImages, getGalleryCategories, type GalleryImage, type GalleryCategory } from '../api';
 
 interface PhotoGallerySectionProps {
   limit?: number;
@@ -84,36 +84,47 @@ const staticFallbackImages: GalleryImage[] = [
   }
 ];
 
-const categories = [
-  { id: 'all', name: 'All Photos' },
-  { id: 'classroom', name: 'Classroom & Study' },
-  { id: 'activities', name: 'Student Activities' },
-  { id: 'events', name: 'Events & Sports' }
+const staticFallbackCategories: GalleryCategory[] = [
+  { id: 'c1', categoryId: 'classroom', name: 'Classroom & Study' },
+  { id: 'c2', categoryId: 'activities', name: 'Student Activities' },
+  { id: 'c3', categoryId: 'events', name: 'Events & Sports' }
 ];
 
 export const PhotoGallerySection: React.FC<PhotoGallerySectionProps> = ({ limit }) => {
   const [galleryImages, setGalleryImages] = useState<GalleryImage[]>([]);
+  const [galleryCategories, setGalleryCategories] = useState<GalleryCategory[]>([]);
   const [loading, setLoading] = useState(true);
   const [activeCategory, setActiveCategory] = useState('all');
   const [lightboxIndex, setLightboxIndex] = useState<number | null>(null);
 
   useEffect(() => {
-    async function fetchImages() {
+    async function fetchData() {
       try {
-        const data = await getGalleryImages();
-        if (data && data.length > 0) {
-          setGalleryImages(data);
+        const [imagesData, categoriesData] = await Promise.all([
+          getGalleryImages(),
+          getGalleryCategories()
+        ]);
+        
+        if (imagesData && imagesData.length > 0) {
+          setGalleryImages(imagesData);
         } else {
           setGalleryImages(staticFallbackImages);
         }
+
+        if (categoriesData && categoriesData.length > 0) {
+          setGalleryCategories(categoriesData);
+        } else {
+          setGalleryCategories(staticFallbackCategories);
+        }
       } catch (err) {
-        console.error('Failed to fetch gallery images, using fallback', err);
+        console.error('Failed to fetch gallery data, using fallbacks', err);
         setGalleryImages(staticFallbackImages);
+        setGalleryCategories(staticFallbackCategories);
       } finally {
         setLoading(false);
       }
     }
-    fetchImages();
+    fetchData();
   }, []);
 
   // Filter images based on active tab
@@ -176,17 +187,28 @@ export const PhotoGallerySection: React.FC<PhotoGallerySectionProps> = ({ limit 
         {/* PROPER ALBUM FOLDERS */}
         {!limit && (
           <div className="flex flex-wrap justify-center gap-3 sm:gap-4 my-2">
-            {categories.map(cat => (
+            <button
+              onClick={() => setActiveCategory('all')}
+              className={`flex items-center gap-2 px-5 py-2.5 rounded-full text-sm font-bold shadow-sm transition-all active:scale-95 cursor-pointer ${
+                activeCategory === 'all'
+                  ? 'bg-[#652d90] text-white'
+                  : 'bg-[#652d90]/5 text-[#652d90] hover:bg-[#652d90]/10'
+              }`}
+            >
+              <ImageIcon className="w-4.5 h-4.5" />
+              All Photos
+            </button>
+            {galleryCategories.map(cat => (
               <button
                 key={cat.id}
-                onClick={() => setActiveCategory(cat.id)}
+                onClick={() => setActiveCategory(cat.categoryId)}
                 className={`flex items-center gap-2 px-5 py-2.5 rounded-full text-sm font-bold shadow-sm transition-all active:scale-95 cursor-pointer ${
-                  activeCategory === cat.id
+                  activeCategory === cat.categoryId
                     ? 'bg-[#652d90] text-white'
                     : 'bg-[#652d90]/5 text-[#652d90] hover:bg-[#652d90]/10'
                 }`}
               >
-                {cat.id === 'all' ? <ImageIcon className="w-4.5 h-4.5" /> : <Folder className="w-4.5 h-4.5" />}
+                <Folder className="w-4.5 h-4.5" />
                 {cat.name}
               </button>
             ))}
@@ -295,7 +317,7 @@ export const PhotoGallerySection: React.FC<PhotoGallerySectionProps> = ({ limit 
                 {galleryImages[lightboxIndex].caption}
               </p>
               <span className="inline-block text-xs font-bold text-[#ffdd57] uppercase tracking-wider mt-2">
-                Category: {galleryImages[lightboxIndex].category}
+                Category: {galleryCategories.find(c => c.categoryId === galleryImages[lightboxIndex].category)?.name || galleryImages[lightboxIndex].category}
               </span>
             </motion.div>
 

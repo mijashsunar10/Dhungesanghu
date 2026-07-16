@@ -2,7 +2,7 @@ import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
 import './database.js'; // Imports connection & seeds database
-import { Notice, CalendarEvent, ContactMessage, Admin, Service, GalleryImage } from './database.js';
+import { Notice, CalendarEvent, ContactMessage, Admin, Service, GalleryImage, GalleryCategory } from './database.js';
 
 dotenv.config();
 
@@ -331,6 +331,56 @@ app.delete('/api/gallery/:id', async (req, res) => {
   } catch (err) {
     console.error('Error deleting gallery image:', err.message);
     res.status(500).json({ error: 'Database error deleting gallery image' });
+  }
+});
+
+// 7e. Get All Gallery Categories
+app.get('/api/gallery-categories', async (req, res) => {
+  try {
+    const categories = await GalleryCategory.find();
+    res.json(categories);
+  } catch (err) {
+    console.error('Error fetching gallery categories:', err.message);
+    res.status(500).json({ error: 'Database error fetching gallery categories' });
+  }
+});
+
+// 7f. Post a Gallery Category
+app.post('/api/gallery-categories', async (req, res) => {
+  const { categoryId, name } = req.body;
+
+  if (!categoryId || !name) {
+    return res.status(400).json({ error: 'Please provide categoryId and name.' });
+  }
+
+  const normalizedId = categoryId.toLowerCase().replace(/[^a-z0-9-]/g, '');
+
+  try {
+    const existing = await GalleryCategory.findOne({ categoryId: normalizedId });
+    if (existing) {
+      return res.status(400).json({ error: 'Category ID already exists.' });
+    }
+
+    const newCategory = new GalleryCategory({ categoryId: normalizedId, name });
+    const saved = await newCategory.save();
+    res.status(201).json(saved);
+  } catch (err) {
+    console.error('Error saving gallery category:', err.message);
+    res.status(500).json({ error: 'Database error saving gallery category' });
+  }
+});
+
+// 7g. Delete a Gallery Category
+app.delete('/api/gallery-categories/:id', async (req, res) => {
+  try {
+    const deleted = await GalleryCategory.findByIdAndDelete(req.params.id);
+    if (!deleted) {
+      return res.status(404).json({ error: 'Gallery category not found.' });
+    }
+    res.json({ success: true, message: 'Gallery category deleted successfully' });
+  } catch (err) {
+    console.error('Error deleting gallery category:', err.message);
+    res.status(500).json({ error: 'Database error deleting gallery category' });
   }
 });
 
