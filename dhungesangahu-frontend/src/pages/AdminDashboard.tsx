@@ -137,6 +137,15 @@ export const AdminDashboard: React.FC = () => {
     }
   }, [navigate]);
 
+  const scrollContainerRef = React.useRef<HTMLElement>(null);
+
+  // Reset scroll position to top when active tab changes
+  useEffect(() => {
+    if (scrollContainerRef.current) {
+      scrollContainerRef.current.scrollTop = 0;
+    }
+  }, [activeTab]);
+
   const loadAllData = async () => {
     try {
       setLoading(true);
@@ -748,7 +757,7 @@ export const AdminDashboard: React.FC = () => {
         </header>
 
         {/* Content area scrollable */}
-        <main className="flex-1 p-6 overflow-y-auto">
+        <main ref={scrollContainerRef} className="flex-1 p-6 overflow-y-auto">
           
           {/* Success / Error Banners */}
           <AnimatePresence>
