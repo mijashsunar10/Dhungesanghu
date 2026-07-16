@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { NavLink } from 'react-router-dom';
 import { School } from 'lucide-react';
+import { getTestimonials, type Testimonial } from '../api';
 import { ImageWithFallback } from '../components/ImageWithFallback';
 import { MissionVisionGoals } from '../components/MissionVisionGoals';
 import { RulesSection } from '../components/RulesSection';
@@ -36,12 +37,26 @@ const staggerContainer: Variants = {
 
 export const Home: React.FC = () => {
   const [currentSlide, setCurrentSlide] = useState(0);
+  const [testimonials, setTestimonials] = useState<Testimonial[]>([]);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const timer = setInterval(() => {
       setCurrentSlide((prev) => (prev + 1) % slides.length);
     }, 5000);
     return () => clearInterval(timer);
+  }, []);
+
+  useEffect(() => {
+    getTestimonials()
+      .then(data => {
+        setTestimonials(data);
+        setLoading(false);
+      })
+      .catch(err => {
+        console.error('Failed to load testimonials:', err);
+        setLoading(false);
+      });
   }, []);
 
   return (
@@ -370,70 +385,41 @@ export const Home: React.FC = () => {
             What Parents Say About Us
           </h2>
 
-          <motion.div 
-            initial="hidden"
-            whileInView="visible"
-            viewport={{ once: true, amount: 0.15 }}
-            variants={staggerContainer}
-            className="grid grid-cols-1 md:grid-cols-3 gap-8 w-full"
-          >
+          {loading ? (
+            <div className="py-10 text-slate-400 text-sm font-light">Loading parent testimonials...</div>
+          ) : testimonials.length === 0 ? (
+            <div className="py-10 text-slate-400 text-sm font-light">No testimonials available at this time.</div>
+          ) : (
             <motion.div 
-              variants={fadeInUp}
-              className="bg-white p-8 rounded-3xl border border-slate-200/60 shadow-sm flex flex-col justify-between text-left relative transition-all duration-300 hover:-translate-y-1.5 hover:shadow-lg"
+              initial="hidden"
+              whileInView="visible"
+              viewport={{ once: true, amount: 0.15 }}
+              variants={staggerContainer}
+              className="grid grid-cols-1 md:grid-cols-3 gap-8 w-full"
             >
-              <div className="text-4xl text-purple-200 font-serif absolute top-6 right-8">“</div>
-              <p className="text-slate-600 font-light text-sm sm:text-base leading-relaxed mb-6 italic z-10">
-                "Dhungesanghu has provided a fantastic environment for my son. The teachers are very attentive, and the focus on moral values and discipline has helped him grow into a responsible student."
-              </p>
-              <div className="flex items-center gap-3">
-                <div className="w-11 h-11 rounded-full bg-purple-100 flex items-center justify-center font-bold text-[#652d90]">
-                  KP
-                </div>
-                <div>
-                  <h4 className="font-bold text-slate-800 text-sm">Kiran Parajuli</h4>
-                  <span className="text-xs text-slate-400">Parent of Grade 8 Student</span>
-                </div>
-              </div>
+              {testimonials.map((t) => (
+                <motion.div 
+                  key={t.id}
+                  variants={fadeInUp}
+                  className="bg-white p-8 rounded-3xl border border-slate-200/60 shadow-sm flex flex-col justify-between text-left relative transition-all duration-300 hover:-translate-y-1.5 hover:shadow-lg"
+                >
+                  <div className="text-4xl text-purple-200 font-serif absolute top-6 right-8">“</div>
+                  <p className="text-slate-600 font-light text-sm sm:text-base leading-relaxed mb-6 italic z-10">
+                    "{t.quote}"
+                  </p>
+                  <div className="flex items-center gap-3">
+                    <div className="w-11 h-11 rounded-full bg-purple-100 flex items-center justify-center font-bold text-[#652d90] uppercase">
+                      {t.parentName.slice(0, 2)}
+                    </div>
+                    <div>
+                      <h4 className="font-bold text-slate-800 text-sm">{t.parentName}</h4>
+                      <span className="text-xs text-slate-400">{t.parentRelation}</span>
+                    </div>
+                  </div>
+                </motion.div>
+              ))}
             </motion.div>
-
-            <motion.div 
-              variants={fadeInUp}
-              className="bg-white p-8 rounded-3xl border border-slate-200/60 shadow-sm flex flex-col justify-between text-left relative transition-all duration-300 hover:-translate-y-1.5 hover:shadow-lg"
-            >
-              <div className="text-4xl text-purple-200 font-serif absolute top-6 right-8">“</div>
-              <p className="text-slate-600 font-light text-sm sm:text-base leading-relaxed mb-6 italic z-10">
-                "We are highly impressed with the digital communication system. We receive homework, bulletins, and exams updates on the school app. The educational quality is excellent."
-              </p>
-              <div className="flex items-center gap-3">
-                <div className="w-11 h-11 rounded-full bg-purple-100 flex items-center justify-center font-bold text-[#652d90]">
-                  SG
-                </div>
-                <div>
-                  <h4 className="font-bold text-slate-800 text-sm">Sita Gurung</h4>
-                  <span className="text-xs text-slate-400">Parent of Grade 3 Student</span>
-                </div>
-              </div>
-            </motion.div>
-
-            <motion.div 
-              variants={fadeInUp}
-              className="bg-white p-8 rounded-3xl border border-slate-200/60 shadow-sm flex flex-col justify-between text-left relative transition-all duration-300 hover:-translate-y-1.5 hover:shadow-lg"
-            >
-              <div className="text-4xl text-purple-200 font-serif absolute top-6 right-8">“</div>
-              <p className="text-slate-600 font-light text-sm sm:text-base leading-relaxed mb-6 italic z-10">
-                "The sports and extracurricular activities are wonderful. My daughter participates in debate and drawing classes, which has boosted her self-confidence immensely."
-              </p>
-              <div className="flex items-center gap-3">
-                <div className="w-11 h-11 rounded-full bg-purple-100 flex items-center justify-center font-bold text-[#652d90]">
-                  RB
-                </div>
-                <div>
-                  <h4 className="font-bold text-slate-800 text-sm">Ramesh Baral</h4>
-                  <span className="text-xs text-slate-400">Parent of Grade 10 Student</span>
-                </div>
-              </div>
-            </motion.div>
-          </motion.div>
+          )}
         </div>
       </section>
 

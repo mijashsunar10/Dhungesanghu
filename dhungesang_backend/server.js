@@ -2,7 +2,7 @@ import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
 import './database.js'; // Imports connection & seeds database
-import { Notice, CalendarEvent, ContactMessage, Admin, Service, GalleryImage, GalleryCategory } from './database.js';
+import { Notice, CalendarEvent, ContactMessage, Admin, Service, GalleryImage, GalleryCategory, Testimonial } from './database.js';
 
 dotenv.config();
 
@@ -381,6 +381,78 @@ app.delete('/api/gallery-categories/:id', async (req, res) => {
   } catch (err) {
     console.error('Error deleting gallery category:', err.message);
     res.status(500).json({ error: 'Database error deleting gallery category' });
+  }
+});
+
+// --- TESTIMONIALS ENDPOINTS ---
+app.get('/api/testimonials', async (req, res) => {
+  try {
+    const list = await Testimonial.find();
+    res.json(list.map(t => ({
+      id: t._id,
+      quote: t.quote,
+      parentName: t.parentName,
+      parentRelation: t.parentRelation
+    })));
+  } catch (err) {
+    console.error('Error fetching testimonials:', err.message);
+    res.status(500).json({ error: 'Database error fetching testimonials' });
+  }
+});
+
+app.post('/api/testimonials', async (req, res) => {
+  const { quote, parentName, parentRelation } = req.body;
+  if (!quote || !parentName || !parentRelation) {
+    return res.status(400).json({ error: 'Quote, parentName, and parentRelation are required.' });
+  }
+  try {
+    const fresh = new Testimonial({ quote, parentName, parentRelation });
+    const saved = await fresh.save();
+    res.status(201).json({
+      id: saved._id,
+      quote: saved.quote,
+      parentName: saved.parentName,
+      parentRelation: saved.parentRelation
+    });
+  } catch (err) {
+    console.error('Error creating testimonial:', err.message);
+    res.status(500).json({ error: 'Database error creating testimonial' });
+  }
+});
+
+app.put('/api/testimonials/:id', async (req, res) => {
+  const { quote, parentName, parentRelation } = req.body;
+  try {
+    const updated = await Testimonial.findByIdAndUpdate(
+      req.params.id,
+      { quote, parentName, parentRelation },
+      { new: true }
+    );
+    if (!updated) {
+      return res.status(404).json({ error: 'Testimonial not found.' });
+    }
+    res.json({
+      id: updated._id,
+      quote: updated.quote,
+      parentName: updated.parentName,
+      parentRelation: updated.parentRelation
+    });
+  } catch (err) {
+    console.error('Error updating testimonial:', err.message);
+    res.status(500).json({ error: 'Database error updating testimonial' });
+  }
+});
+
+app.delete('/api/testimonials/:id', async (req, res) => {
+  try {
+    const deleted = await Testimonial.findByIdAndDelete(req.params.id);
+    if (!deleted) {
+      return res.status(404).json({ error: 'Testimonial not found.' });
+    }
+    res.json({ success: true, message: 'Testimonial deleted successfully' });
+  } catch (err) {
+    console.error('Error deleting testimonial:', err.message);
+    res.status(500).json({ error: 'Database error deleting testimonial' });
   }
 });
 

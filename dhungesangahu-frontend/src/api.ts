@@ -350,4 +350,63 @@ export async function deleteGalleryCategory(id: string): Promise<void> {
   }
 }
 
+export interface Testimonial {
+  id: string;
+  quote: string;
+  parentName: string;
+  parentRelation: string;
+}
+
+export async function getTestimonials(): Promise<Testimonial[]> {
+  const res = await fetch(`${API_URL}/testimonials`);
+  if (!res.ok) {
+    throw new Error('Failed to fetch testimonials');
+  }
+  const data = await res.json();
+  return data.map((item: any) => ({
+    ...item,
+    id: item._id || item.id
+  }));
+}
+
+export async function createTestimonial(t: Omit<Testimonial, 'id'>): Promise<Testimonial> {
+  const res = await fetch(`${API_URL}/testimonials`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(t),
+  });
+  if (!res.ok) {
+    throw new Error('Failed to create testimonial');
+  }
+  const data = await res.json();
+  return { ...data, id: data._id || data.id };
+}
+
+export async function updateTestimonial(id: string, t: Omit<Testimonial, 'id'>): Promise<Testimonial> {
+  const res = await fetch(`${API_URL}/testimonials/${id}`, {
+    method: 'PUT',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(t),
+  });
+  if (!res.ok) {
+    throw new Error('Failed to update testimonial');
+  }
+  const data = await res.json();
+  return { ...data, id: data._id || data.id };
+}
+
+export async function deleteTestimonial(id: string): Promise<void> {
+  const res = await fetch(`${API_URL}/testimonials/${id}`, {
+    method: 'DELETE',
+  });
+  if (!res.ok) {
+    throw new Error('Failed to delete testimonial');
+  }
+}
+
+
 

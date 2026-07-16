@@ -53,17 +53,22 @@ import {
   getGalleryCategories,
   createGalleryCategory,
   deleteGalleryCategory,
+  getTestimonials,
+  createTestimonial,
+  updateTestimonial,
+  deleteTestimonial,
   type Notice,
   type CalendarEvent,
   type ContactMessage,
   type Service,
   type GalleryImage,
-  type GalleryCategory
+  type GalleryCategory,
+  type Testimonial
 } from '../api';
 
 export const AdminDashboard: React.FC = () => {
   const navigate = useNavigate();
-  const [activeTab, setActiveTab] = useState<'overview' | 'notices' | 'calendar' | 'inbox' | 'services' | 'gallery'>('overview');
+  const [activeTab, setActiveTab] = useState<'overview' | 'notices' | 'calendar' | 'inbox' | 'services' | 'gallery' | 'testimonials'>('overview');
   const [adminUser, setAdminUser] = useState('Admin');
   
   // Data States
@@ -73,6 +78,7 @@ export const AdminDashboard: React.FC = () => {
   const [services, setServices] = useState<Service[]>([]);
   const [galleryImages, setGalleryImages] = useState<GalleryImage[]>([]);
   const [galleryCategories, setGalleryCategories] = useState<GalleryCategory[]>([]);
+  const [testimonials, setTestimonials] = useState<Testimonial[]>([]);
   
   // UX States
   const [loading, setLoading] = useState(true);
@@ -92,6 +98,15 @@ export const AdminDashboard: React.FC = () => {
   const [showCategoryModal, setShowCategoryModal] = useState(false);
   const [imageInputMode, setImageInputMode] = useState<'upload' | 'url'>('upload');
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
+  
+  // Testimonials Modals & States
+  const [showTestimonialModal, setShowTestimonialModal] = useState(false);
+  const [editingTestimonialId, setEditingTestimonialId] = useState<string | null>(null);
+  const [newTestimonial, setNewTestimonial] = useState({
+    quote: '',
+    parentName: '',
+    parentRelation: ''
+  });
 
   // New Form Data states
   const [newNotice, setNewNotice] = useState({
@@ -150,13 +165,14 @@ export const AdminDashboard: React.FC = () => {
     try {
       setLoading(true);
       setError(null);
-      const [nList, eList, mList, sList, gList, gcList] = await Promise.all([
+      const [nList, eList, mList, sList, gList, gcList, tList] = await Promise.all([
         getNotices(),
         getCalendarEvents(),
         getContactMessages(),
         getServices(),
         getGalleryImages(),
-        getGalleryCategories()
+        getGalleryCategories(),
+        getTestimonials()
       ]);
       setNotices(nList);
       setEvents(eList);
@@ -164,6 +180,7 @@ export const AdminDashboard: React.FC = () => {
       setServices(sList);
       setGalleryImages(gList);
       setGalleryCategories(gcList);
+      setTestimonials(tList);
     } catch (err: any) {
       console.error('Error fetching admin data:', err);
       setError('Could not load data. Ensure the database server is running.');
@@ -533,6 +550,57 @@ export const AdminDashboard: React.FC = () => {
     }
   };
 
+  const handleCreateTestimonialSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newTestimonial.quote.trim() || !newTestimonial.parentName.trim() || !newTestimonial.parentRelation.trim()) {
+      alert('All fields are required.');
+      return;
+    }
+
+    try {
+      setIsSubmitting(true);
+      if (editingTestimonialId) {
+        const updated = await updateTestimonial(editingTestimonialId, newTestimonial);
+        setTestimonials(testimonials.map(item => item.id === editingTestimonialId ? updated : item));
+        triggerSuccess('Testimonial updated successfully.');
+      } else {
+        const created = await createTestimonial(newTestimonial);
+        setTestimonials([...testimonials, created]);
+        triggerSuccess('New parent testimonial added successfully.');
+      }
+      setShowTestimonialModal(false);
+      setEditingTestimonialId(null);
+      setNewTestimonial({ quote: '', parentName: '', parentRelation: '' });
+    } catch (err: any) {
+      console.error(err);
+      alert('Error saving testimonial.');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleEditTestimonial = (t: Testimonial) => {
+    setEditingTestimonialId(t.id);
+    setNewTestimonial({
+      quote: t.quote,
+      parentName: t.parentName,
+      parentRelation: t.parentRelation
+    });
+    setShowTestimonialModal(true);
+  };
+
+  const handleDeleteTestimonial = async (id: string) => {
+    if (!window.confirm('Are you sure you want to delete this testimonial?')) return;
+    try {
+      await deleteTestimonial(id);
+      setTestimonials(testimonials.filter(item => item.id !== id));
+      triggerSuccess('Testimonial removed successfully.');
+    } catch (err) {
+      console.error(err);
+      alert('Error deleting testimonial.');
+    }
+  };
+
   return (
     <div className="min-h-screen bg-slate-50 flex font-sans text-slate-800 relative overflow-hidden">
       
@@ -666,6 +734,23 @@ export const AdminDashboard: React.FC = () => {
                   {messages.length}
                 </span>
               </button>
+
+              <button
+                onClick={() => { setActiveTab('testimonials'); setIsMobileSidebarOpen(false); }}
+                className={`w-full flex items-center justify-between px-4 py-3 rounded-xl font-bold text-xs sm:text-sm transition-all cursor-pointer text-left ${
+                  activeTab === 'testimonials'
+                    ? 'bg-[#652d90] text-white shadow-md shadow-purple-900/30'
+                    : 'hover:bg-slate-800 hover:text-white text-slate-400'
+                }`}
+              >
+                <span className="flex items-center gap-3">
+                  <HelpCircle className="h-4.5 w-4.5" />
+                  Parent Testimonials
+                </span>
+                <span className="bg-slate-800 text-slate-300 text-[10px] font-extrabold px-2 py-0.5 rounded-full">
+                  {testimonials.length}
+                </span>
+              </button>
             </nav>
           </div>
 
@@ -676,7 +761,6 @@ export const AdminDashboard: React.FC = () => {
                 { name: 'School Team & Officials', icon: Users, status: 'Active (Next)' },
                 { name: 'Home Hero Slides', icon: Sparkles, status: 'Planned' },
                 { name: 'Key Stats Counter', icon: BarChart3, status: 'Planned' },
-                { name: 'Parent Testimonials', icon: HelpCircle, status: 'Planned' },
                 { name: 'Principal\'s Quote', icon: User, status: 'Planned' },
                 { name: 'Alumni Success Network', icon: Award, status: 'Planned' },
                 { name: 'Milestones Timeline', icon: Clock, status: 'Planned' },
@@ -798,7 +882,7 @@ export const AdminDashboard: React.FC = () => {
                 <div className="flex flex-col gap-6">
                   
                   {/* Stats Grid */}
-                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-4">
                     {/* Card 1 */}
                     <div className="bg-white border border-slate-200/80 rounded-2xl p-5 shadow-sm text-left flex items-center gap-4 hover:shadow-md transition-all">
                       <div className="h-12 w-12 bg-purple-50 text-[#652d90] rounded-xl flex items-center justify-center shrink-0">
@@ -858,6 +942,21 @@ export const AdminDashboard: React.FC = () => {
                         <p className="text-[10px] text-slate-400 font-medium mt-1">{galleryCategories.length} Categories</p>
                       </div>
                     </div>
+
+                    {/* Card 6 */}
+                    <div 
+                      onClick={() => setActiveTab('testimonials')}
+                      className="bg-white border border-slate-200/80 rounded-2xl p-5 shadow-sm text-left flex items-center gap-4 hover:shadow-md transition-all cursor-pointer"
+                    >
+                      <div className="h-12 w-12 bg-indigo-50 text-indigo-600 rounded-xl flex items-center justify-center shrink-0">
+                        <HelpCircle className="h-6 w-6" />
+                      </div>
+                      <div>
+                        <p className="text-[10px] uppercase font-bold text-slate-400 tracking-wider">Reviews</p>
+                        <h4 className="text-2xl font-black text-slate-800 leading-none mt-1">{testimonials.length}</h4>
+                        <p className="text-[10px] text-slate-400 font-medium mt-1">Parent Feedback</p>
+                      </div>
+                    </div>
                   </div>
 
                   {/* Analytical Charts */}
@@ -870,7 +969,7 @@ export const AdminDashboard: React.FC = () => {
                       </div>
                       <div className="h-64 flex flex-col justify-center items-center">
                         {/* Responsive SVG Chart */}
-                        <svg viewBox="0 0 400 200" className="w-full h-full max-h-[180px]">
+                        <svg viewBox="0 0 400 240" className="w-full h-full max-h-[220px]">
                           {/* Define gradients for dynamic styling */}
                           <defs>
                             <linearGradient id="purpleGrad" x1="0" y1="0" x2="1" y2="0">
@@ -893,6 +992,10 @@ export const AdminDashboard: React.FC = () => {
                               <stop offset="0%" stopColor="#f59e0b" />
                               <stop offset="100%" stopColor="#b45309" />
                             </linearGradient>
+                            <linearGradient id="indigoGrad" x1="0" y1="0" x2="1" y2="0">
+                              <stop offset="0%" stopColor="#6366f1" />
+                              <stop offset="100%" stopColor="#4338ca" />
+                            </linearGradient>
                           </defs>
 
                           {/* Chart Bars */}
@@ -902,12 +1005,13 @@ export const AdminDashboard: React.FC = () => {
                               { label: 'Events', count: events.length, grad: 'url(#blueGrad)' },
                               { label: 'Services', count: services.length, grad: 'url(#tealGrad)' },
                               { label: 'Inbox', count: messages.length, grad: 'url(#roseGrad)' },
-                              { label: 'Gallery', count: galleryImages.length, grad: 'url(#amberGrad)' }
+                              { label: 'Gallery', count: galleryImages.length, grad: 'url(#amberGrad)' },
+                              { label: 'Reviews', count: testimonials.length, grad: 'url(#indigoGrad)' }
                             ];
                             const maxCount = Math.max(...items.map(i => i.count), 5);
                             return items.map((item, idx) => {
                               const barWidth = (item.count / maxCount) * 250;
-                              const yPos = 20 + idx * 35;
+                              const yPos = 15 + idx * 35;
                               return (
                                 <g key={idx}>
                                   <text x="10" y={yPos + 12} fill="#64748b" className="text-[10px] font-bold uppercase">{item.label}</text>
@@ -1001,6 +1105,12 @@ export const AdminDashboard: React.FC = () => {
                             className="w-full flex items-center gap-3 px-4 py-2.5 bg-teal-50 text-teal-600 hover:bg-teal-100 rounded-xl text-xs font-bold transition-all border border-teal-200/20 text-left cursor-pointer"
                           >
                             <Folder className="h-4 w-4" /> Manage Photo Categories
+                          </button>
+                          <button 
+                            onClick={() => { setActiveTab('testimonials'); setShowTestimonialModal(true); }}
+                            className="w-full flex items-center gap-3 px-4 py-2.5 bg-indigo-50 text-indigo-600 hover:bg-indigo-100 rounded-xl text-xs font-bold transition-all border border-indigo-200/20 text-left cursor-pointer"
+                          >
+                            <HelpCircle className="h-4 w-4" /> Add Parent Testimonial
                           </button>
                         </div>
                       </div>
@@ -1429,6 +1539,84 @@ export const AdminDashboard: React.FC = () => {
                     ))
                   )}
                 </div>
+              </div>
+            )}
+
+            {/* TAB 7: TESTIMONIALS MANAGER VIEW */}
+            {activeTab === 'testimonials' && (
+              <div className="flex flex-col gap-6">
+                
+                {/* Header Actions */}
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between bg-white border border-slate-200/80 rounded-3xl p-6 gap-4 shadow-sm text-left">
+                  <div>
+                    <h2 className="text-xl font-black text-slate-800 font-serif">Parent Testimonials</h2>
+                    <p className="text-slate-400 text-xs font-light">Publish, update, and manage verified feedback comments from students guardians</p>
+                  </div>
+                  <button 
+                    onClick={() => {
+                      setEditingTestimonialId(null);
+                      setNewTestimonial({ quote: '', parentName: '', parentRelation: '' });
+                      setShowTestimonialModal(true);
+                    }}
+                    className="px-5 py-2.5 bg-[#652d90] hover:bg-[#4b1f6b] text-white rounded-xl text-xs font-bold transition-all shadow-md active:scale-95 flex items-center gap-1.5 self-start sm:self-auto cursor-pointer"
+                  >
+                    <Plus className="h-4.5 w-4.5" /> New Testimonial
+                  </button>
+                </div>
+
+                {/* Testimonials Card Grid */}
+                {testimonials.length === 0 ? (
+                  <div className="bg-white border border-slate-200/80 rounded-3xl p-16 text-center shadow-sm">
+                    <HelpCircle className="h-12 w-12 text-slate-300 mx-auto mb-3 animate-pulse" />
+                    <h3 className="text-slate-700 font-bold text-sm">No testimonials published</h3>
+                    <p className="text-slate-400 text-xs font-light mt-1 max-w-sm mx-auto">Add parent testimonials to showcase verified feedback on the home page testimonials section.</p>
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    {testimonials.map((t) => (
+                      <div 
+                        key={t.id} 
+                        className="bg-white border border-slate-200/80 rounded-3xl p-6 shadow-sm flex flex-col justify-between text-left hover:shadow-md transition-all duration-300 relative group"
+                      >
+                        {/* Quote decoration */}
+                        <div className="text-4xl text-purple-100 font-serif absolute top-4 right-6 pointer-events-none group-hover:text-purple-200 transition-colors">“</div>
+                        
+                        <div className="flex-1 flex flex-col justify-between gap-6 z-10">
+                          <p className="text-slate-600 font-light text-xs sm:text-sm leading-relaxed italic">
+                            "{t.quote}"
+                          </p>
+                          
+                          <div className="flex items-center gap-3 border-t border-slate-50 pt-4">
+                            <div className="w-9 h-9 rounded-full bg-purple-50 flex items-center justify-center font-bold text-xs text-[#652d90] uppercase">
+                              {t.parentName.slice(0, 2)}
+                            </div>
+                            <div className="truncate">
+                              <h4 className="font-bold text-slate-800 text-xs sm:text-sm truncate">{t.parentName}</h4>
+                              <span className="text-[10px] text-slate-400 font-light block truncate">{t.parentRelation}</span>
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Edit / Delete overlay/actions */}
+                        <div className="flex gap-2 justify-end mt-4 pt-3 border-t border-slate-100/60 z-15">
+                          <button
+                            onClick={() => handleEditTestimonial(t)}
+                            className="px-2.5 py-1.5 bg-purple-50 hover:bg-purple-100 text-[#652d90] rounded-lg text-[11px] font-bold transition-all border border-purple-200/20 cursor-pointer flex items-center gap-1"
+                          >
+                            <Edit className="h-3.5 w-3.5" /> Edit
+                          </button>
+                          <button
+                            onClick={() => handleDeleteTestimonial(t.id)}
+                            className="px-2.5 py-1.5 bg-rose-50 hover:bg-rose-100 text-rose-600 rounded-lg text-[11px] font-bold transition-all border border-rose-200/20 cursor-pointer flex items-center gap-1"
+                          >
+                            <Trash2 className="h-3.5 w-3.5" /> Delete
+                          </button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+
               </div>
             )}
 
@@ -2219,6 +2407,104 @@ export const AdminDashboard: React.FC = () => {
                     )}
                   </button>
                 </div>
+              </form>
+            </motion.div>
+          </div>
+        )}
+
+        {/* 7. TESTIMONIAL MODAL FORM */}
+        {showTestimonialModal && (
+          <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex justify-center items-center p-4">
+            <motion.div 
+              initial={{ scale: 0.95, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.95, opacity: 0 }}
+              className="bg-white border border-slate-200 shadow-2xl rounded-3xl w-full max-w-lg p-6 sm:p-7 relative z-50 text-left"
+            >
+              <div className="flex justify-between items-center border-b border-slate-100 pb-3 mb-5">
+                <h3 className="text-lg font-black text-slate-800 font-serif">{editingTestimonialId ? 'Edit Parent Testimonial' : 'Add Parent Testimonial'}</h3>
+                <button 
+                  onClick={() => {
+                    setShowTestimonialModal(false);
+                    setEditingTestimonialId(null);
+                    setNewTestimonial({ quote: '', parentName: '', parentRelation: '' });
+                  }} 
+                  className="p-1 hover:bg-slate-100 rounded-lg cursor-pointer"
+                >
+                  <X className="h-5 w-5 text-slate-400" />
+                </button>
+              </div>
+
+              <form onSubmit={handleCreateTestimonialSubmit} className="flex flex-col gap-4">
+                
+                {/* Parent Name */}
+                <div className="flex flex-col gap-1">
+                  <label className="text-xs font-bold text-slate-600 uppercase tracking-wider pl-0.5">Parent Name</label>
+                  <input 
+                    type="text" 
+                    placeholder="e.g. Kiran Parajuli" 
+                    value={newTestimonial.parentName}
+                    onChange={e => setNewTestimonial({...newTestimonial, parentName: e.target.value})}
+                    required
+                    className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 focus:border-[#652d90] rounded-xl text-xs sm:text-sm font-light focus:outline-none transition-all duration-300"
+                  />
+                </div>
+
+                {/* Parent Relation / Info */}
+                <div className="flex flex-col gap-1">
+                  <label className="text-xs font-bold text-slate-600 uppercase tracking-wider pl-0.5">Parent Relation / Designation</label>
+                  <input 
+                    type="text" 
+                    placeholder="e.g. Parent of Grade 8 Student" 
+                    value={newTestimonial.parentRelation}
+                    onChange={e => setNewTestimonial({...newTestimonial, parentRelation: e.target.value})}
+                    required
+                    className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 focus:border-[#652d90] rounded-xl text-xs sm:text-sm font-light focus:outline-none transition-all duration-300"
+                  />
+                </div>
+
+                {/* Quote Text */}
+                <div className="flex flex-col gap-1">
+                  <label className="text-xs font-bold text-slate-600 uppercase tracking-wider pl-0.5">Testimonial Quote</label>
+                  <textarea 
+                    rows={4} 
+                    placeholder="Type the parent's feedback comment here..." 
+                    value={newTestimonial.quote}
+                    onChange={e => setNewTestimonial({...newTestimonial, quote: e.target.value})}
+                    required
+                    className="w-full px-4 py-3 bg-slate-50 border border-slate-200 focus:border-[#652d90] rounded-xl text-xs sm:text-sm font-light resize-none focus:outline-none transition-all duration-300"
+                  />
+                </div>
+
+                {/* Buttons */}
+                <div className="flex gap-3 justify-end mt-2">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setShowTestimonialModal(false);
+                      setEditingTestimonialId(null);
+                      setNewTestimonial({ quote: '', parentName: '', parentRelation: '' });
+                    }}
+                    className="px-5 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-600 rounded-xl text-xs sm:text-sm font-bold transition-all cursor-pointer"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={isSubmitting}
+                    className="px-6 py-2.5 bg-[#652d90] hover:bg-[#4b1f6b] disabled:bg-slate-300 text-white rounded-xl text-xs sm:text-sm font-bold shadow-md transition-all cursor-pointer flex items-center gap-1.5"
+                  >
+                    {isSubmitting ? (
+                      <>
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                        Saving...
+                      </>
+                    ) : (
+                      editingTestimonialId ? 'Save Changes' : 'Add Testimonial'
+                    )}
+                  </button>
+                </div>
+
               </form>
             </motion.div>
           </div>

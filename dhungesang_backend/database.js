@@ -90,6 +90,15 @@ const GalleryCategorySchema = new mongoose.Schema({
 
 export const GalleryCategory = mongoose.model('GalleryCategory', GalleryCategorySchema);
 
+// 7. Testimonial Schema & Model
+const TestimonialSchema = new mongoose.Schema({
+  quote: { type: String, required: true },
+  parentName: { type: String, required: true },
+  parentRelation: { type: String, required: true }
+});
+
+export const Testimonial = mongoose.model('Testimonial', TestimonialSchema);
+
 // Initial Seeding Logic
 async function seedDatabase() {
   try {
@@ -299,6 +308,28 @@ async function seedDatabase() {
       ];
       await GalleryCategory.insertMany(mockCategories);
       console.log('Seeded default gallery categories to MongoDB Atlas.');
+    // Seed Testimonials
+    const testimonialCount = await Testimonial.countDocuments();
+    if (testimonialCount === 0) {
+      const mockTestimonials = [
+        {
+          quote: "Dhungesanghu has provided a fantastic environment for my son. The teachers are very attentive, and the focus on moral values and discipline has helped him grow into a responsible student.",
+          parentName: "Kiran Parajuli",
+          parentRelation: "Parent of Grade 8 Student"
+        },
+        {
+          quote: "We are highly impressed with the digital communication system. We receive homework, bulletins, and exams updates on the school app. The educational quality is excellent.",
+          parentName: "Sita Gurung",
+          parentRelation: "Parent of Grade 3 Student"
+        },
+        {
+          quote: "The sports and extracurricular activities are wonderful. My daughter participates in debate and drawing classes, which has boosted her self-confidence immensely.",
+          parentName: "Ramesh Baral",
+          parentRelation: "Parent of Grade 10 Student"
+        }
+      ];
+      await Testimonial.insertMany(mockTestimonials);
+      console.log('Seeded default parent testimonials to MongoDB Atlas.');
     }
   } catch (err) {
     console.error('Error seeding MongoDB Atlas:', err.message);
