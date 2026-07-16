@@ -64,6 +64,15 @@ const AdminSchema = new mongoose.Schema({
 
 export const Admin = mongoose.model('Admin', AdminSchema);
 
+// 5. Service Schema & Model
+const ServiceSchema = new mongoose.Schema({
+  title: { type: String, required: true },
+  image: { type: String, required: true },
+  desc: { type: String, required: true }
+});
+
+export const Service = mongoose.model('Service', ServiceSchema);
+
 // Initial Seeding Logic
 async function seedDatabase() {
   try {
@@ -153,6 +162,45 @@ async function seedDatabase() {
       ];
       await CalendarEvent.insertMany(mockEvents);
       console.log('Seeded calendar events to MongoDB Atlas.');
+    }
+
+    // Seed Services
+    const servicesCount = await Service.countDocuments();
+    if (servicesCount === 0) {
+      const mockServices = [
+        {
+          title: 'Modern Science Laboratory',
+          image: 'https://images.unsplash.com/photo-1562774053-4ab90860b94c?q=80&w=400',
+          desc: 'Fully equipped Physics, Chemistry, and Biology labs to support hands-on experimentations.'
+        },
+        {
+          title: 'Computer Lab with High-Speed Internet',
+          image: 'https://images.unsplash.com/photo-1563986768609-322da13575f3?q=80&w=400',
+          desc: 'Modern computer systems loaded with modern educational software and guided programming courses.'
+        },
+        {
+          title: 'Rich School Library',
+          image: 'https://images.unsplash.com/photo-1521587760476-6c12a4b040da?q=80&w=400',
+          desc: 'A vast collection of reference manuals, literature, newspapers, and quiet research chambers.'
+        },
+        {
+          title: 'Creative Art & Music Room',
+          image: 'https://images.unsplash.com/photo-1511192336575-5a79af67a629?q=80&w=400',
+          desc: 'Encouraging musical skills and imaginative drawings with direct mentorship and high-quality instruments.'
+        },
+        {
+          title: 'Hygienic Cafeteria',
+          image: 'https://images.unsplash.com/photo-1576972405668-2d020a01cbfa?q=80&w=400',
+          desc: 'Nutritious, fresh, and organic meal plans prepared under certified hygiene regulations.'
+        },
+        {
+          title: 'Secure Transport',
+          image: 'https://images.unsplash.com/photo-1557223562-6c77ef16210f?q=80&w=400',
+          desc: 'A dedicated fleet of school buses covering all major transport routes in the Pokhara region.'
+        }
+      ];
+      await Service.insertMany(mockServices);
+      console.log('Seeded default school services to MongoDB Atlas.');
     }
   } catch (err) {
     console.error('Error seeding MongoDB Atlas:', err.message);

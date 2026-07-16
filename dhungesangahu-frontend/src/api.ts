@@ -36,6 +36,13 @@ export interface ContactMessage {
   createdAt: string;
 }
 
+export interface Service {
+  id: string;
+  title: string;
+  image: string;
+  desc: string;
+}
+
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
 
 export async function adminLogin(username: string, password: string): Promise<{ success: boolean; token: string; username: string }> {
@@ -188,6 +195,57 @@ export async function deleteContactMessage(id: string): Promise<void> {
   });
   if (!res.ok) {
     throw new Error('Failed to delete message');
+  }
+}
+
+export async function getServices(): Promise<Service[]> {
+  const res = await fetch(`${API_URL}/services`);
+  if (!res.ok) {
+    throw new Error('Failed to fetch services');
+  }
+  const data = await res.json();
+  return data.map((item: any) => ({
+    ...item,
+    id: item._id || item.id
+  }));
+}
+
+export async function createService(service: Omit<Service, 'id'>): Promise<Service> {
+  const res = await fetch(`${API_URL}/services`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(service),
+  });
+  if (!res.ok) {
+    throw new Error('Failed to create service');
+  }
+  const data = await res.json();
+  return { ...data, id: data._id || data.id };
+}
+
+export async function updateService(id: string, service: Omit<Service, 'id'>): Promise<Service> {
+  const res = await fetch(`${API_URL}/services/${id}`, {
+    method: 'PUT',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(service),
+  });
+  if (!res.ok) {
+    throw new Error('Failed to update service');
+  }
+  const data = await res.json();
+  return { ...data, id: data._id || data.id };
+}
+
+export async function deleteService(id: string): Promise<void> {
+  const res = await fetch(`${API_URL}/services/${id}`, {
+    method: 'DELETE',
+  });
+  if (!res.ok) {
+    throw new Error('Failed to delete service');
   }
 }
 

@@ -1,13 +1,14 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { NavLink } from 'react-router-dom';
 import { motion, type Variants } from 'framer-motion';
 import { ImageWithFallback } from './ImageWithFallback';
+import { getServices, type Service } from '../api';
 
 interface FacilitiesSectionProps {
   limit?: number;
 }
 
-const allFacilities = [
+const fallbackFacilities = [
   {
     title: 'Modern Science Laboratory',
     image: 'https://images.unsplash.com/photo-1562774053-4ab90860b94c?q=80&w=400',
@@ -57,7 +58,32 @@ const staggerContainer: Variants = {
 };
 
 export const FacilitiesSection: React.FC<FacilitiesSectionProps> = ({ limit }) => {
-  const listToShow = limit ? allFacilities.slice(0, limit) : allFacilities;
+  const [services, setServices] = useState<Service[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    let active = true;
+    getServices()
+      .then((data) => {
+        if (active) {
+          setServices(data);
+          setLoading(false);
+        }
+      })
+      .catch((err) => {
+        console.error('Failed to load dynamic services from API:', err);
+        if (active) {
+          // Fall back to static items if server is offline or loading
+          setLoading(false);
+        }
+      });
+    return () => {
+      active = false;
+    };
+  }, []);
+
+  const displayList = services.length > 0 ? services : fallbackFacilities;
+  const listToShow = limit ? displayList.slice(0, limit) : displayList;
 
   return (
     <section className="w-full py-16 px-6 sm:px-12 md:px-20 bg-gradient-to-b from-white to-[#f7f3fb] font-sans">
@@ -77,36 +103,43 @@ export const FacilitiesSection: React.FC<FacilitiesSectionProps> = ({ limit }) =
           <div className="w-20 h-1 bg-[#652d90] rounded-full mt-1" />
         </motion.div>
 
-        {/* GRID */}
-        <motion.div 
-          initial="hidden"
-          whileInView="visible"
-          viewport={{ once: true, amount: 0.15 }}
-          variants={staggerContainer}
-          className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8 lg:gap-10 w-full mt-4 justify-items-center"
-        >
-          {listToShow.map((facility, idx) => (
-            <motion.div 
-              variants={fadeInUp}
-              key={idx} 
-              className="bg-white rounded-3xl p-6 pb-8 border-t-[7px] border-[#652d90] shadow-[0_14px_30px_rgba(101,45,144,0.12)] hover:-translate-y-2 hover:shadow-[0_24px_60px_rgba(101,45,144,0.25)] transition-all duration-300 flex flex-col items-center text-center w-full max-w-[320px] group"
-            >
-              {/* IMAGE ICON */}
-              <div className="w-28 h-28 rounded-full overflow-hidden border-4 border-slate-200 shadow-md mb-6 shrink-0">
-                <ImageWithFallback 
-                  src={facility.image} 
-                  alt={facility.title} 
-                  fallbackType="school"
-                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 ease-out"
-                />
-              </div>
+        {/* LOADING PLACEHOLDER */}
+        {loading && services.length === 0 ? (
+          <div className="flex justify-center items-center py-10">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#652d90]" />
+          </div>
+        ) : (
+          /* GRID */
+          <motion.div 
+            initial="hidden"
+            whileInView="visible"
+            viewport={{ once: true, amount: 0.15 }}
+            variants={staggerContainer}
+            className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8 lg:gap-10 w-full mt-4 justify-items-center"
+          >
+            {listToShow.map((facility, idx) => (
+              <motion.div 
+                variants={fadeInUp}
+                key={facility.title + idx} 
+                className="bg-white rounded-3xl p-6 pb-8 border-t-[7px] border-[#652d90] shadow-[0_14px_30px_rgba(101,45,144,0.12)] hover:-translate-y-2 hover:shadow-[0_24px_60px_rgba(101,45,144,0.25)] transition-all duration-300 flex flex-col items-center text-center w-full max-w-[320px] group"
+              >
+                {/* IMAGE ICON */}
+                <div className="w-28 h-28 rounded-full overflow-hidden border-4 border-slate-200 shadow-md mb-6 shrink-0">
+                  <ImageWithFallback 
+                    src={facility.image} 
+                    alt={facility.title} 
+                    fallbackType="school"
+                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 ease-out"
+                  />
+                </div>
 
-              {/* DETAILS */}
-              <h3 className="text-lg font-bold text-[#652d90] mb-3">{facility.title}</h3>
-              <p className="text-slate-600 text-sm leading-relaxed font-light">{facility.desc}</p>
-            </motion.div>
-          ))}
-        </motion.div>
+                {/* DETAILS */}
+                <h3 className="text-lg font-bold text-[#652d90] mb-3">{facility.title}</h3>
+                <p className="text-slate-600 text-sm leading-relaxed font-light">{facility.desc}</p>
+              </motion.div>
+            ))}
+          </motion.div>
+        )}
 
         {/* BUTTON WRAP */}
         {limit && (

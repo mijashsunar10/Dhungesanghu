@@ -13,7 +13,8 @@ import {
   X, 
   Loader2, 
   AlertCircle, 
-  ExternalLink 
+  ExternalLink,
+  Wrench
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
@@ -27,20 +28,26 @@ import {
   deleteCalendarEvent, 
   updateCalendarEvent,
   deleteContactMessage,
+  getServices,
+  createService,
+  deleteService,
+  updateService,
   type Notice,
   type CalendarEvent,
-  type ContactMessage 
+  type ContactMessage,
+  type Service
 } from '../api';
 
 export const AdminDashboard: React.FC = () => {
   const navigate = useNavigate();
-  const [activeTab, setActiveTab] = useState<'notices' | 'calendar' | 'inbox'>('notices');
+  const [activeTab, setActiveTab] = useState<'notices' | 'calendar' | 'inbox' | 'services'>('notices');
   const [adminUser, setAdminUser] = useState('Admin');
   
   // Data States
   const [notices, setNotices] = useState<Notice[]>([]);
   const [events, setEvents] = useState<CalendarEvent[]>([]);
   const [messages, setMessages] = useState<ContactMessage[]>([]);
+  const [services, setServices] = useState<Service[]>([]);
   
   // UX States
   const [loading, setLoading] = useState(true);
@@ -50,9 +57,12 @@ export const AdminDashboard: React.FC = () => {
   // Modals state
   const [showNoticeModal, setShowNoticeModal] = useState(false);
   const [showEventModal, setShowEventModal] = useState(false);
+  const [showServiceModal, setShowServiceModal] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [editingNoticeId, setEditingNoticeId] = useState<string | null>(null);
   const [editingEventId, setEditingEventId] = useState<string | null>(null);
+  const [editingServiceId, setEditingServiceId] = useState<string | null>(null);
+  const [imageInputMode, setImageInputMode] = useState<'upload' | 'url'>('upload');
 
   // New Form Data states
   const [newNotice, setNewNotice] = useState({
@@ -71,6 +81,12 @@ export const AdminDashboard: React.FC = () => {
     description: ''
   });
 
+  const [newService, setNewService] = useState({
+    title: '',
+    image: '',
+    desc: ''
+  });
+
   // Verify authentication on mount
   useEffect(() => {
     const token = localStorage.getItem('admin_token');
@@ -87,14 +103,16 @@ export const AdminDashboard: React.FC = () => {
     try {
       setLoading(true);
       setError(null);
-      const [nList, eList, mList] = await Promise.all([
+      const [nList, eList, mList, sList] = await Promise.all([
         getNotices(),
         getCalendarEvents(),
-        getContactMessages()
+        getContactMessages(),
+        getServices()
       ]);
       setNotices(nList);
       setEvents(eList);
       setMessages(mList);
+      setServices(sList);
     } catch (err: any) {
       console.error('Error fetching admin data:', err);
       setError('Could not load data. Ensure the database server is running.');
@@ -251,6 +269,83 @@ export const AdminDashboard: React.FC = () => {
     }
   };
 
+  // SERVICE HANDLERS
+  const handleCreateServiceSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    try {
+      setIsSubmitting(true);
+      if (editingServiceId) {
+        // Edit Mode
+        const updated = await updateService(editingServiceId, newService);
+        setServices(services.map(item => item.id === editingServiceId ? updated : item));
+        setEditingServiceId(null);
+        setShowServiceModal(false);
+        setNewService({ title: '', image: '', desc: '' });
+        triggerSuccess('Service updated successfully!');
+      } else {
+        // Create Mode
+        const created = await createService(newService);
+        setServices([...services, created]);
+        setShowServiceModal(false);
+        setNewService({ title: '', image: '', desc: '' });
+        triggerSuccess('New service added successfully!');
+      }
+    } catch (err) {
+      console.error('Failed to save service:', err);
+      alert('Error saving service.');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleImageFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (file.size > 3 * 1024 * 1024) {
+      alert('File size exceeds 3MB. Please select a smaller image.');
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      if (typeof reader.result === 'string') {
+        setNewService(prev => ({ ...prev, image: reader.result as string }));
+      }
+    };
+    reader.onerror = () => {
+      alert('Error reading local file.');
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const handleEditService = (service: Service) => {
+    setEditingServiceId(service.id);
+    setNewService({
+      title: service.title,
+      image: service.image,
+      desc: service.desc
+    });
+    if (service.image && service.image.startsWith('data:image')) {
+      setImageInputMode('upload');
+    } else {
+      setImageInputMode('url');
+    }
+    setShowServiceModal(true);
+  };
+
+  const handleDeleteService = async (id: string) => {
+    if (!window.confirm('Are you sure you want to delete this service?')) return;
+    try {
+      await deleteService(id);
+      setServices(services.filter(item => item.id !== id));
+      triggerSuccess('Service removed successfully.');
+    } catch (err) {
+      console.error(err);
+      alert('Error deleting service.');
+    }
+  };
+
   // INBOX HANDLERS
   const handleDeleteMessage = async (id: string) => {
     if (!window.confirm('Delete this inquiry permanently?')) return;
@@ -355,6 +450,18 @@ export const AdminDashboard: React.FC = () => {
           >
             <Calendar className="h-4 w-4" />
             Calendar Events ({events.length})
+          </button>
+
+          <button
+            onClick={() => setActiveTab('services')}
+            className={`px-5 py-3 rounded-xl font-bold text-xs sm:text-sm flex items-center gap-2.5 transition-all cursor-pointer ${
+              activeTab === 'services'
+                ? 'bg-[#652d90] text-white shadow-sm'
+                : 'bg-white border border-slate-200 text-slate-600 hover:bg-slate-50'
+            }`}
+          >
+            <Wrench className="h-4 w-4" />
+            Services Manager ({services.length})
           </button>
 
           <button
@@ -578,6 +685,83 @@ export const AdminDashboard: React.FC = () => {
                         >
                           <Trash2 className="h-4.5 w-4.5" />
                         </button>
+                      </div>
+                    ))
+                  )}
+                </div>
+              </div>
+            )}
+
+            {/* TAB 4: SERVICES VIEW */}
+            {activeTab === 'services' && (
+              <div className="flex flex-col gap-6">
+                <div className="flex justify-between items-center bg-white p-5 rounded-3xl border border-slate-200 shadow-sm">
+                  <div className="text-left">
+                    <h2 className="text-lg font-black text-slate-800 font-serif">School Services & Facilities</h2>
+                    <p className="text-slate-400 text-xs sm:text-sm font-light mt-0.5">Manage live services, infrastructure facilities, and student utilities posted on the website.</p>
+                  </div>
+                  <button
+                    onClick={() => {
+                      setEditingServiceId(null);
+                      setNewService({ title: '', image: '', desc: '' });
+                      setImageInputMode('upload');
+                      setShowServiceModal(true);
+                    }}
+                    className="flex items-center gap-2 px-5 py-3 bg-[#652d90] hover:bg-[#4b1f6b] text-white rounded-xl text-xs sm:text-sm font-bold shadow-md hover:shadow-lg transition-all active:scale-95 cursor-pointer shrink-0"
+                  >
+                    <Plus className="h-4.5 w-4.5" />
+                    New Service
+                  </button>
+                </div>
+
+                {/* Services Grid */}
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                  {services.length === 0 ? (
+                    <div className="col-span-full bg-white border border-slate-200/60 p-16 rounded-3xl text-center text-slate-400 font-light">
+                      No school services found in the database. Click "New Service" to create one.
+                    </div>
+                  ) : (
+                    services.map((service) => (
+                      <div 
+                        key={service.id}
+                        className="bg-white border border-slate-200/80 rounded-2xl overflow-hidden shadow-sm hover:shadow-md transition-all flex flex-col text-left group"
+                      >
+                        {/* Service Image */}
+                        <div className="h-44 w-full bg-slate-100 overflow-hidden relative border-b border-slate-100">
+                          <img 
+                            src={service.image} 
+                            alt={service.title} 
+                            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 ease-out"
+                            onError={(e) => {
+                              (e.target as HTMLImageElement).src = 'https://images.unsplash.com/photo-1576972405668-2d020a01cbfa?q=80&w=400';
+                            }}
+                          />
+                        </div>
+
+                        {/* Details */}
+                        <div className="p-5 flex-1 flex flex-col justify-between gap-4">
+                          <div>
+                            <h3 className="font-bold text-slate-800 text-base leading-tight mb-2">{service.title}</h3>
+                            <p className="text-slate-500 text-xs sm:text-sm font-light leading-relaxed line-clamp-3">{service.desc}</p>
+                          </div>
+
+                          <div className="flex gap-2 justify-end pt-3 border-t border-slate-100">
+                            <button
+                              onClick={() => handleEditService(service)}
+                              className="px-3 py-1.5 bg-purple-50 text-[#652d90] hover:bg-purple-100 rounded-lg text-xs font-bold transition-all border border-purple-200/30 cursor-pointer flex items-center gap-1"
+                              title="Edit Service"
+                            >
+                              <Edit className="h-3.5 w-3.5" /> Edit
+                            </button>
+                            <button
+                              onClick={() => handleDeleteService(service.id)}
+                              className="px-3 py-1.5 bg-rose-50 text-rose-600 hover:bg-rose-100 rounded-lg text-xs font-bold transition-all border border-rose-200/30 cursor-pointer flex items-center gap-1"
+                              title="Delete Service"
+                            >
+                              <Trash2 className="h-3.5 w-3.5" /> Delete
+                            </button>
+                          </div>
+                        </div>
                       </div>
                     ))
                   )}
@@ -845,6 +1029,204 @@ export const AdminDashboard: React.FC = () => {
                       </>
                     ) : (
                       editingEventId ? 'Save Changes' : 'Schedule Event'
+                    )}
+                  </button>
+                </div>
+
+              </form>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
+      {/* 4. SERVICE MODAL FORM */}
+      <AnimatePresence>
+        {showServiceModal && (
+          <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex justify-center items-center p-4">
+            <motion.div 
+              initial={{ scale: 0.95, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.95, opacity: 0 }}
+              className="bg-white border border-slate-200 shadow-2xl rounded-3xl w-full max-w-xl p-6 sm:p-7 relative z-50 text-left"
+            >
+              <div className="flex justify-between items-center border-b border-slate-100 pb-3 mb-5">
+                <h3 className="text-lg font-black text-slate-800 font-serif">{editingServiceId ? 'Edit School Service' : 'Add New Service'}</h3>
+                <button 
+                  onClick={() => {
+                    setShowServiceModal(false);
+                    setEditingServiceId(null);
+                    setNewService({ title: '', image: '', desc: '' });
+                  }} 
+                  className="p-1 hover:bg-slate-100 rounded-lg cursor-pointer"
+                >
+                  <X className="h-5 w-5 text-slate-400" />
+                </button>
+              </div>
+
+              <form onSubmit={handleCreateServiceSubmit} className="flex flex-col gap-4">
+                
+                {/* Title */}
+                <div className="flex flex-col gap-1">
+                  <label className="text-xs font-bold text-slate-600 uppercase tracking-wider pl-0.5">Service Title</label>
+                  <input 
+                    type="text" 
+                    placeholder="e.g. Modern Science Laboratory..." 
+                    value={newService.title}
+                    onChange={e => setNewService({...newService, title: e.target.value})}
+                    required
+                    className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 focus:border-[#652d90] rounded-xl text-xs sm:text-sm font-light focus:outline-none transition-all duration-300"
+                  />
+                </div>
+
+                {/* Image Selection Tabs */}
+                <div className="flex flex-col gap-1.5">
+                  <label className="text-xs font-bold text-slate-600 uppercase tracking-wider pl-0.5">Service Image</label>
+                  <div className="flex gap-2 bg-slate-100 p-1 rounded-xl w-fit">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setImageInputMode('upload');
+                        if (newService.image && !newService.image.startsWith('data:image')) {
+                          setNewService(prev => ({ ...prev, image: '' }));
+                        }
+                      }}
+                      className={`px-4 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+                        imageInputMode === 'upload' ? 'bg-white text-[#652d90] shadow-sm' : 'text-slate-500 hover:text-slate-700'
+                      }`}
+                    >
+                      Upload File
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setImageInputMode('url');
+                        if (newService.image && newService.image.startsWith('data:image')) {
+                          setNewService(prev => ({ ...prev, image: '' }));
+                        }
+                      }}
+                      className={`px-4 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+                        imageInputMode === 'url' ? 'bg-white text-[#652d90] shadow-sm' : 'text-slate-500 hover:text-slate-700'
+                      }`}
+                    >
+                      Image URL link
+                    </button>
+                  </div>
+
+                  {imageInputMode === 'upload' ? (
+                    <div className="flex flex-col gap-2">
+                      <div className="flex items-center gap-3">
+                        <label className="px-4 py-2.5 bg-[#652d90] hover:bg-[#4b1f6b] text-white rounded-xl text-xs font-bold transition-all cursor-pointer shadow-sm active:scale-95">
+                          Choose Image File
+                          <input
+                            type="file"
+                            accept="image/*"
+                            onChange={handleImageFileChange}
+                            className="hidden"
+                          />
+                        </label>
+                        <span className="text-xs text-slate-400 font-light truncate max-w-[260px]">
+                          {newService.image && newService.image.startsWith('data:image') 
+                            ? '✓ Image loaded from local computer' 
+                            : 'No file selected (Supports JPEG, PNG, WEBP)'}
+                        </span>
+                      </div>
+                    </div>
+                  ) : (
+                    <input 
+                      type="url" 
+                      placeholder="e.g. https://images.unsplash.com/photo-..." 
+                      value={newService.image.startsWith('data:image') ? '' : newService.image}
+                      onChange={e => setNewService({...newService, image: e.target.value})}
+                      required
+                      className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 focus:border-[#652d90] rounded-xl text-xs sm:text-sm font-light focus:outline-none transition-all duration-300"
+                    />
+                  )}
+                </div>
+
+                {/* Image Preview Box */}
+                <div className="flex flex-col gap-1">
+                  <label className="text-xs font-bold text-slate-600 uppercase tracking-wider pl-0.5">Image Preview</label>
+                  <div className="w-full h-40 bg-slate-50 border-2 border-dashed border-slate-200 rounded-2xl overflow-hidden flex items-center justify-center relative shadow-inner">
+                    {newService.image && (newService.image.startsWith('http') || newService.image.startsWith('data:image')) ? (
+                      <img 
+                        src={newService.image} 
+                        alt="Preview" 
+                        className="w-full h-full object-cover"
+                        onError={(e) => {
+                          (e.target as HTMLImageElement).style.display = 'none';
+                          const fallbackNode = e.currentTarget.parentElement?.querySelector('.preview-error');
+                          if (fallbackNode) (fallbackNode as HTMLElement).style.display = 'flex';
+                        }}
+                        onLoad={(e) => {
+                          (e.target as HTMLImageElement).style.display = 'block';
+                          const fallbackNode = e.currentTarget.parentElement?.querySelector('.preview-error');
+                          if (fallbackNode) (fallbackNode as HTMLElement).style.display = 'none';
+                        }}
+                      />
+                    ) : null}
+                    
+                    {/* Placeholder when URL/File is empty */}
+                    {(!newService.image || (!newService.image.startsWith('http') && !newService.image.startsWith('data:image'))) && (
+                      <div className="flex flex-col items-center justify-center text-slate-400 gap-1.5 p-4 text-center">
+                        <svg className="w-8 h-8 text-slate-300 animate-pulse" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                        </svg>
+                        <span className="text-[11px] font-semibold uppercase tracking-wider text-slate-400/80">No image loaded</span>
+                        <span className="text-[10px] text-slate-400 font-light">
+                          {imageInputMode === 'upload' ? 'Upload an image from your computer to preview it here' : 'Paste a valid image URL link above to preview'}
+                        </span>
+                      </div>
+                    )}
+                    
+                    {/* Error display if load fails */}
+                    <div className="preview-error hidden absolute inset-0 bg-rose-50/90 flex flex-col items-center justify-center text-center p-4 text-rose-600 gap-1">
+                      <svg className="w-7 h-7 text-rose-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                      </svg>
+                      <span className="text-[11px] font-bold uppercase tracking-wider">Invalid Image Source</span>
+                      <span className="text-[10px] text-rose-500 font-light">Unable to load or render the image provided</span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Description */}
+                <div className="flex flex-col gap-1">
+                  <label className="text-xs font-bold text-slate-600 uppercase tracking-wider pl-0.5">Service Description</label>
+                  <textarea 
+                    rows={4} 
+                    placeholder="Describe the facility, opening hours, transport route coverage, or equipment available..." 
+                    value={newService.desc}
+                    onChange={e => setNewService({...newService, desc: e.target.value})}
+                    required
+                    className="w-full px-4 py-3 bg-slate-50 border border-slate-200 focus:border-[#652d90] rounded-xl text-xs sm:text-sm font-light resize-none focus:outline-none transition-all duration-300"
+                  />
+                </div>
+
+                {/* Buttons */}
+                <div className="flex gap-3 justify-end mt-2">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setShowServiceModal(false);
+                      setEditingServiceId(null);
+                      setNewService({ title: '', image: '', desc: '' });
+                    }}
+                    className="px-5 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-600 rounded-xl text-xs sm:text-sm font-bold transition-all cursor-pointer"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={isSubmitting}
+                    className="px-6 py-2.5 bg-[#652d90] hover:bg-[#4b1f6b] disabled:bg-slate-300 text-white rounded-xl text-xs sm:text-sm font-bold shadow-md transition-all cursor-pointer flex items-center gap-1.5"
+                  >
+                    {isSubmitting ? (
+                      <>
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                        Saving...
+                      </>
+                    ) : (
+                      editingServiceId ? 'Save Changes' : 'Add Service'
                     )}
                   </button>
                 </div>

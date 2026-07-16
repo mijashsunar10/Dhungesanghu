@@ -2,7 +2,7 @@ import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
 import './database.js'; // Imports connection & seeds database
-import { Notice, CalendarEvent, ContactMessage, Admin } from './database.js';
+import { Notice, CalendarEvent, ContactMessage, Admin, Service } from './database.js';
 
 dotenv.config();
 
@@ -204,6 +204,68 @@ app.delete('/api/contact-messages/:id', async (req, res) => {
   } catch (err) {
     console.error('Error deleting message:', err.message);
     res.status(500).json({ error: 'Database error deleting contact message' });
+  }
+});
+
+// 6. Get All Services
+app.get('/api/services', async (req, res) => {
+  try {
+    const services = await Service.find();
+    res.json(services);
+  } catch (err) {
+    console.error('Error fetching services:', err.message);
+    res.status(500).json({ error: 'Database error fetching services' });
+  }
+});
+
+// 6b. Post a Service
+app.post('/api/services', async (req, res) => {
+  const { title, image, desc } = req.body;
+
+  if (!title || !image || !desc) {
+    return res.status(400).json({ error: 'Please provide title, image URL, and description.' });
+  }
+
+  try {
+    const newService = new Service({ title, image, desc });
+    const saved = await newService.save();
+    res.status(201).json(saved);
+  } catch (err) {
+    console.error('Error saving service:', err.message);
+    res.status(500).json({ error: 'Database error saving service' });
+  }
+});
+
+// 6c. Update a Service
+app.put('/api/services/:id', async (req, res) => {
+  const { title, image, desc } = req.body;
+  try {
+    const updated = await Service.findByIdAndUpdate(
+      req.params.id,
+      { title, image, desc },
+      { new: true }
+    );
+    if (!updated) {
+      return res.status(404).json({ error: 'Service not found.' });
+    }
+    res.json(updated);
+  } catch (err) {
+    console.error('Error updating service:', err.message);
+    res.status(500).json({ error: 'Database error updating service' });
+  }
+});
+
+// 6d. Delete a Service
+app.delete('/api/services/:id', async (req, res) => {
+  try {
+    const deleted = await Service.findByIdAndDelete(req.params.id);
+    if (!deleted) {
+      return res.status(404).json({ error: 'Service not found.' });
+    }
+    res.json({ success: true, message: 'Service deleted successfully' });
+  } catch (err) {
+    console.error('Error deleting service:', err.message);
+    res.status(500).json({ error: 'Database error deleting service' });
   }
 });
 
