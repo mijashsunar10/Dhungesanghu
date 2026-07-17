@@ -570,4 +570,62 @@ export async function deleteMilestone(id: string): Promise<void> {
   }
 }
 
+export interface Rule {
+  id: string;
+  text: string;
+  order: number;
+}
+
+export async function getRules(): Promise<Rule[]> {
+  const res = await fetch(`${API_URL}/rules`);
+  if (!res.ok) {
+    throw new Error('Failed to fetch school rules');
+  }
+  const data = await res.json();
+  return data.map((item: any) => ({
+    ...item,
+    id: item._id || item.id
+  }));
+}
+
+export async function createRule(rule: Omit<Rule, 'id'>): Promise<Rule> {
+  const res = await fetch(`${API_URL}/rules`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(rule),
+  });
+  if (!res.ok) {
+    throw new Error('Failed to create rule');
+  }
+  const data = await res.json();
+  return { ...data, id: data._id || data.id };
+}
+
+export async function updateRule(id: string, rule: Omit<Rule, 'id'>): Promise<Rule> {
+  const res = await fetch(`${API_URL}/rules/${id}`, {
+    method: 'PUT',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(rule),
+  });
+  if (!res.ok) {
+    throw new Error('Failed to update rule');
+  }
+  const data = await res.json();
+  return { ...data, id: data._id || data.id };
+}
+
+export async function deleteRule(id: string): Promise<void> {
+  const res = await fetch(`${API_URL}/rules/${id}`, {
+    method: 'DELETE',
+  });
+  if (!res.ok) {
+    throw new Error('Failed to delete rule');
+  }
+}
+
+
 

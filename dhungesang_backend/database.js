@@ -142,6 +142,15 @@ const MilestoneSchema = new mongoose.Schema({
 
 export const Milestone = mongoose.model('Milestone', MilestoneSchema);
 
+// 11. Rule Schema & Model
+const RuleSchema = new mongoose.Schema({
+  text: { type: String, required: true },
+  order: { type: Number, default: 0 }
+});
+
+export const Rule = mongoose.model('Rule', RuleSchema);
+
+
 
 
 // Initial Seeding Logic
@@ -464,6 +473,25 @@ async function seedDatabase() {
       ];
       await Milestone.insertMany(mockMilestones);
       console.log('Seeded default milestones to MongoDB.');
+    }
+
+    // Seed Rules & Policies
+    const ruleCount = await Rule.countDocuments();
+    if (ruleCount === 0) {
+      const mockRules = [
+        { text: "Students must wear the proper school uniform neatly and tidily and enter the school premises only between 9:30 A.M. and 9:55 A.M.", order: 1 },
+        { text: "Students must make every attempt to keep their classroom neat and tidy and free from litter.", order: 2 },
+        { text: "Students must use English as means of communication within the school premises.", order: 3 },
+        { text: "\"Please\", \"Thank you\", \"Excuse me\", \"Sorry\" should be part of every student's vocabulary and used at appropriate times.", order: 4 },
+        { text: "Abusive or fool language and disrespect behavior to anyone will not be tolerated at any time under any circumstances.", order: 5 },
+        { text: "Regular attendance is mandatory. Any absence must be supported by a leave application signed by parents or guardians.", order: 6 },
+        { text: "Students must respect school property. Damaging desks, walls, books, or laboratory equipment is strictly prohibited and subject to fines.", order: 7 },
+        { text: "Mobile phones, smartwatches, and other personal electronic gadgets are strictly prohibited inside the school premises.", order: 8 },
+        { text: "Assignments, homework, and projects must be completed and submitted on time as directed by the subject teachers.", order: 9 },
+        { text: "During exams, academic integrity is paramount. Any form of cheating, copying, or malpractice will result in immediate suspension.", order: 10 }
+      ];
+      await Rule.insertMany(mockRules);
+      console.log('Seeded default rules & regulations to MongoDB.');
     }
   } catch (err) {
     console.error('Error seeding MongoDB Atlas:', err.message);

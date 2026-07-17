@@ -2,7 +2,7 @@ import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
 import './database.js'; // Imports connection & seeds database
-import { Notice, CalendarEvent, ContactMessage, Admin, Service, GalleryImage, GalleryCategory, Testimonial, PrincipalMessage, Alumni, Milestone } from './database.js';
+import { Notice, CalendarEvent, ContactMessage, Admin, Service, GalleryImage, GalleryCategory, Testimonial, PrincipalMessage, Alumni, Milestone, Rule } from './database.js';
 
 dotenv.config();
 
@@ -722,6 +722,80 @@ app.delete('/api/milestones/:id', async (req, res) => {
   } catch (err) {
     console.error('Error deleting milestone:', err.message);
     res.status(500).json({ error: 'Database error deleting milestone' });
+  }
+});
+
+// --- RULES & POLICIES ENDPOINTS ---
+app.get('/api/rules', async (req, res) => {
+  try {
+    const list = await Rule.find().sort({ order: 1 });
+    res.json(list.map(item => ({
+      id: item._id,
+      text: item.text,
+      order: item.order
+    })));
+  } catch (err) {
+    console.error('Error fetching rules:', err.message);
+    res.status(500).json({ error: 'Database error fetching rules' });
+  }
+});
+
+app.post('/api/rules', async (req, res) => {
+  const { text, order } = req.body;
+  if (!text) {
+    return res.status(400).json({ error: 'Rule text is required.' });
+  }
+  try {
+    let ruleOrder = order;
+    if (ruleOrder === undefined) {
+      const maxRule = await Rule.findOne().sort({ order: -1 });
+      ruleOrder = maxRule ? maxRule.order + 1 : 1;
+    }
+    const fresh = new Rule({ text, order: ruleOrder });
+    const saved = await fresh.save();
+    res.status(201).json({
+      id: saved._id,
+      text: saved.text,
+      order: saved.order
+    });
+  } catch (err) {
+    console.error('Error creating rule:', err.message);
+    res.status(500).json({ error: 'Database error creating rule' });
+  }
+});
+
+app.put('/api/rules/:id', async (req, res) => {
+  const { text, order } = req.body;
+  try {
+    const updated = await Rule.findByIdAndUpdate(
+      req.params.id,
+      { text, order },
+      { new: true }
+    );
+    if (!updated) {
+      return res.status(404).json({ error: 'Rule not found.' });
+    }
+    res.json({
+      id: updated._id,
+      text: updated.text,
+      order: updated.order
+    });
+  } catch (err) {
+    console.error('Error updating rule:', err.message);
+    res.status(500).json({ error: 'Database error updating rule' });
+  }
+});
+
+app.delete('/api/rules/:id', async (req, res) => {
+  try {
+    const deleted = await Rule.findByIdAndDelete(req.params.id);
+    if (!deleted) {
+      return res.status(404).json({ error: 'Rule not found.' });
+    }
+    res.json({ success: true, message: 'Rule deleted successfully' });
+  } catch (err) {
+    console.error('Error deleting rule:', err.message);
+    res.status(500).json({ error: 'Database error deleting rule' });
   }
 });
 

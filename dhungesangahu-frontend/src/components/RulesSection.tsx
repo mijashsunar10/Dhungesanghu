@@ -1,5 +1,6 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { NavLink } from 'react-router-dom';
+import { getRules } from '../api';
 
 interface RulesSectionProps {
   limit?: number;
@@ -20,9 +21,28 @@ const allRules = [
 
 export const RulesSection: React.FC<RulesSectionProps> = ({ limit }) => {
   const sectionRef = useRef<HTMLDivElement>(null);
+  const [rules, setRules] = useState<string[]>([]);
+
+  // Fetch rules from API
+  useEffect(() => {
+    getRules()
+      .then(list => {
+        if (list && list.length > 0) {
+          // Sort list according to order and map text strings
+          const texts = list.map(item => item.text);
+          setRules(texts);
+        } else {
+          setRules(allRules);
+        }
+      })
+      .catch(err => {
+        console.warn("Failed to fetch school rules, using fallback:", err);
+        setRules(allRules);
+      });
+  }, []);
 
   // Parse rules list according to limit
-  const rulesToShow = limit ? allRules.slice(0, limit) : allRules;
+  const rulesToShow = limit ? rules.slice(0, limit) : rules;
 
   // Handle scroll-to-hash scroll effects if URL contains #rules
   useEffect(() => {
@@ -93,3 +113,4 @@ export const RulesSection: React.FC<RulesSectionProps> = ({ limit }) => {
     </section>
   );
 };
+
