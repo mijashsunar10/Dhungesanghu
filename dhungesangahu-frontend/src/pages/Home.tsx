@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { NavLink } from 'react-router-dom';
 import { School } from 'lucide-react';
-import { getTestimonials, type Testimonial } from '../api';
+import { getTestimonials, getPrincipalMessage, type Testimonial, type PrincipalMessageData } from '../api';
 import { ImageWithFallback } from '../components/ImageWithFallback';
 import { MissionVisionGoals } from '../components/MissionVisionGoals';
 import { RulesSection } from '../components/RulesSection';
@@ -38,6 +38,7 @@ const staggerContainer: Variants = {
 export const Home: React.FC = () => {
   const [currentSlide, setCurrentSlide] = useState(0);
   const [testimonials, setTestimonials] = useState<Testimonial[]>([]);
+  const [principalMsg, setPrincipalMsg] = useState<PrincipalMessageData | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -57,6 +58,10 @@ export const Home: React.FC = () => {
         console.error('Failed to load testimonials:', err);
         setLoading(false);
       });
+
+    getPrincipalMessage()
+      .then(data => setPrincipalMsg(data))
+      .catch(err => console.error('Failed to load principal message:', err));
   }, []);
 
   return (
@@ -305,30 +310,38 @@ export const Home: React.FC = () => {
               variants={fadeInUp}
               className="text-3xl sm:text-4xl font-extrabold text-slate-800 leading-tight"
             >
-              Message From <span className="text-[#652d90] font-serif">The Principal</span>
+              Message From <span className="text-[#652d90] font-serif">{principalMsg?.title || "The Principal"}</span>
             </motion.h2>
             <motion.blockquote 
               variants={fadeInUp}
               className="bg-[#f7f2fb] border-l-4 border-[#652d90] p-5 my-2 italic text-slate-700 rounded-r-xl text-left w-full"
             >
-              “Education is not the learning of facts, but the training of the mind to think.”
-              <span className="block text-xs text-slate-500 font-sans font-medium mt-1.5">— Albert Einstein</span>
+              “{principalMsg?.quote || "Education is not the learning of facts, but the training of the mind to think."}”
+              <span className="block text-xs text-slate-500 font-sans font-medium mt-1.5">— {principalMsg?.quoteAuthor || "Albert Einstein"}</span>
             </motion.blockquote>
             <motion.div 
               variants={fadeInUp}
               className="flex flex-col gap-4 text-slate-600 leading-relaxed font-light text-sm sm:text-base"
             >
-              <p className="font-bold text-slate-800">Dear Parents, Children and Well-Wishers,</p>
-              <p>
-                A warm greeting from the Principal!
-                It is an honor and privilege to lead an institution where everyone is a learner
-                and each day brings new opportunities to grow and discover.
-              </p>
-              <p>
-                At our school, we believe education is more than academics.
-                It is about character building, discipline, creativity,
-                and preparing students to face the future with confidence.
-              </p>
+              <p className="font-bold text-slate-800">{principalMsg?.messageIntro || "Dear Parents, Children and Well-Wishers,"}</p>
+              {principalMsg ? (
+                principalMsg.message.split('\n\n').filter(Boolean).slice(0, 2).map((para, i) => (
+                  <p key={i}>{para}</p>
+                ))
+              ) : (
+                <>
+                  <p>
+                    A warm greeting from the Principal!
+                    It is an honor and privilege to lead an institution where everyone is a learner
+                    and each day brings new opportunities to grow and discover.
+                  </p>
+                  <p>
+                    At our school, we believe education is more than academics.
+                    It is about character building, discipline, creativity,
+                    and preparing students to face the future with confidence.
+                  </p>
+                </>
+              )}
             </motion.div>
             <motion.div 
               variants={fadeInUp}
@@ -351,8 +364,8 @@ export const Home: React.FC = () => {
             className="md:col-span-4 flex justify-center w-full"
           >
             <ImageWithFallback 
-              src="https://dhungesanghuschool.edu.np/wp-content/uploads/2026/02/BishnuGcPrincipal.jpeg" 
-              alt="Principal Bishnu G.C." 
+              src={principalMsg?.image || "https://dhungesanghuschool.edu.np/wp-content/uploads/2026/02/BishnuGcPrincipal.jpeg"} 
+              alt={`Principal ${principalMsg?.name || "Bishnu G.C."}`} 
               fallbackType="user"
               className="w-[280px] h-[280px] sm:w-[360px] sm:h-[360px] object-cover rounded-full border-8 border-white shadow-2xl transition-all duration-500 ease-out hover:scale-103 hover:shadow-3xl"
             />

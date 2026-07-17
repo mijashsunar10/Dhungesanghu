@@ -2,7 +2,7 @@ import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
 import './database.js'; // Imports connection & seeds database
-import { Notice, CalendarEvent, ContactMessage, Admin, Service, GalleryImage, GalleryCategory, Testimonial } from './database.js';
+import { Notice, CalendarEvent, ContactMessage, Admin, Service, GalleryImage, GalleryCategory, Testimonial, PrincipalMessage } from './database.js';
 
 dotenv.config();
 
@@ -453,6 +453,111 @@ app.delete('/api/testimonials/:id', async (req, res) => {
   } catch (err) {
     console.error('Error deleting testimonial:', err.message);
     res.status(500).json({ error: 'Database error deleting testimonial' });
+  }
+});
+
+// --- PRINCIPAL MESSAGE ENDPOINTS ---
+app.get('/api/principal-message', async (req, res) => {
+  try {
+    let msg = await PrincipalMessage.findOne();
+    if (!msg) {
+      // Return a default empty structure or seed it here
+      msg = await PrincipalMessage.create({
+        name: "Mr. Bishnu G.C.",
+        title: "Principal",
+        image: "https://dhungesanghuschool.edu.np/wp-content/uploads/2026/02/BishnuGcPrincipal.jpeg",
+        qualifications: "M.Ed. in Educational Leadership",
+        experience: "18+ Years Academic Service",
+        email: "bishnugc@dhungesanghu.edu.np",
+        quote: "Education is not the learning of facts, but the training of the mind to think.",
+        quoteAuthor: "Albert Einstein",
+        messageIntro: "Dear Parents, Children and Well-Wishers,",
+        message: "A warm greeting from the Principal! It is an honor and privilege to lead an institution where everyone is a learner and each day brings new opportunities to grow and discover.\n\nAt Dhungesanghu Boarding School, we believe education is more than academics. It is about character building, discipline, creativity, and preparing students to face the future with confidence. Our primary focus is to identify the unique talents of each individual and guide them on their path to personal excellence.\n\nWe believe in partnering with parents, administrators, and the local community to create a safe, stimulating, and academically rigorous environment. We teach our students to practice discipline, show respect to seniors, and act with integrity at all times.\n\nWe are constantly updating our curriculum, labs, and teaching methodologies to align with modern international standards while retaining our core values. We encourage collaborative learning and practical problem-solving in all grade levels.\n\nThank you for trusting Dhungesanghu Boarding School with your child's educational journey. Together, let us cultivate a generation of innovators, thinkers, and builders.",
+        closure: "Warm regards,",
+        signature: "Bishnu G.C.",
+        signatureTitle: "Mr. Bishnu G.C., Principal",
+        signatureSchool: "Dhungesanghu Boarding School",
+        coreTenets: "Nurturing unique potentials of every child\nFostering empathy, respect, and discipline\nConstant curriculum updates to global levels"
+      });
+    }
+    res.json({
+      id: msg._id,
+      name: msg.name,
+      title: msg.title,
+      image: msg.image,
+      qualifications: msg.qualifications,
+      experience: msg.experience,
+      email: msg.email,
+      quote: msg.quote,
+      quoteAuthor: msg.quoteAuthor,
+      messageIntro: msg.messageIntro,
+      message: msg.message,
+      closure: msg.closure,
+      signature: msg.signature,
+      signatureTitle: msg.signatureTitle,
+      signatureSchool: msg.signatureSchool,
+      coreTenets: msg.coreTenets
+    });
+  } catch (err) {
+    console.error('Error fetching principal message:', err.message);
+    res.status(500).json({ error: 'Database error fetching principal message' });
+  }
+});
+
+app.put('/api/principal-message', async (req, res) => {
+  const { 
+    name, title, image, qualifications, experience, email, 
+    quote, quoteAuthor, messageIntro, message, 
+    closure, signature, signatureTitle, signatureSchool, coreTenets 
+  } = req.body;
+
+  try {
+    let msg = await PrincipalMessage.findOne();
+    if (!msg) {
+      msg = new PrincipalMessage({
+        name, title, image, qualifications, experience, email, 
+        quote, quoteAuthor, messageIntro, message, 
+        closure, signature, signatureTitle, signatureSchool, coreTenets
+      });
+    } else {
+      if (name !== undefined) msg.name = name;
+      if (title !== undefined) msg.title = title;
+      if (image !== undefined) msg.image = image;
+      if (qualifications !== undefined) msg.qualifications = qualifications;
+      if (experience !== undefined) msg.experience = experience;
+      if (email !== undefined) msg.email = email;
+      if (quote !== undefined) msg.quote = quote;
+      if (quoteAuthor !== undefined) msg.quoteAuthor = quoteAuthor;
+      if (messageIntro !== undefined) msg.messageIntro = messageIntro;
+      if (message !== undefined) msg.message = message;
+      if (closure !== undefined) msg.closure = closure;
+      if (signature !== undefined) msg.signature = signature;
+      if (signatureTitle !== undefined) msg.signatureTitle = signatureTitle;
+      if (signatureSchool !== undefined) msg.signatureSchool = signatureSchool;
+      if (coreTenets !== undefined) msg.coreTenets = coreTenets;
+    }
+    const saved = await msg.save();
+    res.json({
+      id: saved._id,
+      name: saved.name,
+      title: saved.title,
+      image: saved.image,
+      qualifications: saved.qualifications,
+      experience: saved.experience,
+      email: saved.email,
+      quote: saved.quote,
+      quoteAuthor: saved.quoteAuthor,
+      messageIntro: saved.messageIntro,
+      message: saved.message,
+      closure: saved.closure,
+      signature: saved.signature,
+      signatureTitle: saved.signatureTitle,
+      signatureSchool: saved.signatureSchool,
+      coreTenets: saved.coreTenets
+    });
+  } catch (err) {
+    console.error('Error updating principal message:', err.message);
+    res.status(500).json({ error: 'Database error updating principal message' });
   }
 });
 

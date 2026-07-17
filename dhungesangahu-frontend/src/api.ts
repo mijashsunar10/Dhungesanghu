@@ -31,6 +31,7 @@ export interface ContactMessage {
   id: string;
   name: string;
   email: string;
+  phone?: string;
   subject?: string;
   message: string;
   createdAt: string;
@@ -408,5 +409,43 @@ export async function deleteTestimonial(id: string): Promise<void> {
   }
 }
 
+export interface PrincipalMessageData {
+  id?: string;
+  name: string;
+  title: string;
+  image: string;
+  qualifications: string;
+  experience: string;
+  email: string;
+  quote: string;
+  quoteAuthor: string;
+  messageIntro: string;
+  message: string;
+  closure: string;
+  signature: string;
+  signatureTitle: string;
+  signatureSchool: string;
+  coreTenets: string;
+}
 
+export async function getPrincipalMessage(): Promise<PrincipalMessageData> {
+  const res = await fetch(`${API_URL}/principal-message`);
+  if (!res.ok) {
+    throw new Error('Failed to fetch principal message');
+  }
+  return res.json();
+}
 
+export async function updatePrincipalMessage(data: PrincipalMessageData): Promise<PrincipalMessageData> {
+  const res = await fetch(`${API_URL}/principal-message`, {
+    method: 'PUT',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(data),
+  });
+  if (!res.ok) {
+    throw new Error('Failed to update principal message');
+  }
+  return res.json();
+}

@@ -99,9 +99,53 @@ const TestimonialSchema = new mongoose.Schema({
 
 export const Testimonial = mongoose.model('Testimonial', TestimonialSchema);
 
+// 8. Principal Message Schema & Model
+const PrincipalMessageSchema = new mongoose.Schema({
+  name: { type: String, required: true },
+  title: { type: String, required: true },
+  image: { type: String, required: true },
+  qualifications: { type: String, required: true },
+  experience: { type: String, required: true },
+  email: { type: String, required: true },
+  quote: { type: String, required: true },
+  quoteAuthor: { type: String, required: true },
+  messageIntro: { type: String, required: true },
+  message: { type: String, required: true },
+  closure: { type: String, required: true },
+  signature: { type: String, required: true },
+  signatureTitle: { type: String, required: true },
+  signatureSchool: { type: String, required: true },
+  coreTenets: { type: String, required: true }
+});
+
+export const PrincipalMessage = mongoose.model('PrincipalMessage', PrincipalMessageSchema);
+
 // Initial Seeding Logic
 async function seedDatabase() {
   try {
+    // Seed Principal Message
+    const principalMessageCount = await PrincipalMessage.countDocuments();
+    if (principalMessageCount === 0) {
+      await PrincipalMessage.create({
+        name: "Mr. Bishnu G.C.",
+        title: "Principal",
+        image: "https://dhungesanghuschool.edu.np/wp-content/uploads/2026/02/BishnuGcPrincipal.jpeg",
+        qualifications: "M.Ed. in Educational Leadership",
+        experience: "18+ Years Academic Service",
+        email: "bishnugc@dhungesanghu.edu.np",
+        quote: "Education is not the learning of facts, but the training of the mind to think.",
+        quoteAuthor: "Albert Einstein",
+        messageIntro: "Dear Parents, Children and Well-Wishers,",
+        message: "A warm greeting from the Principal! It is an honor and privilege to lead an institution where everyone is a learner and each day brings new opportunities to grow and discover.\n\nAt Dhungesanghu Boarding School, we believe education is more than academics. It is about character building, discipline, creativity, and preparing students to face the future with confidence. Our primary focus is to identify the unique talents of each individual and guide them on their path to personal excellence.\n\nWe believe in partnering with parents, administrators, and the local community to create a safe, stimulating, and academically rigorous environment. We teach our students to practice discipline, show respect to seniors, and act with integrity at all times.\n\nWe are constantly updating our curriculum, labs, and teaching methodologies to align with modern international standards while retaining our core values. We encourage collaborative learning and practical problem-solving in all grade levels.\n\nThank you for trusting Dhungesanghu Boarding School with your child's educational journey. Together, let us cultivate a generation of innovators, thinkers, and builders.",
+        closure: "Warm regards,",
+        signature: "Bishnu G.C.",
+        signatureTitle: "Mr. Bishnu G.C., Principal",
+        signatureSchool: "Dhungesanghu Boarding School",
+        coreTenets: "Nurturing unique potentials of every child\nFostering empathy, respect, and discipline\nConstant curriculum updates to global levels"
+      });
+      console.log('Seeded default principal message to MongoDB.');
+    }
+
     // Seed Admin Accounts
     const adminCount = await Admin.countDocuments();
     if (adminCount === 0) {
@@ -308,6 +352,7 @@ async function seedDatabase() {
       ];
       await GalleryCategory.insertMany(mockCategories);
       console.log('Seeded default gallery categories to MongoDB Atlas.');
+    }
     // Seed Testimonials
     const testimonialCount = await Testimonial.countDocuments();
     if (testimonialCount === 0) {

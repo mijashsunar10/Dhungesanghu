@@ -57,18 +57,21 @@ import {
   createTestimonial,
   updateTestimonial,
   deleteTestimonial,
+  getPrincipalMessage,
+  updatePrincipalMessage,
   type Notice,
   type CalendarEvent,
   type ContactMessage,
   type Service,
   type GalleryImage,
   type GalleryCategory,
-  type Testimonial
+  type Testimonial,
+  type PrincipalMessageData
 } from '../api';
 
 export const AdminDashboard: React.FC = () => {
   const navigate = useNavigate();
-  const [activeTab, setActiveTab] = useState<'overview' | 'notices' | 'calendar' | 'inbox' | 'services' | 'gallery' | 'testimonials'>('overview');
+  const [activeTab, setActiveTab] = useState<'overview' | 'notices' | 'calendar' | 'inbox' | 'services' | 'gallery' | 'testimonials' | 'principal'>('overview');
   const [adminUser, setAdminUser] = useState('Admin');
   
   // Data States
@@ -79,6 +82,23 @@ export const AdminDashboard: React.FC = () => {
   const [galleryImages, setGalleryImages] = useState<GalleryImage[]>([]);
   const [galleryCategories, setGalleryCategories] = useState<GalleryCategory[]>([]);
   const [testimonials, setTestimonials] = useState<Testimonial[]>([]);
+  const [principalData, setPrincipalData] = useState<PrincipalMessageData>({
+    name: '',
+    title: '',
+    image: '',
+    qualifications: '',
+    experience: '',
+    email: '',
+    quote: '',
+    quoteAuthor: '',
+    messageIntro: '',
+    message: '',
+    closure: '',
+    signature: '',
+    signatureTitle: '',
+    signatureSchool: '',
+    coreTenets: ''
+  });
   
   // UX States
   const [loading, setLoading] = useState(true);
@@ -133,7 +153,7 @@ export const AdminDashboard: React.FC = () => {
 
   const [newGalleryImage, setNewGalleryImage] = useState({
     url: '',
-    category: '',
+    category: 'classroom' as 'classroom' | 'activities' | 'events',
     caption: ''
   });
 
@@ -165,14 +185,15 @@ export const AdminDashboard: React.FC = () => {
     try {
       setLoading(true);
       setError(null);
-      const [nList, eList, mList, sList, gList, gcList, tList] = await Promise.all([
+      const [nList, eList, mList, sList, gList, gcList, tList, pMsg] = await Promise.all([
         getNotices(),
         getCalendarEvents(),
         getContactMessages(),
         getServices(),
         getGalleryImages(),
         getGalleryCategories(),
-        getTestimonials()
+        getTestimonials(),
+        getPrincipalMessage()
       ]);
       setNotices(nList);
       setEvents(eList);
@@ -181,6 +202,7 @@ export const AdminDashboard: React.FC = () => {
       setGalleryImages(gList);
       setGalleryCategories(gcList);
       setTestimonials(tList);
+      setPrincipalData(pMsg);
     } catch (err: any) {
       console.error('Error fetching admin data:', err);
       setError('Could not load data. Ensure the database server is running.');
@@ -601,6 +623,42 @@ export const AdminDashboard: React.FC = () => {
     }
   };
 
+  const handlePrincipalSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    try {
+      setIsSubmitting(true);
+      const updated = await updatePrincipalMessage(principalData);
+      setPrincipalData(updated);
+      triggerSuccess("Principal's Message and Quote updated successfully!");
+    } catch (err) {
+      console.error(err);
+      alert("Error updating Principal's Message.");
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handlePrincipalImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (file.size > 3 * 1024 * 1024) {
+      alert('File size exceeds 3MB. Please select a smaller image.');
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      if (typeof reader.result === 'string') {
+        setPrincipalData(prev => ({ ...prev, image: reader.result as string }));
+      }
+    };
+    reader.onerror = () => {
+      alert('Error reading local file.');
+    };
+    reader.readAsDataURL(file);
+  };
+
   return (
     <div className="min-h-screen bg-slate-50 flex font-sans text-slate-800 relative overflow-hidden">
       
@@ -751,6 +809,20 @@ export const AdminDashboard: React.FC = () => {
                   {testimonials.length}
                 </span>
               </button>
+
+              <button
+                onClick={() => { setActiveTab('principal'); setIsMobileSidebarOpen(false); }}
+                className={`w-full flex items-center justify-between px-4 py-3 rounded-xl font-bold text-xs sm:text-sm transition-all cursor-pointer text-left ${
+                  activeTab === 'principal'
+                    ? 'bg-[#652d90] text-white shadow-md shadow-purple-900/30'
+                    : 'hover:bg-slate-800 hover:text-white text-slate-400'
+                }`}
+              >
+                <span className="flex items-center gap-3">
+                  <User className="h-4.5 w-4.5" />
+                  Principal Message & Quote
+                </span>
+              </button>
             </nav>
           </div>
 
@@ -761,7 +833,6 @@ export const AdminDashboard: React.FC = () => {
                 { name: 'School Team & Officials', icon: Users, status: 'Active (Next)' },
                 { name: 'Home Hero Slides', icon: Sparkles, status: 'Planned' },
                 { name: 'Key Stats Counter', icon: BarChart3, status: 'Planned' },
-                { name: 'Principal\'s Quote', icon: User, status: 'Planned' },
                 { name: 'Alumni Success Network', icon: Award, status: 'Planned' },
                 { name: 'Milestones Timeline', icon: Clock, status: 'Planned' },
                 { name: 'School Rules & Policies', icon: Shield, status: 'Planned' },
@@ -1473,7 +1544,7 @@ export const AdminDashboard: React.FC = () => {
                     <button
                       onClick={() => {
                         setEditingGalleryId(null);
-                        setNewGalleryImage({ url: '', category: galleryCategories[0]?.categoryId || 'classroom', caption: '' });
+                        setNewGalleryImage({ url: '', category: (galleryCategories[0]?.categoryId || 'classroom') as any, caption: '' });
                         setImageInputMode('upload');
                         setShowGalleryModal(true);
                       }}
@@ -1617,6 +1688,247 @@ export const AdminDashboard: React.FC = () => {
                   </div>
                 )}
 
+              </div>
+            )}
+
+            {/* TAB 8: PRINCIPAL MESSAGE & QUOTE MANAGER */}
+            {activeTab === 'principal' && (
+              <div className="flex flex-col gap-6">
+                <div className="bg-white p-6 rounded-3xl border border-slate-200 shadow-sm text-left">
+                  <h2 className="text-xl font-black text-slate-800 font-serif">Principal's Message & Quote Manager</h2>
+                  <p className="text-slate-400 text-xs sm:text-sm font-light mt-0.5">Edit and manage the principal's address, academic stats, email, profile photo, and landing page quote.</p>
+                </div>
+
+                <form onSubmit={handlePrincipalSubmit} className="bg-white border border-slate-200 rounded-3xl p-6 sm:p-8 shadow-sm flex flex-col gap-6 text-left">
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    {/* Left block: Photo and email */}
+                    <div className="flex flex-col gap-4">
+                      <h3 className="text-sm font-bold text-[#652d90] border-b border-slate-100 pb-2">Profile Photo & Identity</h3>
+                      
+                      {/* Photo preview */}
+                      <div className="w-40 h-40 mx-auto rounded-full overflow-hidden border-4 border-slate-100 shadow-md relative group bg-slate-50 flex items-center justify-center">
+                        {principalData.image ? (
+                          <img 
+                            src={principalData.image} 
+                            alt="Principal Preview" 
+                            className="w-full h-full object-cover"
+                          />
+                        ) : (
+                          <span className="text-slate-300 text-xs font-light">No image uploaded</span>
+                        )}
+                      </div>
+
+                      <div className="flex flex-col gap-1.5">
+                        <label className="text-xs font-bold text-slate-600 uppercase tracking-wider">Change Profile Photo</label>
+                        <input
+                          type="file"
+                          accept="image/*"
+                          onChange={handlePrincipalImageChange}
+                          className="w-full text-xs text-slate-500 file:mr-3 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-bold file:bg-[#652d90]/10 file:text-[#652d90] hover:file:bg-[#652d90]/20 cursor-pointer"
+                        />
+                        <p className="text-[10px] text-slate-400 mt-1">Or enter an image URL link below:</p>
+                        <input 
+                          type="text"
+                          placeholder="Image URL link..."
+                          value={principalData.image}
+                          onChange={e => setPrincipalData({...principalData, image: e.target.value})}
+                          className="w-full px-3 py-2 bg-slate-50 border border-slate-200 focus:border-[#652d90] rounded-xl text-xs font-light focus:outline-none"
+                        />
+                      </div>
+
+                      <div className="flex flex-col gap-1">
+                        <label className="text-xs font-bold text-slate-600 uppercase tracking-wider">Principal's Full Name</label>
+                        <input 
+                          type="text"
+                          required
+                          value={principalData.name}
+                          onChange={e => setPrincipalData({...principalData, name: e.target.value})}
+                          className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 focus:border-[#652d90] rounded-xl text-xs sm:text-sm font-light focus:outline-none"
+                        />
+                      </div>
+
+                      <div className="flex flex-col gap-1">
+                        <label className="text-xs font-bold text-slate-600 uppercase tracking-wider">Professional Title</label>
+                        <input 
+                          type="text"
+                          required
+                          value={principalData.title}
+                          onChange={e => setPrincipalData({...principalData, title: e.target.value})}
+                          className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 focus:border-[#652d90] rounded-xl text-xs sm:text-sm font-light focus:outline-none"
+                        />
+                      </div>
+                    </div>
+
+                    {/* Middle block: Credentials and Quote */}
+                    <div className="flex flex-col gap-4">
+                      <h3 className="text-sm font-bold text-[#652d90] border-b border-slate-100 pb-2">Credentials & Contact</h3>
+
+                      <div className="flex flex-col gap-1">
+                        <label className="text-xs font-bold text-slate-600 uppercase tracking-wider">Academic Qualifications</label>
+                        <input 
+                          type="text"
+                          required
+                          value={principalData.qualifications}
+                          onChange={e => setPrincipalData({...principalData, qualifications: e.target.value})}
+                          className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 focus:border-[#652d90] rounded-xl text-xs sm:text-sm font-light focus:outline-none"
+                        />
+                      </div>
+
+                      <div className="flex flex-col gap-1">
+                        <label className="text-xs font-bold text-slate-600 uppercase tracking-wider">Years of Academic Service</label>
+                        <input 
+                          type="text"
+                          required
+                          value={principalData.experience}
+                          onChange={e => setPrincipalData({...principalData, experience: e.target.value})}
+                          className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 focus:border-[#652d90] rounded-xl text-xs sm:text-sm font-light focus:outline-none"
+                        />
+                      </div>
+
+                      <div className="flex flex-col gap-1">
+                        <label className="text-xs font-bold text-slate-600 uppercase tracking-wider">Official Email Address</label>
+                        <input 
+                          type="email"
+                          required
+                          value={principalData.email}
+                          onChange={e => setPrincipalData({...principalData, email: e.target.value})}
+                          className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 focus:border-[#652d90] rounded-xl text-xs sm:text-sm font-light focus:outline-none"
+                        />
+                      </div>
+
+                      <h3 className="text-sm font-bold text-[#652d90] border-b border-slate-100 pb-2 mt-2">Principal's Quote</h3>
+
+                      <div className="flex flex-col gap-1">
+                        <label className="text-xs font-bold text-slate-600 uppercase tracking-wider">Inspiring Quote Text</label>
+                        <textarea 
+                          rows={2}
+                          required
+                          value={principalData.quote}
+                          onChange={e => setPrincipalData({...principalData, quote: e.target.value})}
+                          className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 focus:border-[#652d90] rounded-xl text-xs sm:text-sm font-light resize-none focus:outline-none"
+                        />
+                      </div>
+
+                      <div className="flex flex-col gap-1">
+                        <label className="text-xs font-bold text-slate-600 uppercase tracking-wider">Quote Author</label>
+                        <input 
+                          type="text"
+                          required
+                          value={principalData.quoteAuthor}
+                          onChange={e => setPrincipalData({...principalData, quoteAuthor: e.target.value})}
+                          className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 focus:border-[#652d90] rounded-xl text-xs sm:text-sm font-light focus:outline-none"
+                        />
+                      </div>
+                    </div>
+
+                    {/* Right block: Core tenets & Closure */}
+                    <div className="flex flex-col gap-4">
+                      <h3 className="text-sm font-bold text-[#652d90] border-b border-slate-100 pb-2">Core Tenets & Closure</h3>
+
+                      <div className="flex flex-col gap-1">
+                        <label className="text-xs font-bold text-slate-600 uppercase tracking-wider">School Core Tenets (One per line)</label>
+                        <textarea 
+                          rows={3}
+                          required
+                          placeholder="Enter core tenets..."
+                          value={principalData.coreTenets}
+                          onChange={e => setPrincipalData({...principalData, coreTenets: e.target.value})}
+                          className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 focus:border-[#652d90] rounded-xl text-xs sm:text-sm font-light resize-none focus:outline-none"
+                        />
+                      </div>
+
+                      <div className="flex flex-col gap-1">
+                        <label className="text-xs font-bold text-slate-600 uppercase tracking-wider">Regard Closure</label>
+                        <input 
+                          type="text"
+                          required
+                          value={principalData.closure}
+                          onChange={e => setPrincipalData({...principalData, closure: e.target.value})}
+                          className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 focus:border-[#652d90] rounded-xl text-xs sm:text-sm font-light focus:outline-none"
+                        />
+                      </div>
+
+                      <div className="flex flex-col gap-1">
+                        <label className="text-xs font-bold text-slate-600 uppercase tracking-wider">Signature Text</label>
+                        <input 
+                          type="text"
+                          required
+                          value={principalData.signature}
+                          onChange={e => setPrincipalData({...principalData, signature: e.target.value})}
+                          className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 focus:border-[#652d90] rounded-xl text-xs sm:text-sm font-light focus:outline-none"
+                        />
+                      </div>
+
+                      <div className="flex flex-col gap-1">
+                        <label className="text-xs font-bold text-slate-600 uppercase tracking-wider">Signature Title</label>
+                        <input 
+                          type="text"
+                          required
+                          value={principalData.signatureTitle}
+                          onChange={e => setPrincipalData({...principalData, signatureTitle: e.target.value})}
+                          className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 focus:border-[#652d90] rounded-xl text-xs sm:text-sm font-light focus:outline-none"
+                        />
+                      </div>
+
+                      <div className="flex flex-col gap-1">
+                        <label className="text-xs font-bold text-slate-600 uppercase tracking-wider">Signature School Name</label>
+                        <input 
+                          type="text"
+                          required
+                          value={principalData.signatureSchool}
+                          onChange={e => setPrincipalData({...principalData, signatureSchool: e.target.value})}
+                          className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 focus:border-[#652d90] rounded-xl text-xs sm:text-sm font-light focus:outline-none"
+                        />
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Message body section */}
+                  <div className="flex flex-col gap-4 border-t border-slate-100 pt-6">
+                    <h3 className="text-sm font-bold text-[#652d90] border-b border-slate-100 pb-2">Full Message Body</h3>
+
+                    <div className="flex flex-col gap-1">
+                      <label className="text-xs font-bold text-slate-600 uppercase tracking-wider">Greeting Intro</label>
+                      <input 
+                        type="text"
+                        required
+                        value={principalData.messageIntro}
+                        onChange={e => setPrincipalData({...principalData, messageIntro: e.target.value})}
+                        className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 focus:border-[#652d90] rounded-xl text-xs sm:text-sm font-light focus:outline-none"
+                      />
+                    </div>
+
+                    <div className="flex flex-col gap-1">
+                      <label className="text-xs font-bold text-slate-600 uppercase tracking-wider">Detailed Message Content (Paragraphs separated by blank double newlines)</label>
+                      <textarea 
+                        rows={12}
+                        required
+                        value={principalData.message}
+                        onChange={e => setPrincipalData({...principalData, message: e.target.value})}
+                        className="w-full px-4 py-3 bg-slate-50 border border-slate-200 focus:border-[#652d90] rounded-xl text-xs sm:text-sm font-light focus:outline-none resize-y leading-relaxed font-sans"
+                        placeholder="Type full letter content here..."
+                      />
+                    </div>
+                  </div>
+
+                  {/* Action Buttons */}
+                  <div className="flex justify-end gap-3 border-t border-slate-100 pt-6">
+                    <button
+                      type="submit"
+                      disabled={isSubmitting}
+                      className="px-8 py-3 bg-[#652d90] hover:bg-[#4b1f6b] disabled:bg-slate-300 text-white rounded-xl text-xs sm:text-sm font-bold shadow-md hover:shadow-lg transition-all active:scale-95 cursor-pointer flex items-center gap-2"
+                    >
+                      {isSubmitting ? (
+                        <>
+                          <Loader2 className="h-4.5 w-4.5 animate-spin" />
+                          Saving Changes...
+                        </>
+                      ) : (
+                        'Save Principal Message & Quote'
+                      )}
+                    </button>
+                  </div>
+                </form>
               </div>
             )}
 
@@ -2102,7 +2414,7 @@ export const AdminDashboard: React.FC = () => {
                   onClick={() => {
                     setShowGalleryModal(false);
                     setEditingGalleryId(null);
-                    setNewGalleryImage({ url: '', category: galleryCategories[0]?.categoryId || 'classroom', caption: '' });
+                    setNewGalleryImage({ url: '', category: (galleryCategories[0]?.categoryId || 'classroom') as any, caption: '' });
                   }} 
                   className="p-1 hover:bg-slate-100 rounded-lg cursor-pointer"
                 >
@@ -2130,7 +2442,7 @@ export const AdminDashboard: React.FC = () => {
                   <label className="text-xs font-bold text-slate-600 uppercase tracking-wider pl-0.5">Photo Category</label>
                   <select
                     value={newGalleryImage.category}
-                    onChange={e => setNewGalleryImage({...newGalleryImage, category: e.target.value})}
+                    onChange={e => setNewGalleryImage({...newGalleryImage, category: e.target.value as any})}
                     className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 focus:border-[#652d90] rounded-xl text-xs sm:text-sm font-light focus:outline-none transition-all duration-300 cursor-pointer"
                   >
                     {galleryCategories.map(cat => (
