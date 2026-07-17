@@ -1,22 +1,11 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Mail, ShieldCheck, Award } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ImageWithFallback } from '../components/ImageWithFallback';
 import { PageBanner } from '../components/PageBanner';
+import { getOfficials, type Official } from '../api';
 
-
-interface Official {
-  name: string;
-  position: string;
-  category: 'leadership' | 'teachers' | 'admin';
-  categoryLabel: string;
-  image: string;
-  email: string;
-  qualification: string;
-  experience: string;
-}
-
-const officialsList: Official[] = [
+const staticOfficialsList: Omit<Official, 'id' | 'order'>[] = [
   {
     name: 'Bishnu GC',
     position: 'Principal',
@@ -101,13 +90,41 @@ const officialsList: Official[] = [
 
 export const Officials: React.FC = () => {
   const [filter, setFilter] = useState<string>('all');
+  const [officials, setOfficials] = useState<Official[]>([]);
+
+  useEffect(() => {
+    getOfficials()
+      .then(data => {
+        if (data && data.length > 0) {
+          setOfficials(data);
+        } else {
+          // If response is empty, map static list to typed objects
+          const formattedStatic = staticOfficialsList.map((o, idx) => ({
+            ...o,
+            id: `static-${idx}`,
+            order: idx + 1
+          })) as Official[];
+          setOfficials(formattedStatic);
+        }
+      })
+      .catch(err => {
+        console.error('Failed loading school officials:', err);
+        const formattedStatic = staticOfficialsList.map((o, idx) => ({
+          ...o,
+          id: `static-${idx}`,
+          order: idx + 1
+        })) as Official[];
+        setOfficials(formattedStatic);
+      });
+  }, []);
 
   const filteredOfficials = filter === 'all' 
-    ? officialsList 
-    : officialsList.filter(o => o.category === filter);
+    ? officials 
+    : officials.filter(o => o.category === filter);
 
   return (
     <div className="w-full flex flex-col font-sans bg-slate-50 min-h-screen">
+
       <PageBanner 
         title="School Officials" 
         subtitle="Meet the academic leaders, professional faculty, and dedicated administrators guiding Dhungesanghu Boarding School." 

@@ -753,6 +753,71 @@ export async function deleteAdmissionStep(id: string): Promise<void> {
   }
 }
 
+export interface Official {
+  id: string;
+  name: string;
+  position: string;
+  category: 'leadership' | 'teachers' | 'admin';
+  categoryLabel: string;
+  image: string;
+  email: string;
+  qualification: string;
+  experience: string;
+  order: number;
+}
+
+export async function getOfficials(): Promise<Official[]> {
+  const res = await fetch(`${API_URL}/officials`);
+  if (!res.ok) {
+    throw new Error('Failed to fetch school officials');
+  }
+  const data = await res.json();
+  return data.map((item: any) => ({
+    ...item,
+    id: item._id || item.id
+  }));
+}
+
+export async function createOfficial(official: Omit<Official, 'id' | 'categoryLabel'>): Promise<Official> {
+  const res = await fetch(`${API_URL}/officials`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(official),
+  });
+  if (!res.ok) {
+    throw new Error('Failed to create school official');
+  }
+  const data = await res.json();
+  return { ...data, id: data._id || data.id };
+}
+
+export async function updateOfficial(id: string, official: Omit<Official, 'id' | 'categoryLabel'>): Promise<Official> {
+  const res = await fetch(`${API_URL}/officials/${id}`, {
+    method: 'PUT',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(official),
+  });
+  if (!res.ok) {
+    throw new Error('Failed to update school official');
+  }
+  const data = await res.json();
+  return { ...data, id: data._id || data.id };
+}
+
+export async function deleteOfficial(id: string): Promise<void> {
+  const res = await fetch(`${API_URL}/officials/${id}`, {
+    method: 'DELETE',
+  });
+  if (!res.ok) {
+    throw new Error('Failed to delete school official');
+  }
+}
+
+
 
 
 

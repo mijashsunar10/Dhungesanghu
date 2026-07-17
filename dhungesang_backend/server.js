@@ -2,7 +2,7 @@ import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
 import './database.js'; // Imports connection & seeds database
-import { Notice, CalendarEvent, ContactMessage, Admin, Service, GalleryImage, GalleryCategory, Testimonial, PrincipalMessage, Alumni, Milestone, Rule, Program, AdmissionStep } from './database.js';
+import { Notice, CalendarEvent, ContactMessage, Admin, Service, GalleryImage, GalleryCategory, Testimonial, PrincipalMessage, Alumni, Milestone, Rule, Program, AdmissionStep, Official } from './database.js';
 
 dotenv.config();
 
@@ -994,6 +994,96 @@ app.delete('/api/admission-steps/:id', async (req, res) => {
   } catch (err) {
     console.error('Error deleting admission step:', err.message);
     res.status(500).json({ error: 'Database error deleting admission step' });
+  }
+});
+
+// --- SCHOOL OFFICIALS / TEAM MEMBERS ---
+app.get('/api/officials', async (req, res) => {
+  try {
+    const list = await Official.find({}).sort({ order: 1 });
+    res.json(list);
+  } catch (err) {
+    console.error('Error fetching officials:', err.message);
+    res.status(500).json({ error: 'Database error fetching officials' });
+  }
+});
+
+app.post('/api/officials', async (req, res) => {
+  try {
+    const { name, position, category, image, email, qualification, experience, order } = req.body;
+    if (!name || !position || !category || !image || !email || !qualification || !experience) {
+      return res.status(400).json({ error: 'All fields except order are required.' });
+    }
+    const categoryLabels = {
+      leadership: 'Leadership',
+      teachers: 'Teaching Faculty',
+      admin: 'Administration'
+    };
+    const created = await Official.create({
+      name,
+      position,
+      category,
+      categoryLabel: categoryLabels[category] || 'Staff',
+      image,
+      email,
+      qualification,
+      experience,
+      order: order || 0
+    });
+    res.status(201).json(created);
+  } catch (err) {
+    console.error('Error creating official:', err.message);
+    res.status(500).json({ error: 'Database error creating official' });
+  }
+});
+
+app.put('/api/officials/:id', async (req, res) => {
+  try {
+    const { name, position, category, image, email, qualification, experience, order } = req.body;
+    const categoryLabels = {
+      leadership: 'Leadership',
+      teachers: 'Teaching Faculty',
+      admin: 'Administration'
+    };
+    
+    const updateData = {};
+    if (name !== undefined) updateData.name = name;
+    if (position !== undefined) updateData.position = position;
+    if (category !== undefined) {
+      updateData.category = category;
+      updateData.categoryLabel = categoryLabels[category] || 'Staff';
+    }
+    if (image !== undefined) updateData.image = image;
+    if (email !== undefined) updateData.email = email;
+    if (qualification !== undefined) updateData.qualification = qualification;
+    if (experience !== undefined) updateData.experience = experience;
+    if (order !== undefined) updateData.order = order;
+
+    const updated = await Official.findByIdAndUpdate(
+      req.params.id,
+      updateData,
+      { new: true }
+    );
+    if (!updated) {
+      return res.status(404).json({ error: 'Official not found.' });
+    }
+    res.json(updated);
+  } catch (err) {
+    console.error('Error updating official:', err.message);
+    res.status(500).json({ error: 'Database error updating official' });
+  }
+});
+
+app.delete('/api/officials/:id', async (req, res) => {
+  try {
+    const deleted = await Official.findByIdAndDelete(req.params.id);
+    if (!deleted) {
+      return res.status(404).json({ error: 'Official not found.' });
+    }
+    res.json({ success: true, message: 'Official deleted successfully' });
+  } catch (err) {
+    console.error('Error deleting official:', err.message);
+    res.status(500).json({ error: 'Database error deleting official' });
   }
 });
 

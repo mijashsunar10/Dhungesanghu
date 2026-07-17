@@ -177,6 +177,22 @@ const AdmissionStepSchema = new mongoose.Schema({
 
 export const AdmissionStep = mongoose.model('AdmissionStep', AdmissionStepSchema);
 
+// 14. Official Schema & Model
+const OfficialSchema = new mongoose.Schema({
+  name: { type: String, required: true },
+  position: { type: String, required: true },
+  category: { type: String, enum: ['leadership', 'teachers', 'admin'], required: true },
+  categoryLabel: { type: String, required: true },
+  image: { type: String, required: true },
+  email: { type: String, required: true },
+  qualification: { type: String, required: true },
+  experience: { type: String, required: true },
+  order: { type: Number, default: 0 }
+});
+
+export const Official = mongoose.model('Official', OfficialSchema);
+
+
 
 
 
@@ -643,7 +659,105 @@ async function seedDatabase() {
       await AdmissionStep.insertMany(mockSteps);
       console.log('Seeded default admission journey steps to MongoDB.');
     }
+
+    // Seed Officials
+    const officialsCount = await Official.countDocuments();
+    if (officialsCount === 0) {
+      const mockOfficials = [
+        {
+          name: 'Bishnu GC',
+          position: 'Principal',
+          category: 'leadership',
+          categoryLabel: 'Leadership',
+          image: 'https://dhungesanghuschool.edu.np/wp-content/uploads/2026/04/DSC01910-scaled.jpg',
+          email: 'bishnugc@dhungesanghu.edu.np',
+          qualification: 'M.Ed. in Educational Leadership',
+          experience: '18+ Years Experience',
+          order: 1
+        },
+        {
+          name: 'D Daya Sagar Paudel',
+          position: 'Academic Coordinator',
+          category: 'leadership',
+          categoryLabel: 'Leadership',
+          image: 'https://dhungesanghuschool.edu.np/wp-content/uploads/2026/02/WhatsApp-Image-2026-02-11-at-3.41.57-PM.jpeg',
+          email: 'dayasagar@dhungesanghu.edu.np',
+          qualification: 'M.Sc. in Mathematics',
+          experience: '12+ Years Experience',
+          order: 2
+        },
+        {
+          name: 'Dhruba Bandhu Rijal',
+          position: 'Senior School Incharge',
+          category: 'leadership',
+          categoryLabel: 'Leadership',
+          image: 'https://dhungesanghuschool.edu.np/wp-content/uploads/2026/04/DSC01902-scaled.jpg',
+          email: 'dhrubarijal@dhungesanghu.edu.np',
+          qualification: 'M.A. in English Literature',
+          experience: '15+ Years Experience',
+          order: 3
+        },
+        {
+          name: 'Sunita Bhujel',
+          position: 'Senior Accountant',
+          category: 'admin',
+          categoryLabel: 'Administration',
+          image: 'https://dhungesanghuschool.edu.np/wp-content/uploads/2026/04/DSC01609-scaled.jpg',
+          email: 'sunitabhujel@dhungesanghu.edu.np',
+          qualification: 'M.B.S. in Finance',
+          experience: '8+ Years Experience',
+          order: 4
+        },
+        {
+          name: 'Ramesh Bhandari',
+          position: 'Senior Mathematics Faculty',
+          category: 'teachers',
+          categoryLabel: 'Teaching Faculty',
+          image: 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?q=80&w=400',
+          email: 'rameshbhandari@dhungesanghu.edu.np',
+          qualification: 'B.Sc. B.Ed. in Mathematics',
+          experience: '6+ Years Experience',
+          order: 5
+        },
+        {
+          name: 'Sita Gurung Thapa',
+          position: 'Physics & Chemistry Faculty',
+          category: 'teachers',
+          categoryLabel: 'Teaching Faculty',
+          image: 'https://images.unsplash.com/photo-1580894732444-8fecef2271d4?q=80&w=400',
+          email: 'sitathapa@dhungesanghu.edu.np',
+          qualification: 'M.Sc. in Physics',
+          experience: '7+ Years Experience',
+          order: 6
+        },
+        {
+          name: 'Anju Gurung',
+          position: 'English Language Expert',
+          category: 'teachers',
+          categoryLabel: 'Teaching Faculty',
+          image: 'https://images.unsplash.com/photo-1544717305-2782549b5136?q=80&w=400',
+          email: 'anjugurung@dhungesanghu.edu.np',
+          qualification: 'B.A. in English & Education',
+          experience: '5+ Years Experience',
+          order: 7
+        },
+        {
+          name: 'Krishna Raj GC',
+          position: 'Social Studies & Moral values Faculty',
+          category: 'teachers',
+          categoryLabel: 'Teaching Faculty',
+          image: 'https://images.unsplash.com/photo-1560250097-0b93528c311a?q=80&w=400',
+          email: 'krishnagc@dhungesanghu.edu.np',
+          qualification: 'M.A. in Sociology',
+          experience: '10+ Years Experience',
+          order: 8
+        }
+      ];
+      await Official.insertMany(mockOfficials);
+      console.log('Seeded default school officials to MongoDB.');
+    }
   } catch (err) {
     console.error('Error seeding MongoDB Atlas:', err.message);
   }
 }
+
