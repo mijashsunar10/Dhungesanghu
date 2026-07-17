@@ -150,6 +150,22 @@ const RuleSchema = new mongoose.Schema({
 
 export const Rule = mongoose.model('Rule', RuleSchema);
 
+// 12. Program Schema & Model
+const ProgramSchema = new mongoose.Schema({
+  programId: { type: String, required: true, unique: true },
+  title: { type: String, required: true },
+  subtitle: { type: String, required: true },
+  description: { type: String, required: true },
+  ageGroup: { type: String, required: true },
+  highlights: [{ type: String }],
+  subjects: [{ type: String }],
+  icon: { type: String, default: 'BookOpen' }, // Sparkles, BookOpen, GraduationCap
+  order: { type: Number, default: 0 }
+});
+
+export const Program = mongoose.model('Program', ProgramSchema);
+
+
 
 
 
@@ -492,6 +508,66 @@ async function seedDatabase() {
       ];
       await Rule.insertMany(mockRules);
       console.log('Seeded default rules & regulations to MongoDB.');
+    }
+
+    // Seed Academic Programs
+    const programCount = await Program.countDocuments();
+    if (programCount === 0) {
+      const mockPrograms = [
+        {
+          programId: 'pre-primary',
+          title: 'Pre-Primary Level',
+          subtitle: 'Play Group (PG) to Upper Kindergarten (UKG)',
+          description: 'Our Pre-Primary program focuses on sensory learning, motor skills development, basic language skills, and foundational numeracy. We utilize interactive play-way methods, storytellings, and audio-visual sessions in a colorful, child-friendly environment to spark early curiosity.',
+          ageGroup: '2.5 to 5 Years',
+          highlights: [
+            'Sensory-based learning materials',
+            'Montessori activity room exercises',
+            'Audio-Visual storytelling & music classes',
+            'Focus on motor skills and social communication',
+            'Caring, highly-trained female faculties'
+          ],
+          subjects: ['English Alphabets', 'Nepali Letters', 'Numeracy & Basic Maths', 'Drawing & Crafting', 'General Awareness', 'Good Habits & Manners'],
+          icon: 'Sparkles',
+          order: 1
+        },
+        {
+          programId: 'primary',
+          title: 'Primary Level',
+          subtitle: 'Grade 1 to Grade 5',
+          description: 'The primary years focus on building critical foundational knowledge. We transition students into deeper academic concepts in science, language arts, and basic math while cultivating creative thinking, personal discipline, and active team participation.',
+          ageGroup: '6 to 10 Years',
+          highlights: [
+            'Interactive learning classrooms',
+            'Weekly spelling & creative drawing tasks',
+            'Basic computer usage introduction',
+            'Practical science exhibits & collections',
+            'Value-based moral education sessions'
+          ],
+          subjects: ['English Language & Grammar', 'Mathematics', 'Science & Environment', 'Nepali & Social Studies', 'Computer Studies', 'Moral Science', 'Art & Craft'],
+          icon: 'BookOpen',
+          order: 2
+        },
+        {
+          programId: 'secondary',
+          title: 'Secondary Level',
+          subtitle: 'Grade 6 to Grade 10 (SEE Preparation)',
+          description: 'Designed to equip students for higher secondary learning and the national Secondary Education Examination (SEE). We focus heavily on logical reasoning, analytical abilities, advanced computer operations, laboratory research, and structured competitive exams prep.',
+          ageGroup: '11 to 16 Years',
+          highlights: [
+            'Intensive Secondary Education Examination (SEE) drills',
+            'Hands-on Physics, Chemistry & Biology laboratory experiments',
+            'Advanced computer programming & coding basics',
+            'Leadership programs & public speaking classes',
+            'Inter-school sports tournaments coaching'
+          ],
+          subjects: ['Compulsory English', 'Compulsory Mathematics', 'Science & Technology', 'Social Studies (Nepali Medium)', 'Nepali Language', 'Optional Mathematics / Env. Science', 'Computer Science'],
+          icon: 'GraduationCap',
+          order: 3
+        }
+      ];
+      await Program.insertMany(mockPrograms);
+      console.log('Seeded default academic programs to MongoDB.');
     }
   } catch (err) {
     console.error('Error seeding MongoDB Atlas:', err.message);

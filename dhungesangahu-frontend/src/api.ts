@@ -627,5 +627,69 @@ export async function deleteRule(id: string): Promise<void> {
   }
 }
 
+export interface Program {
+  id: string;
+  programId: string;
+  title: string;
+  subtitle: string;
+  description: string;
+  ageGroup: string;
+  highlights: string[];
+  subjects: string[];
+  icon: string;
+  order: number;
+}
+
+export async function getPrograms(): Promise<Program[]> {
+  const res = await fetch(`${API_URL}/programs`);
+  if (!res.ok) {
+    throw new Error('Failed to fetch academic programs');
+  }
+  const data = await res.json();
+  return data.map((item: any) => ({
+    ...item,
+    id: item._id || item.id
+  }));
+}
+
+export async function createProgram(program: Omit<Program, 'id'>): Promise<Program> {
+  const res = await fetch(`${API_URL}/programs`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(program),
+  });
+  if (!res.ok) {
+    throw new Error('Failed to create academic program');
+  }
+  const data = await res.json();
+  return { ...data, id: data._id || data.id };
+}
+
+export async function updateProgram(id: string, program: Omit<Program, 'id'>): Promise<Program> {
+  const res = await fetch(`${API_URL}/programs/${id}`, {
+    method: 'PUT',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(program),
+  });
+  if (!res.ok) {
+    throw new Error('Failed to update academic program');
+  }
+  const data = await res.json();
+  return { ...data, id: data._id || data.id };
+}
+
+export async function deleteProgram(id: string): Promise<void> {
+  const res = await fetch(`${API_URL}/programs/${id}`, {
+    method: 'DELETE',
+  });
+  if (!res.ok) {
+    throw new Error('Failed to delete academic program');
+  }
+}
+
 
 

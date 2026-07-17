@@ -2,7 +2,7 @@ import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
 import './database.js'; // Imports connection & seeds database
-import { Notice, CalendarEvent, ContactMessage, Admin, Service, GalleryImage, GalleryCategory, Testimonial, PrincipalMessage, Alumni, Milestone, Rule } from './database.js';
+import { Notice, CalendarEvent, ContactMessage, Admin, Service, GalleryImage, GalleryCategory, Testimonial, PrincipalMessage, Alumni, Milestone, Rule, Program } from './database.js';
 
 dotenv.config();
 
@@ -796,6 +796,111 @@ app.delete('/api/rules/:id', async (req, res) => {
   } catch (err) {
     console.error('Error deleting rule:', err.message);
     res.status(500).json({ error: 'Database error deleting rule' });
+  }
+});
+
+// --- ACADEMIC PROGRAMS ENDPOINTS ---
+app.get('/api/programs', async (req, res) => {
+  try {
+    const list = await Program.find().sort({ order: 1 });
+    res.json(list.map(item => ({
+      id: item._id,
+      programId: item.programId,
+      title: item.title,
+      subtitle: item.subtitle,
+      description: item.description,
+      ageGroup: item.ageGroup,
+      highlights: item.highlights,
+      subjects: item.subjects,
+      icon: item.icon,
+      order: item.order
+    })));
+  } catch (err) {
+    console.error('Error fetching academic programs:', err.message);
+    res.status(500).json({ error: 'Database error fetching academic programs' });
+  }
+});
+
+app.post('/api/programs', async (req, res) => {
+  const { programId, title, subtitle, description, ageGroup, highlights, subjects, icon, order } = req.body;
+  if (!programId || !title || !subtitle || !description || !ageGroup) {
+    return res.status(400).json({ error: 'Missing required program fields.' });
+  }
+  try {
+    let progOrder = order;
+    if (progOrder === undefined) {
+      const maxProg = await Program.findOne().sort({ order: -1 });
+      progOrder = maxProg ? maxProg.order + 1 : 1;
+    }
+    const fresh = new Program({
+      programId,
+      title,
+      subtitle,
+      description,
+      ageGroup,
+      highlights: highlights || [],
+      subjects: subjects || [],
+      icon: icon || 'BookOpen',
+      order: progOrder
+    });
+    const saved = await fresh.save();
+    res.status(201).json({
+      id: saved._id,
+      programId: saved.programId,
+      title: saved.title,
+      subtitle: saved.subtitle,
+      description: saved.description,
+      ageGroup: saved.ageGroup,
+      highlights: saved.highlights,
+      subjects: saved.subjects,
+      icon: saved.icon,
+      order: saved.order
+    });
+  } catch (err) {
+    console.error('Error creating program:', err.message);
+    res.status(500).json({ error: 'Database error creating program' });
+  }
+});
+
+app.put('/api/programs/:id', async (req, res) => {
+  const { programId, title, subtitle, description, ageGroup, highlights, subjects, icon, order } = req.body;
+  try {
+    const updated = await Program.findByIdAndUpdate(
+      req.params.id,
+      { programId, title, subtitle, description, ageGroup, highlights, subjects, icon, order },
+      { new: true }
+    );
+    if (!updated) {
+      return res.status(404).json({ error: 'Program not found.' });
+    }
+    res.json({
+      id: updated._id,
+      programId: updated.programId,
+      title: updated.title,
+      subtitle: updated.subtitle,
+      description: updated.description,
+      ageGroup: updated.ageGroup,
+      highlights: updated.highlights,
+      subjects: updated.subjects,
+      icon: updated.icon,
+      order: updated.order
+    });
+  } catch (err) {
+    console.error('Error updating program:', err.message);
+    res.status(500).json({ error: 'Database error updating program' });
+  }
+});
+
+app.delete('/api/programs/:id', async (req, res) => {
+  try {
+    const deleted = await Program.findByIdAndDelete(req.params.id);
+    if (!deleted) {
+      return res.status(404).json({ error: 'Program not found.' });
+    }
+    res.json({ success: true, message: 'Program deleted successfully' });
+  } catch (err) {
+    console.error('Error deleting program:', err.message);
+    res.status(500).json({ error: 'Database error deleting program' });
   }
 });
 
