@@ -133,6 +133,16 @@ const AlumniSchema = new mongoose.Schema({
 
 export const Alumni = mongoose.model('Alumni', AlumniSchema);
 
+// 10. Milestone Schema & Model
+const MilestoneSchema = new mongoose.Schema({
+  year: { type: String, required: true },
+  title: { type: String, required: true },
+  desc: { type: String, required: true }
+});
+
+export const Milestone = mongoose.model('Milestone', MilestoneSchema);
+
+
 
 // Initial Seeding Logic
 async function seedDatabase() {
@@ -425,6 +435,35 @@ async function seedDatabase() {
       ];
       await Alumni.insertMany(mockAlumni);
       console.log('Seeded default alumni to MongoDB.');
+    }
+
+    // Seed Milestones
+    const milestoneCount = await Milestone.countDocuments();
+    if (milestoneCount === 0) {
+      const mockMilestones = [
+        {
+          year: "2006",
+          title: "Foundation of School",
+          desc: "Dhungesanghu Boarding School was established in Pokhara-17, Mahatgaunda, with primary classes and a commitment to excellence."
+        },
+        {
+          year: "2012",
+          title: "Secondary Upgrade & Labs",
+          desc: "Expanded classrooms to include secondary grades up to SEE and opened custom-designed physics, chemistry, and biology labs."
+        },
+        {
+          year: "2018",
+          title: "100% SEE Passing Rate",
+          desc: "Achieved the milestone of 100% passing rates in SEE with multiple students obtaining distinction ranks."
+        },
+        {
+          year: "2022",
+          title: "Veda Digital Integration",
+          desc: "Partnered with Veda to launch the school smartphone apps for real-time exams, bulletins, and digital homework updates."
+        }
+      ];
+      await Milestone.insertMany(mockMilestones);
+      console.log('Seeded default milestones to MongoDB.');
     }
   } catch (err) {
     console.error('Error seeding MongoDB Atlas:', err.message);

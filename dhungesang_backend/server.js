@@ -2,7 +2,7 @@ import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
 import './database.js'; // Imports connection & seeds database
-import { Notice, CalendarEvent, ContactMessage, Admin, Service, GalleryImage, GalleryCategory, Testimonial, PrincipalMessage, Alumni } from './database.js';
+import { Notice, CalendarEvent, ContactMessage, Admin, Service, GalleryImage, GalleryCategory, Testimonial, PrincipalMessage, Alumni, Milestone } from './database.js';
 
 dotenv.config();
 
@@ -650,6 +650,78 @@ app.delete('/api/alumni/:id', async (req, res) => {
   } catch (err) {
     console.error('Error deleting alumni:', err.message);
     res.status(500).json({ error: 'Database error deleting alumni' });
+  }
+});
+
+// --- MILESTONES TIMELINE ENDPOINTS ---
+app.get('/api/milestones', async (req, res) => {
+  try {
+    const list = await Milestone.find().sort({ year: 1 });
+    res.json(list.map(item => ({
+      id: item._id,
+      year: item.year,
+      title: item.title,
+      desc: item.desc
+    })));
+  } catch (err) {
+    console.error('Error fetching milestones:', err.message);
+    res.status(500).json({ error: 'Database error fetching milestones' });
+  }
+});
+
+app.post('/api/milestones', async (req, res) => {
+  const { year, title, desc } = req.body;
+  if (!year || !title || !desc) {
+    return res.status(400).json({ error: 'All fields (year, title, desc) are required.' });
+  }
+  try {
+    const fresh = new Milestone({ year, title, desc });
+    const saved = await fresh.save();
+    res.status(201).json({
+      id: saved._id,
+      year: saved.year,
+      title: saved.title,
+      desc: saved.desc
+    });
+  } catch (err) {
+    console.error('Error creating milestone:', err.message);
+    res.status(500).json({ error: 'Database error creating milestone' });
+  }
+});
+
+app.put('/api/milestones/:id', async (req, res) => {
+  const { year, title, desc } = req.body;
+  try {
+    const updated = await Milestone.findByIdAndUpdate(
+      req.params.id,
+      { year, title, desc },
+      { new: true }
+    );
+    if (!updated) {
+      return res.status(404).json({ error: 'Milestone not found.' });
+    }
+    res.json({
+      id: updated._id,
+      year: updated.year,
+      title: updated.title,
+      desc: updated.desc
+    });
+  } catch (err) {
+    console.error('Error updating milestone:', err.message);
+    res.status(500).json({ error: 'Database error updating milestone' });
+  }
+});
+
+app.delete('/api/milestones/:id', async (req, res) => {
+  try {
+    const deleted = await Milestone.findByIdAndDelete(req.params.id);
+    if (!deleted) {
+      return res.status(404).json({ error: 'Milestone not found.' });
+    }
+    res.json({ success: true, message: 'Milestone deleted successfully' });
+  } catch (err) {
+    console.error('Error deleting milestone:', err.message);
+    res.status(500).json({ error: 'Database error deleting milestone' });
   }
 });
 

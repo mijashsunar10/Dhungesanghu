@@ -63,6 +63,10 @@ import {
   createAlumni,
   updateAlumni,
   deleteAlumni,
+  getMilestones,
+  createMilestone,
+  updateMilestone,
+  deleteMilestone,
   type Notice,
   type CalendarEvent,
   type ContactMessage,
@@ -71,12 +75,13 @@ import {
   type GalleryCategory,
   type Testimonial,
   type PrincipalMessageData,
-  type Alumni
+  type Alumni,
+  type Milestone
 } from '../api';
 
 export const AdminDashboard: React.FC = () => {
   const navigate = useNavigate();
-  const [activeTab, setActiveTab] = useState<'overview' | 'notices' | 'calendar' | 'inbox' | 'services' | 'gallery' | 'testimonials' | 'principal' | 'alumni'>('overview');
+  const [activeTab, setActiveTab] = useState<'overview' | 'notices' | 'calendar' | 'inbox' | 'services' | 'gallery' | 'testimonials' | 'principal' | 'alumni' | 'milestones'>('overview');
   const [adminUser, setAdminUser] = useState('Admin');
   
   // Data States
@@ -88,6 +93,7 @@ export const AdminDashboard: React.FC = () => {
   const [galleryCategories, setGalleryCategories] = useState<GalleryCategory[]>([]);
   const [testimonials, setTestimonials] = useState<Testimonial[]>([]);
   const [alumni, setAlumni] = useState<Alumni[]>([]);
+  const [milestones, setMilestones] = useState<Milestone[]>([]);
   const [principalData, setPrincipalData] = useState<PrincipalMessageData>({
     name: '',
     title: '',
@@ -147,6 +153,15 @@ export const AdminDashboard: React.FC = () => {
     image: ''
   });
 
+  // Milestones Modals & States
+  const [showMilestoneModal, setShowMilestoneModal] = useState(false);
+  const [editingMilestoneId, setEditingMilestoneId] = useState<string | null>(null);
+  const [newMilestone, setNewMilestone] = useState({
+    year: '',
+    title: '',
+    desc: ''
+  });
+
   // New Form Data states
   const [newNotice, setNewNotice] = useState({
     title: '',
@@ -204,7 +219,7 @@ export const AdminDashboard: React.FC = () => {
     try {
       setLoading(true);
       setError(null);
-      const [nList, eList, mList, sList, gList, gcList, tList, pMsg, aList] = await Promise.all([
+      const [nList, eList, mList, sList, gList, gcList, tList, pMsg, aList, milList] = await Promise.all([
         getNotices(),
         getCalendarEvents(),
         getContactMessages(),
@@ -213,7 +228,8 @@ export const AdminDashboard: React.FC = () => {
         getGalleryCategories(),
         getTestimonials(),
         getPrincipalMessage(),
-        getAlumni()
+        getAlumni(),
+        getMilestones()
       ]);
       setNotices(nList);
       setEvents(eList);
@@ -224,6 +240,7 @@ export const AdminDashboard: React.FC = () => {
       setTestimonials(tList);
       setPrincipalData(pMsg);
       setAlumni(aList);
+      setMilestones(milList);
     } catch (err: any) {
       console.error('Error fetching admin data:', err);
       setError('Could not load data. Ensure the database server is running.');
@@ -757,6 +774,58 @@ export const AdminDashboard: React.FC = () => {
     reader.readAsDataURL(file);
   };
 
+  // MILESTONE TIMELINE HANDLERS
+  const handleCreateMilestoneSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newMilestone.year.trim() || !newMilestone.title.trim() || !newMilestone.desc.trim()) {
+      alert('All fields are required.');
+      return;
+    }
+
+    try {
+      setIsSubmitting(true);
+      if (editingMilestoneId) {
+        const updated = await updateMilestone(editingMilestoneId, newMilestone);
+        setMilestones(milestones.map(item => item.id === editingMilestoneId ? updated : item));
+        triggerSuccess('Milestone updated successfully.');
+      } else {
+        const created = await createMilestone(newMilestone);
+        setMilestones([...milestones, created]);
+        triggerSuccess('New milestone added successfully.');
+      }
+      setShowMilestoneModal(false);
+      setEditingMilestoneId(null);
+      setNewMilestone({ year: '', title: '', desc: '' });
+    } catch (err: any) {
+      console.error(err);
+      alert('Error saving milestone.');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleEditMilestone = (mil: Milestone) => {
+    setEditingMilestoneId(mil.id);
+    setNewMilestone({
+      year: mil.year,
+      title: mil.title,
+      desc: mil.desc
+    });
+    setShowMilestoneModal(true);
+  };
+
+  const handleDeleteMilestone = async (id: string) => {
+    if (!window.confirm('Are you sure you want to delete this milestone?')) return;
+    try {
+      await deleteMilestone(id);
+      setMilestones(milestones.filter(item => item.id !== id));
+      triggerSuccess('Milestone deleted successfully.');
+    } catch (err) {
+      console.error(err);
+      alert('Error deleting milestone.');
+    }
+  };
+
   return (
     <div className="min-h-screen bg-slate-50 flex font-sans text-slate-800 relative overflow-hidden">
       
@@ -938,6 +1007,23 @@ export const AdminDashboard: React.FC = () => {
                   {alumni.length}
                 </span>
               </button>
+
+              <button
+                onClick={() => { setActiveTab('milestones'); setIsMobileSidebarOpen(false); }}
+                className={`w-full flex items-center justify-between px-4 py-3 rounded-xl font-bold text-xs sm:text-sm transition-all cursor-pointer text-left ${
+                  activeTab === 'milestones'
+                    ? 'bg-[#652d90] text-white shadow-md shadow-purple-900/30'
+                    : 'hover:bg-slate-800 hover:text-white text-slate-400'
+                }`}
+              >
+                <span className="flex items-center gap-3">
+                  <Clock className="h-4.5 w-4.5" />
+                  Milestones Timeline
+                </span>
+                <span className="bg-slate-800 text-slate-300 text-[10px] font-extrabold px-2 py-0.5 rounded-full">
+                  {milestones.length}
+                </span>
+              </button>
             </nav>
           </div>
 
@@ -949,7 +1035,7 @@ export const AdminDashboard: React.FC = () => {
                 { name: 'Home Hero Slides', icon: Sparkles, status: 'Planned' },
                 { name: 'Key Stats Counter', icon: BarChart3, status: 'Planned' },
                 { name: 'Alumni Success Network', icon: Award, status: 'Active' },
-                { name: 'Milestones Timeline', icon: Clock, status: 'Planned' },
+                { name: 'Milestones Timeline', icon: Clock, status: 'Active' },
                 { name: 'School Rules & Policies', icon: Shield, status: 'Planned' },
                 { name: 'Academic Programs', icon: BookOpen, status: 'Planned' },
                 { name: 'Admission Journey Steps', icon: FileText, status: 'Planned' },
@@ -1068,7 +1154,7 @@ export const AdminDashboard: React.FC = () => {
                 <div className="flex flex-col gap-6">
                   
                   {/* Stats Grid */}
-                  <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-7 gap-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-8 gap-4">
                     {/* Card 1 */}
                     <div className="bg-white border border-slate-200/80 rounded-2xl p-5 shadow-sm text-left flex items-center gap-4 hover:shadow-md transition-all">
                       <div className="h-12 w-12 bg-purple-50 text-[#652d90] rounded-xl flex items-center justify-center shrink-0">
@@ -1158,6 +1244,21 @@ export const AdminDashboard: React.FC = () => {
                         <p className="text-[10px] text-slate-400 font-medium mt-1">Success Network</p>
                       </div>
                     </div>
+
+                    {/* Card 8 */}
+                    <div 
+                      onClick={() => setActiveTab('milestones')}
+                      className="bg-white border border-slate-200/80 rounded-2xl p-5 shadow-sm text-left flex items-center gap-4 hover:shadow-md transition-all cursor-pointer"
+                    >
+                      <div className="h-12 w-12 bg-amber-50 text-[#d97706] rounded-xl flex items-center justify-center shrink-0">
+                        <Clock className="h-6 w-6" />
+                      </div>
+                      <div>
+                        <p className="text-[10px] uppercase font-bold text-slate-400 tracking-wider">Milestones</p>
+                        <h4 className="text-2xl font-black text-slate-800 leading-none mt-1">{milestones.length}</h4>
+                        <p className="text-[10px] text-slate-400 font-medium mt-1">Journey Events</p>
+                      </div>
+                    </div>
                   </div>
 
                   {/* Analytical Charts */}
@@ -1170,7 +1271,7 @@ export const AdminDashboard: React.FC = () => {
                       </div>
                       <div className="h-64 flex flex-col justify-center items-center">
                         {/* Responsive SVG Chart */}
-                        <svg viewBox="0 0 400 280" className="w-full h-full max-h-[260px]">
+                        <svg viewBox="0 0 400 320" className="w-full h-full max-h-[300px]">
                           {/* Define gradients for dynamic styling */}
                           <defs>
                             <linearGradient id="purpleGrad" x1="0" y1="0" x2="1" y2="0">
@@ -1208,7 +1309,8 @@ export const AdminDashboard: React.FC = () => {
                               { label: 'Inbox', count: messages.length, grad: 'url(#roseGrad)' },
                               { label: 'Gallery', count: galleryImages.length, grad: 'url(#amberGrad)' },
                               { label: 'Reviews', count: testimonials.length, grad: 'url(#indigoGrad)' },
-                              { label: 'Alumni', count: alumni.length, grad: 'url(#purpleGrad)' }
+                              { label: 'Alumni', count: alumni.length, grad: 'url(#purpleGrad)' },
+                              { label: 'Milestones', count: milestones.length, grad: 'url(#amberGrad)' }
                             ];
                             const maxCount = Math.max(...items.map(i => i.count), 5);
                             return items.map((item, idx) => {
@@ -1319,6 +1421,12 @@ export const AdminDashboard: React.FC = () => {
                             className="w-full flex items-center gap-3 px-4 py-2.5 bg-purple-50 text-[#652d90] hover:bg-purple-100 rounded-xl text-xs font-bold transition-all border border-purple-200/20 text-left cursor-pointer"
                           >
                             <Award className="h-4 w-4" /> Add Alumni Graduate
+                          </button>
+                          <button 
+                            onClick={() => { setActiveTab('milestones'); setShowMilestoneModal(true); }}
+                            className="w-full flex items-center gap-3 px-4 py-2.5 bg-amber-50 text-[#d97706] hover:bg-amber-100 rounded-xl text-xs font-bold transition-all border border-amber-200/20 text-left cursor-pointer"
+                          >
+                            <Clock className="h-4 w-4" /> Add Journey Milestone
                           </button>
                         </div>
                       </div>
@@ -2145,6 +2253,74 @@ export const AdminDashboard: React.FC = () => {
                             <Trash2 className="h-3.5 w-3.5" /> Delete
                           </button>
                         </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+              </div>
+            )}
+
+            {activeTab === 'milestones' && (
+              <div className="flex flex-col gap-6">
+                
+                {/* Header Actions */}
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between bg-white border border-slate-200/80 rounded-3xl p-6 gap-4 shadow-sm text-left">
+                  <div>
+                    <h2 className="text-xl font-black text-slate-800 font-serif">Milestones Timeline</h2>
+                    <p className="text-slate-400 text-xs font-light">Manage and update the historical journey steps of Dhungesanghu Boarding School</p>
+                  </div>
+                  <button 
+                    onClick={() => {
+                      setEditingMilestoneId(null);
+                      setNewMilestone({ year: '', title: '', desc: '' });
+                      setShowMilestoneModal(true);
+                    }}
+                    className="px-5 py-2.5 bg-[#652d90] hover:bg-[#4b1f6b] text-white rounded-xl text-xs font-bold transition-all shadow-md active:scale-95 flex items-center gap-1.5 self-start sm:self-auto cursor-pointer"
+                  >
+                    <Plus className="h-4.5 w-4.5" /> Add Milestone
+                  </button>
+                </div>
+
+                {/* Timeline display */}
+                {milestones.length === 0 ? (
+                  <div className="bg-white border border-slate-200/80 rounded-3xl p-16 text-center shadow-sm">
+                    <Clock className="h-12 w-12 text-slate-300 mx-auto mb-3 animate-pulse" />
+                    <h3 className="text-slate-700 font-bold text-sm">No milestones found</h3>
+                    <p className="text-slate-400 text-xs font-light mt-1 max-w-sm mx-auto">Add milestones to showcase the school's growth timeline on the About Us page.</p>
+                  </div>
+                ) : (
+                  <div className="bg-white border border-slate-200/80 rounded-3xl p-6 sm:p-8 shadow-sm flex flex-col gap-8 relative text-left">
+                    <div className="absolute left-10 top-8 bottom-8 w-0.5 bg-purple-100" />
+
+                    {milestones.map((mil) => (
+                      <div key={mil.id} className="relative pl-12 flex flex-col sm:flex-row sm:items-start justify-between gap-4 group">
+                        
+                        {/* Bullet Circle */}
+                        <div className="absolute left-2.5 top-1.5 w-5 h-5 rounded-full bg-white border-4 border-[#652d90] shadow-sm z-10 transition-transform group-hover:scale-110" />
+
+                        <div className="flex-1 flex flex-col gap-1.5">
+                          <span className="text-sm font-black text-[#d97706] font-mono leading-none">{mil.year}</span>
+                          <h4 className="text-base font-bold text-slate-800 leading-snug">{mil.title}</h4>
+                          <p className="text-slate-500 font-light text-xs sm:text-sm leading-relaxed max-w-3xl">{mil.desc}</p>
+                        </div>
+
+                        {/* Actions */}
+                        <div className="flex gap-2 shrink-0 self-start sm:self-center mt-2 sm:mt-0">
+                          <button
+                            onClick={() => handleEditMilestone(mil)}
+                            className="px-2.5 py-1.5 bg-purple-50 hover:bg-purple-100 text-[#652d90] rounded-lg text-[11px] font-bold transition-all border border-purple-200/20 cursor-pointer flex items-center gap-1"
+                          >
+                            <Edit className="h-3.5 w-3.5" /> Edit
+                          </button>
+                          <button
+                            onClick={() => handleDeleteMilestone(mil.id)}
+                            className="px-2.5 py-1.5 bg-rose-50 hover:bg-rose-100 text-rose-600 rounded-lg text-[11px] font-bold transition-all border border-rose-200/20 cursor-pointer flex items-center gap-1"
+                          >
+                            <Trash2 className="h-3.5 w-3.5" /> Delete
+                          </button>
+                        </div>
+
                       </div>
                     ))}
                   </div>
@@ -3226,6 +3402,104 @@ export const AdminDashboard: React.FC = () => {
                       </>
                     ) : (
                       editingAlumniId ? 'Save Changes' : 'Add Graduate'
+                    )}
+                  </button>
+                </div>
+
+              </form>
+            </motion.div>
+          </div>
+        )}
+
+        {/* 9. MILESTONE TIMELINE MODAL FORM */}
+        {showMilestoneModal && (
+          <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex justify-center items-center p-4">
+            <motion.div 
+              initial={{ scale: 0.95, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.95, opacity: 0 }}
+              className="bg-white border border-slate-200 shadow-2xl rounded-3xl w-full max-w-lg p-6 sm:p-7 relative z-50 text-left max-h-[90vh] overflow-y-auto"
+            >
+              <div className="flex justify-between items-center border-b border-slate-100 pb-3 mb-5">
+                <h3 className="text-lg font-black text-slate-800 font-serif">{editingMilestoneId ? 'Edit Journey Milestone' : 'Add Journey Milestone'}</h3>
+                <button 
+                  onClick={() => {
+                    setShowMilestoneModal(false);
+                    setEditingMilestoneId(null);
+                    setNewMilestone({ year: '', title: '', desc: '' });
+                  }} 
+                  className="p-1 hover:bg-slate-100 rounded-lg cursor-pointer"
+                >
+                  <X className="h-5 w-5 text-slate-400" />
+                </button>
+              </div>
+
+              <form onSubmit={handleCreateMilestoneSubmit} className="flex flex-col gap-4">
+                
+                {/* Year */}
+                <div className="flex flex-col gap-1">
+                  <label className="text-xs font-bold text-slate-600 uppercase tracking-wider pl-0.5">Milestone Year</label>
+                  <input 
+                    type="text" 
+                    placeholder="e.g. 2006" 
+                    value={newMilestone.year}
+                    onChange={e => setNewMilestone({...newMilestone, year: e.target.value})}
+                    required
+                    className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 focus:border-[#652d90] rounded-xl text-xs sm:text-sm font-light focus:outline-none transition-all duration-300"
+                  />
+                </div>
+
+                {/* Title */}
+                <div className="flex flex-col gap-1">
+                  <label className="text-xs font-bold text-slate-600 uppercase tracking-wider pl-0.5">Milestone Title</label>
+                  <input 
+                    type="text" 
+                    placeholder="e.g. Foundation of School" 
+                    value={newMilestone.title}
+                    onChange={e => setNewMilestone({...newMilestone, title: e.target.value})}
+                    required
+                    className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 focus:border-[#652d90] rounded-xl text-xs sm:text-sm font-light focus:outline-none transition-all duration-300"
+                  />
+                </div>
+
+                {/* Description */}
+                <div className="flex flex-col gap-1">
+                  <label className="text-xs font-bold text-slate-600 uppercase tracking-wider pl-0.5">Milestone Description</label>
+                  <textarea 
+                    rows={4} 
+                    placeholder="Describe this journey event or milestone achievement in detail..." 
+                    value={newMilestone.desc}
+                    onChange={e => setNewMilestone({...newMilestone, desc: e.target.value})}
+                    required
+                    className="w-full px-4 py-3 bg-slate-50 border border-slate-200 focus:border-[#652d90] rounded-xl text-xs sm:text-sm font-light resize-none focus:outline-none transition-all duration-300"
+                  />
+                </div>
+
+                {/* Buttons */}
+                <div className="flex gap-3 justify-end mt-2">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setShowMilestoneModal(false);
+                      setEditingMilestoneId(null);
+                      setNewMilestone({ year: '', title: '', desc: '' });
+                    }}
+                    className="px-5 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-600 rounded-xl text-xs sm:text-sm font-bold transition-all cursor-pointer"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={isSubmitting}
+                    className="px-6 py-2.5 bg-[#652d90] hover:bg-[#4b1f6b] disabled:bg-slate-300 text-white rounded-xl text-xs sm:text-sm font-bold shadow-md transition-all cursor-pointer flex items-center gap-1.5"
+                  >
+                    {isSubmitting ? (
+                      <>
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                        Saving...
+                      </>
+                    ) : (
+                      editingMilestoneId ? 'Save Changes' : 'Add Milestone'
                     )}
                   </button>
                 </div>

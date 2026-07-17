@@ -5,7 +5,7 @@ import { ChevronLeft, ChevronRight, GraduationCap } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ImageWithFallback } from '../components/ImageWithFallback';
 import { PageBanner } from '../components/PageBanner';
-import { getAlumni } from '../api';
+import { getAlumni, getMilestones } from '../api';
 
 interface TimelineEvent {
   year: string;
@@ -57,6 +57,7 @@ export const AboutUs: React.FC = () => {
   const [activeValue, setActiveValue] = useState<'wisdom' | 'excellence' | 'competency'>('wisdom');
   const [activeAlumniIdx, setActiveAlumniIdx] = useState<number>(0);
   const [alumni, setAlumni] = useState<Alumni[]>([]);
+  const [milestones, setMilestones] = useState<TimelineEvent[]>([]);
 
   useEffect(() => {
     getAlumni()
@@ -71,6 +72,19 @@ export const AboutUs: React.FC = () => {
         console.warn("Failed to fetch alumni, fallback to static:", err);
         setAlumni(staticAlumniList);
       });
+
+    getMilestones()
+      .then(list => {
+        if (list && list.length > 0) {
+          setMilestones(list);
+        } else {
+          setMilestones(staticMilestoneEvents);
+        }
+      })
+      .catch(err => {
+        console.warn("Failed to fetch milestones, fallback to static:", err);
+        setMilestones(staticMilestoneEvents);
+      });
   }, []);
 
   const nextAlumni = () => {
@@ -81,28 +95,28 @@ export const AboutUs: React.FC = () => {
     setActiveAlumniIdx(prev => (prev === 0 ? alumni.length - 1 : prev - 1));
   };
 
-  const timelineEvents: TimelineEvent[] = [
-    {
-      year: "2006",
-      title: "Foundation of School",
-      desc: "Dhungesanghu Boarding School was established in Pokhara-17, Mahatgaunda, with primary classes and a commitment to excellence."
-    },
-    {
-      year: "2012",
-      title: "Secondary Upgrade & Labs",
-      desc: "Expanded classrooms to include secondary grades up to SEE and opened custom-designed physics, chemistry, and biology labs."
-    },
-    {
-      year: "2018",
-      title: "100% SEE Passing Rate",
-      desc: "Achieved the milestone of 100% passing rates in SEE with multiple students obtaining distinction ranks."
-    },
-    {
-      year: "2022",
-      title: "Veda Digital Integration",
-      desc: "Partnered with Veda to launch the school smartphone apps for real-time exams, bulletins, and digital homework updates."
-    }
-  ];
+const staticMilestoneEvents: TimelineEvent[] = [
+  {
+    year: "2006",
+    title: "Foundation of School",
+    desc: "Dhungesanghu Boarding School was established in Pokhara-17, Mahatgaunda, with primary classes and a commitment to excellence."
+  },
+  {
+    year: "2012",
+    title: "Secondary Upgrade & Labs",
+    desc: "Expanded classrooms to include secondary grades up to SEE and opened custom-designed physics, chemistry, and biology labs."
+  },
+  {
+    year: "2018",
+    title: "100% SEE Passing Rate",
+    desc: "Achieved the milestone of 100% passing rates in SEE with multiple students obtaining distinction ranks."
+  },
+  {
+    year: "2022",
+    title: "Veda Digital Integration",
+    desc: "Partnered with Veda to launch the school smartphone apps for real-time exams, bulletins, and digital homework updates."
+  }
+];
 
   return (
     <div className="w-full flex flex-col font-sans bg-slate-50 min-h-screen">
@@ -224,7 +238,7 @@ export const AboutUs: React.FC = () => {
           </div>
 
           <div className="flex flex-col gap-6 relative pl-6 border-l-2 border-purple-200 ml-4">
-            {timelineEvents.map((ev, i) => (
+            {milestones.map((ev, i) => (
               <div key={i} className="relative text-left flex flex-col gap-1">
                 {/* Dot */}
                 <div className="absolute left-[-31px] top-1.5 w-4 h-4 rounded-full bg-[#652d90] border-4 border-white shadow-sm" />

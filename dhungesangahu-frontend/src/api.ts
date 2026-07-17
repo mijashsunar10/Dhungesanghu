@@ -512,3 +512,62 @@ export async function deleteAlumni(id: string): Promise<void> {
   }
 }
 
+export interface Milestone {
+  id: string;
+  year: string;
+  title: string;
+  desc: string;
+}
+
+export async function getMilestones(): Promise<Milestone[]> {
+  const res = await fetch(`${API_URL}/milestones`);
+  if (!res.ok) {
+    throw new Error('Failed to fetch milestones');
+  }
+  const data = await res.json();
+  return data.map((item: any) => ({
+    ...item,
+    id: item._id || item.id
+  }));
+}
+
+export async function createMilestone(milestone: Omit<Milestone, 'id'>): Promise<Milestone> {
+  const res = await fetch(`${API_URL}/milestones`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(milestone),
+  });
+  if (!res.ok) {
+    throw new Error('Failed to create milestone');
+  }
+  const data = await res.json();
+  return { ...data, id: data._id || data.id };
+}
+
+export async function updateMilestone(id: string, milestone: Omit<Milestone, 'id'>): Promise<Milestone> {
+  const res = await fetch(`${API_URL}/milestones/${id}`, {
+    method: 'PUT',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(milestone),
+  });
+  if (!res.ok) {
+    throw new Error('Failed to update milestone');
+  }
+  const data = await res.json();
+  return { ...data, id: data._id || data.id };
+}
+
+export async function deleteMilestone(id: string): Promise<void> {
+  const res = await fetch(`${API_URL}/milestones/${id}`, {
+    method: 'DELETE',
+  });
+  if (!res.ok) {
+    throw new Error('Failed to delete milestone');
+  }
+}
+
+
