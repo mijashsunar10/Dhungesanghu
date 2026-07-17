@@ -2,7 +2,7 @@ import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
 import './database.js'; // Imports connection & seeds database
-import { Notice, CalendarEvent, ContactMessage, Admin, Service, GalleryImage, GalleryCategory, Testimonial, PrincipalMessage, Alumni, Milestone, Rule, Program } from './database.js';
+import { Notice, CalendarEvent, ContactMessage, Admin, Service, GalleryImage, GalleryCategory, Testimonial, PrincipalMessage, Alumni, Milestone, Rule, Program, AdmissionStep } from './database.js';
 
 dotenv.config();
 
@@ -901,6 +901,99 @@ app.delete('/api/programs/:id', async (req, res) => {
   } catch (err) {
     console.error('Error deleting program:', err.message);
     res.status(500).json({ error: 'Database error deleting program' });
+  }
+});
+
+// --- ADMISSION STEPS ENDPOINTS ---
+app.get('/api/admission-steps', async (req, res) => {
+  try {
+    const list = await AdmissionStep.find().sort({ order: 1 });
+    res.json(list.map(item => ({
+      id: item._id,
+      num: item.num,
+      title: item.title,
+      desc: item.desc,
+      icon: item.icon,
+      details: item.details,
+      order: item.order
+    })));
+  } catch (err) {
+    console.error('Error fetching admission steps:', err.message);
+    res.status(500).json({ error: 'Database error fetching admission steps' });
+  }
+});
+
+app.post('/api/admission-steps', async (req, res) => {
+  const { num, title, desc, icon, details, order } = req.body;
+  if (!num || !title || !desc) {
+    return res.status(400).json({ error: 'Missing required admission step fields.' });
+  }
+  try {
+    let stepOrder = order;
+    if (stepOrder === undefined) {
+      const maxStep = await AdmissionStep.findOne().sort({ order: -1 });
+      stepOrder = maxStep ? maxStep.order + 1 : 1;
+    }
+    const fresh = new AdmissionStep({
+      num,
+      title,
+      desc,
+      icon: icon || 'ClipboardList',
+      details: details || [],
+      order: stepOrder
+    });
+    const saved = await fresh.save();
+    res.status(201).json({
+      id: saved._id,
+      num: saved.num,
+      title: saved.title,
+      desc: saved.desc,
+      icon: saved.icon,
+      details: saved.details,
+      order: saved.order
+    });
+  } catch (err) {
+    console.error('Error creating admission step:', err.message);
+    res.status(500).json({ error: 'Database error creating admission step' });
+  }
+});
+
+app.put('/api/admission-steps/:id', async (req, res) => {
+  const { num, title, desc, icon, details, order } = req.body;
+  try {
+    const updated = await AdmissionStep.findByIdAndUpdate(
+      req.params.id,
+      { num, title, desc, icon, details, order },
+      { new: true }
+    );
+    if (!updated) {
+      return res.status(404).json({ error: 'Admission step not found.' });
+    }
+    res.json({
+      id: updated._id,
+      num: updated.num,
+      title: updated.title,
+      desc: updated.desc,
+      icon: updated.icon,
+      details: updated.details,
+      order: updated.order
+    });
+  } catch (err) {
+    console.error('Error updating admission step:', err.message);
+    res.status(500).json({ error: 'Database error updating admission step' });
+  }
+});
+
+app.delete('/api/admission-steps/:id', async (req, res) => {
+  try {
+    const deleted = await AdmissionStep.findByIdAndDelete(req.params.id);
+    if (!deleted) {
+      return res.status(404).json({ error: 'Admission step not found.' });
+    }
+    res.json({ success: true, message: 'Admission step deleted successfully' });
+  } catch (err) {
+    console.error('Error deleting admission step:', err.message);
+    res.status(500).json({ error: 'Database error deleting admission step' });
   }
 });
 

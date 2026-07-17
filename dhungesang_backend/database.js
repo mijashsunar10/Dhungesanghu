@@ -165,6 +165,19 @@ const ProgramSchema = new mongoose.Schema({
 
 export const Program = mongoose.model('Program', ProgramSchema);
 
+// 13. Admission Step Schema & Model
+const AdmissionStepSchema = new mongoose.Schema({
+  num: { type: String, required: true },
+  title: { type: String, required: true },
+  desc: { type: String, required: true },
+  icon: { type: String, default: 'ClipboardList' }, // ClipboardList, FileCheck, FileSpreadsheet, Compass
+  details: [{ type: String }],
+  order: { type: Number, default: 0 }
+});
+
+export const AdmissionStep = mongoose.model('AdmissionStep', AdmissionStepSchema);
+
+
 
 
 
@@ -568,6 +581,67 @@ async function seedDatabase() {
       ];
       await Program.insertMany(mockPrograms);
       console.log('Seeded default academic programs to MongoDB.');
+    }
+
+    // Seed Admission Steps
+    const stepCount = await AdmissionStep.countDocuments();
+    if (stepCount === 0) {
+      const mockSteps = [
+        {
+          num: "01",
+          title: "Online Registration",
+          desc: "Fill and submit the online application form to register your child's inquiry.",
+          icon: "ClipboardList",
+          details: [
+            "Provide accurate candidate and guardian information.",
+            "Choose appropriate grade level and academic term.",
+            "Double-check contact numbers and emails before submission.",
+            "Keep the generated registration reference number safe."
+          ],
+          order: 1
+        },
+        {
+          num: "02",
+          title: "Document Submission",
+          desc: "Provide necessary educational certificates, photos, and birth registration.",
+          icon: "FileCheck",
+          details: [
+            "Photocopy of birth certificate.",
+            "Transfer certificate and character certificate from prior school.",
+            "Marksheet/Report card of the last terminal/final examination.",
+            "Three recent passport-sized color photographs of the student."
+          ],
+          order: 2
+        },
+        {
+          num: "03",
+          title: "Entrance Assessment",
+          desc: "Mandatory entrance examination covering English, Mathematics, Science, and Nepali.",
+          icon: "FileSpreadsheet",
+          details: [
+            "Entrance exams are compulsory for all grades starting from Prep-Class to Grade 9.",
+            "Questions check understanding of basic concepts from the preceding grade.",
+            "Exam duration is approximately 2 hours.",
+            "Results are announced within 2 days of testing."
+          ],
+          order: 3
+        },
+        {
+          num: "04",
+          title: "Interview & Enrollment",
+          desc: "A brief student and parent interaction with the Principal followed by fee settlement.",
+          icon: "Compass",
+          details: [
+            "Both parents/guardians are recommended to accompany the child during interview.",
+            "Review and sign the school discipline agreement forms.",
+            "Deposit admission, security, and first terminal fees at the accountant desk.",
+            "Collect textbooks list, notebooks list, and custom uniforms details."
+          ],
+          order: 4
+        }
+      ];
+      await AdmissionStep.insertMany(mockSteps);
+      console.log('Seeded default admission journey steps to MongoDB.');
     }
   } catch (err) {
     console.error('Error seeding MongoDB Atlas:', err.message);

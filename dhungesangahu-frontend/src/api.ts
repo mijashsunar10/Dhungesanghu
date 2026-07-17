@@ -691,5 +691,68 @@ export async function deleteProgram(id: string): Promise<void> {
   }
 }
 
+// ADMISSION STEPS
+export interface AdmissionStep {
+  id: string;
+  num: string;
+  title: string;
+  desc: string;
+  icon: string;
+  details: string[];
+  order: number;
+}
+
+export async function getAdmissionSteps(): Promise<AdmissionStep[]> {
+  const res = await fetch(`${API_URL}/admission-steps`);
+  if (!res.ok) {
+    throw new Error('Failed to fetch admission steps');
+  }
+  const data = await res.json();
+  return data.map((item: any) => ({
+    ...item,
+    id: item._id || item.id
+  }));
+}
+
+export async function createAdmissionStep(step: Omit<AdmissionStep, 'id'>): Promise<AdmissionStep> {
+  const res = await fetch(`${API_URL}/admission-steps`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(step),
+  });
+  if (!res.ok) {
+    throw new Error('Failed to create admission step');
+  }
+  const data = await res.json();
+  return { ...data, id: data._id || data.id };
+}
+
+export async function updateAdmissionStep(id: string, step: Omit<AdmissionStep, 'id'>): Promise<AdmissionStep> {
+  const res = await fetch(`${API_URL}/admission-steps/${id}`, {
+    method: 'PUT',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(step),
+  });
+  if (!res.ok) {
+    throw new Error('Failed to update admission step');
+  }
+  const data = await res.json();
+  return { ...data, id: data._id || data.id };
+}
+
+export async function deleteAdmissionStep(id: string): Promise<void> {
+  const res = await fetch(`${API_URL}/admission-steps/${id}`, {
+    method: 'DELETE',
+  });
+  if (!res.ok) {
+    throw new Error('Failed to delete admission step');
+  }
+}
+
+
 
 

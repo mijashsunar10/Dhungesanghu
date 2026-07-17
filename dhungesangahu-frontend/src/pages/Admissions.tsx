@@ -1,13 +1,14 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { ClipboardList, FileCheck, FileSpreadsheet, Compass, ArrowRight, ChevronDown, ChevronUp, Download, Calculator, Coins } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { PageBanner } from '../components/PageBanner';
+import { getAdmissionSteps } from '../api';
 
 interface Step {
   num: string;
   title: string;
   desc: string;
-  icon: React.ReactNode;
+  icon: string;
   details: string[];
 }
 
@@ -26,12 +27,12 @@ export const Admissions: React.FC = () => {
   const [transportRoute, setTransportRoute] = useState<string>('none');
   const [selectedClubs, setSelectedClubs] = useState<string[]>([]);
 
-  const admissionSteps: Step[] = [
+  const [admissionSteps, setAdmissionSteps] = useState<Step[]>([
     {
       num: "01",
       title: "Online Registration",
       desc: "Fill and submit the online application form to register your child's inquiry.",
-      icon: <ClipboardList className="h-6 w-6 text-[#652d90]" />,
+      icon: "ClipboardList",
       details: [
         "Provide accurate candidate and guardian information.",
         "Choose appropriate grade level and academic term.",
@@ -43,7 +44,7 @@ export const Admissions: React.FC = () => {
       num: "02",
       title: "Document Submission",
       desc: "Provide necessary educational certificates, photos, and birth registration.",
-      icon: <FileCheck className="h-6 w-6 text-[#652d90]" />,
+      icon: "FileCheck",
       details: [
         "Photocopy of birth certificate.",
         "Transfer certificate and character certificate from prior school.",
@@ -55,7 +56,7 @@ export const Admissions: React.FC = () => {
       num: "03",
       title: "Entrance Assessment",
       desc: "Mandatory entrance examination covering English, Mathematics, Science, and Nepali.",
-      icon: <FileSpreadsheet className="h-6 w-6 text-[#652d90]" />,
+      icon: "FileSpreadsheet",
       details: [
         "Entrance exams are compulsory for all grades starting from Prep-Class to Grade 9.",
         "Questions check understanding of basic concepts from the preceding grade.",
@@ -67,7 +68,7 @@ export const Admissions: React.FC = () => {
       num: "04",
       title: "Interview & Enrollment",
       desc: "A brief student and parent interaction with the Principal followed by fee settlement.",
-      icon: <Compass className="h-6 w-6 text-[#652d90]" />,
+      icon: "Compass",
       details: [
         "Both parents/guardians are recommended to accompany the child during interview.",
         "Review and sign the school discipline agreement forms.",
@@ -75,7 +76,27 @@ export const Admissions: React.FC = () => {
         "Collect textbooks list, notebooks list, and custom uniforms details."
       ]
     }
-  ];
+  ]);
+
+  useEffect(() => {
+    getAdmissionSteps()
+      .then(data => {
+        if (data && data.length > 0) {
+          setAdmissionSteps(data.sort((a, b) => a.order - b.order));
+        }
+      })
+      .catch(err => console.error('Failed loading admission steps:', err));
+  }, []);
+
+  const renderStepIcon = (iconName: string) => {
+    switch (iconName) {
+      case 'ClipboardList': return <ClipboardList className="h-6 w-6 text-[#652d90]" />;
+      case 'FileCheck': return <FileCheck className="h-6 w-6 text-[#652d90]" />;
+      case 'FileSpreadsheet': return <FileSpreadsheet className="h-6 w-6 text-[#652d90]" />;
+      case 'Compass': return <Compass className="h-6 w-6 text-[#652d90]" />;
+      default: return <ClipboardList className="h-6 w-6 text-[#652d90]" />;
+    }
+  };
 
   const faqs: Faq[] = [
     {
@@ -213,39 +234,41 @@ export const Admissions: React.FC = () => {
             {/* Step Details Right Panel */}
             <div className="md:col-span-8 bg-white border border-slate-200 rounded-3xl p-6 sm:p-8 shadow-md text-left flex flex-col gap-5 relative min-h-[280px] overflow-hidden">
               <AnimatePresence mode="wait">
-                <motion.div
-                  key={activeStep}
-                  initial={{ opacity: 0, x: 20 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  exit={{ opacity: 0, x: -20 }}
-                  transition={{ duration: 0.25, ease: "easeInOut" }}
-                  className="flex flex-col gap-5 h-full w-full"
-                >
-                  <div className="flex items-center gap-3">
-                    <div className="p-3 bg-purple-100 rounded-xl shrink-0">
-                      {admissionSteps[activeStep].icon}
+                {admissionSteps[activeStep] && (
+                  <motion.div
+                    key={activeStep}
+                    initial={{ opacity: 0, x: 20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    exit={{ opacity: 0, x: -20 }}
+                    transition={{ duration: 0.25, ease: "easeInOut" }}
+                    className="flex flex-col gap-5 h-full w-full"
+                  >
+                    <div className="flex items-center gap-3">
+                      <div className="p-3 bg-purple-100 rounded-xl shrink-0">
+                        {renderStepIcon(admissionSteps[activeStep].icon)}
+                      </div>
+                      <h3 className="text-lg sm:text-xl font-bold text-slate-800">{admissionSteps[activeStep].title}</h3>
                     </div>
-                    <h3 className="text-lg sm:text-xl font-bold text-slate-800">{admissionSteps[activeStep].title}</h3>
-                  </div>
-                  
-                  <p className="text-slate-600 font-light text-sm sm:text-base leading-relaxed">
-                    {admissionSteps[activeStep].desc}
-                  </p>
+                    
+                    <p className="text-slate-600 font-light text-sm sm:text-base leading-relaxed">
+                      {admissionSteps[activeStep].desc}
+                    </p>
 
-                  <div className="h-[1px] bg-slate-100 w-full" />
+                    <div className="h-[1px] bg-slate-100 w-full" />
 
-                  <div className="flex flex-col gap-3">
-                    <h4 className="font-extrabold text-slate-700 text-xs sm:text-sm uppercase tracking-wider">Required Guidelines & Criteria:</h4>
-                    <ul className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-slate-500 font-light text-xs sm:text-sm">
-                      {admissionSteps[activeStep].details.map((detail, idx) => (
-                        <li key={idx} className="flex items-start gap-2.5">
-                          <div className="w-1.5 h-1.5 rounded-full bg-[#652d90] mt-2 shrink-0" />
-                          <span>{detail}</span>
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-                </motion.div>
+                    <div className="flex flex-col gap-3">
+                      <h4 className="font-extrabold text-slate-700 text-xs sm:text-sm uppercase tracking-wider">Required Guidelines & Criteria:</h4>
+                      <ul className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-slate-500 font-light text-xs sm:text-sm">
+                        {admissionSteps[activeStep].details.map((detail, idx) => (
+                          <li key={idx} className="flex items-start gap-2.5">
+                            <div className="w-1.5 h-1.5 rounded-full bg-[#652d90] mt-2 shrink-0" />
+                            <span>{detail}</span>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  </motion.div>
+                )}
               </AnimatePresence>
             </div>
           </div>
