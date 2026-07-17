@@ -59,6 +59,10 @@ import {
   deleteTestimonial,
   getPrincipalMessage,
   updatePrincipalMessage,
+  getAlumni,
+  createAlumni,
+  updateAlumni,
+  deleteAlumni,
   type Notice,
   type CalendarEvent,
   type ContactMessage,
@@ -66,12 +70,13 @@ import {
   type GalleryImage,
   type GalleryCategory,
   type Testimonial,
-  type PrincipalMessageData
+  type PrincipalMessageData,
+  type Alumni
 } from '../api';
 
 export const AdminDashboard: React.FC = () => {
   const navigate = useNavigate();
-  const [activeTab, setActiveTab] = useState<'overview' | 'notices' | 'calendar' | 'inbox' | 'services' | 'gallery' | 'testimonials' | 'principal'>('overview');
+  const [activeTab, setActiveTab] = useState<'overview' | 'notices' | 'calendar' | 'inbox' | 'services' | 'gallery' | 'testimonials' | 'principal' | 'alumni'>('overview');
   const [adminUser, setAdminUser] = useState('Admin');
   
   // Data States
@@ -82,6 +87,7 @@ export const AdminDashboard: React.FC = () => {
   const [galleryImages, setGalleryImages] = useState<GalleryImage[]>([]);
   const [galleryCategories, setGalleryCategories] = useState<GalleryCategory[]>([]);
   const [testimonials, setTestimonials] = useState<Testimonial[]>([]);
+  const [alumni, setAlumni] = useState<Alumni[]>([]);
   const [principalData, setPrincipalData] = useState<PrincipalMessageData>({
     name: '',
     title: '',
@@ -126,6 +132,19 @@ export const AdminDashboard: React.FC = () => {
     quote: '',
     parentName: '',
     parentRelation: ''
+  });
+
+  // Alumni Modals & States
+  const [showAlumniModal, setShowAlumniModal] = useState(false);
+  const [editingAlumniId, setEditingAlumniId] = useState<string | null>(null);
+  const [newAlumni, setNewAlumni] = useState({
+    name: '',
+    batch: '',
+    profession: '',
+    quote: '',
+    affiliation: '',
+    path: '',
+    image: ''
   });
 
   // New Form Data states
@@ -185,7 +204,7 @@ export const AdminDashboard: React.FC = () => {
     try {
       setLoading(true);
       setError(null);
-      const [nList, eList, mList, sList, gList, gcList, tList, pMsg] = await Promise.all([
+      const [nList, eList, mList, sList, gList, gcList, tList, pMsg, aList] = await Promise.all([
         getNotices(),
         getCalendarEvents(),
         getContactMessages(),
@@ -193,7 +212,8 @@ export const AdminDashboard: React.FC = () => {
         getGalleryImages(),
         getGalleryCategories(),
         getTestimonials(),
-        getPrincipalMessage()
+        getPrincipalMessage(),
+        getAlumni()
       ]);
       setNotices(nList);
       setEvents(eList);
@@ -203,6 +223,7 @@ export const AdminDashboard: React.FC = () => {
       setGalleryCategories(gcList);
       setTestimonials(tList);
       setPrincipalData(pMsg);
+      setAlumni(aList);
     } catch (err: any) {
       console.error('Error fetching admin data:', err);
       setError('Could not load data. Ensure the database server is running.');
@@ -659,6 +680,83 @@ export const AdminDashboard: React.FC = () => {
     reader.readAsDataURL(file);
   };
 
+  // ALUMNI HANDLERS
+  const handleCreateAlumniSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newAlumni.name.trim() || !newAlumni.batch.trim() || !newAlumni.profession.trim() || !newAlumni.quote.trim() || !newAlumni.affiliation.trim() || !newAlumni.path.trim()) {
+      alert('All fields are required.');
+      return;
+    }
+
+    try {
+      setIsSubmitting(true);
+      if (editingAlumniId) {
+        const updated = await updateAlumni(editingAlumniId, newAlumni);
+        setAlumni(alumni.map(item => item.id === editingAlumniId ? updated : item));
+        triggerSuccess('Alumni entry updated successfully.');
+      } else {
+        const created = await createAlumni(newAlumni);
+        setAlumni([...alumni, created]);
+        triggerSuccess('New alumni entry added successfully.');
+      }
+      setShowAlumniModal(false);
+      setEditingAlumniId(null);
+      setNewAlumni({ name: '', batch: '', profession: '', quote: '', affiliation: '', path: '', image: '' });
+    } catch (err: any) {
+      console.error(err);
+      alert('Error saving alumni entry.');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleEditAlumni = (al: Alumni) => {
+    setEditingAlumniId(al.id);
+    setNewAlumni({
+      name: al.name,
+      batch: al.batch,
+      profession: al.profession,
+      quote: al.quote,
+      affiliation: al.affiliation,
+      path: al.path,
+      image: al.image
+    });
+    setShowAlumniModal(true);
+  };
+
+  const handleDeleteAlumni = async (id: string) => {
+    if (!window.confirm('Are you sure you want to delete this alumni entry?')) return;
+    try {
+      await deleteAlumni(id);
+      setAlumni(alumni.filter(item => item.id !== id));
+      triggerSuccess('Alumni entry removed successfully.');
+    } catch (err) {
+      console.error(err);
+      alert('Error deleting alumni entry.');
+    }
+  };
+
+  const handleAlumniImageFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (file.size > 3 * 1024 * 1024) {
+      alert('File size exceeds 3MB. Please select a smaller image.');
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      if (typeof reader.result === 'string') {
+        setNewAlumni(prev => ({ ...prev, image: reader.result as string }));
+      }
+    };
+    reader.onerror = () => {
+      alert('Error reading local file.');
+    };
+    reader.readAsDataURL(file);
+  };
+
   return (
     <div className="min-h-screen bg-slate-50 flex font-sans text-slate-800 relative overflow-hidden">
       
@@ -823,6 +921,23 @@ export const AdminDashboard: React.FC = () => {
                   Principal Message & Quote
                 </span>
               </button>
+
+              <button
+                onClick={() => { setActiveTab('alumni'); setIsMobileSidebarOpen(false); }}
+                className={`w-full flex items-center justify-between px-4 py-3 rounded-xl font-bold text-xs sm:text-sm transition-all cursor-pointer text-left ${
+                  activeTab === 'alumni'
+                    ? 'bg-[#652d90] text-white shadow-md shadow-purple-900/30'
+                    : 'hover:bg-slate-800 hover:text-white text-slate-400'
+                }`}
+              >
+                <span className="flex items-center gap-3">
+                  <Award className="h-4.5 w-4.5" />
+                  Alumni Success Network
+                </span>
+                <span className="bg-slate-800 text-slate-300 text-[10px] font-extrabold px-2 py-0.5 rounded-full">
+                  {alumni.length}
+                </span>
+              </button>
             </nav>
           </div>
 
@@ -833,7 +948,7 @@ export const AdminDashboard: React.FC = () => {
                 { name: 'School Team & Officials', icon: Users, status: 'Active (Next)' },
                 { name: 'Home Hero Slides', icon: Sparkles, status: 'Planned' },
                 { name: 'Key Stats Counter', icon: BarChart3, status: 'Planned' },
-                { name: 'Alumni Success Network', icon: Award, status: 'Planned' },
+                { name: 'Alumni Success Network', icon: Award, status: 'Active' },
                 { name: 'Milestones Timeline', icon: Clock, status: 'Planned' },
                 { name: 'School Rules & Policies', icon: Shield, status: 'Planned' },
                 { name: 'Academic Programs', icon: BookOpen, status: 'Planned' },
@@ -953,7 +1068,7 @@ export const AdminDashboard: React.FC = () => {
                 <div className="flex flex-col gap-6">
                   
                   {/* Stats Grid */}
-                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-7 gap-4">
                     {/* Card 1 */}
                     <div className="bg-white border border-slate-200/80 rounded-2xl p-5 shadow-sm text-left flex items-center gap-4 hover:shadow-md transition-all">
                       <div className="h-12 w-12 bg-purple-50 text-[#652d90] rounded-xl flex items-center justify-center shrink-0">
@@ -1028,6 +1143,21 @@ export const AdminDashboard: React.FC = () => {
                         <p className="text-[10px] text-slate-400 font-medium mt-1">Parent Feedback</p>
                       </div>
                     </div>
+
+                    {/* Card 7 */}
+                    <div 
+                      onClick={() => setActiveTab('alumni')}
+                      className="bg-white border border-slate-200/80 rounded-2xl p-5 shadow-sm text-left flex items-center gap-4 hover:shadow-md transition-all cursor-pointer"
+                    >
+                      <div className="h-12 w-12 bg-purple-50 text-[#652d90] rounded-xl flex items-center justify-center shrink-0">
+                        <Award className="h-6 w-6" />
+                      </div>
+                      <div>
+                        <p className="text-[10px] uppercase font-bold text-slate-400 tracking-wider">Alumni</p>
+                        <h4 className="text-2xl font-black text-slate-800 leading-none mt-1">{alumni.length}</h4>
+                        <p className="text-[10px] text-slate-400 font-medium mt-1">Success Network</p>
+                      </div>
+                    </div>
                   </div>
 
                   {/* Analytical Charts */}
@@ -1040,7 +1170,7 @@ export const AdminDashboard: React.FC = () => {
                       </div>
                       <div className="h-64 flex flex-col justify-center items-center">
                         {/* Responsive SVG Chart */}
-                        <svg viewBox="0 0 400 240" className="w-full h-full max-h-[220px]">
+                        <svg viewBox="0 0 400 280" className="w-full h-full max-h-[260px]">
                           {/* Define gradients for dynamic styling */}
                           <defs>
                             <linearGradient id="purpleGrad" x1="0" y1="0" x2="1" y2="0">
@@ -1077,7 +1207,8 @@ export const AdminDashboard: React.FC = () => {
                               { label: 'Services', count: services.length, grad: 'url(#tealGrad)' },
                               { label: 'Inbox', count: messages.length, grad: 'url(#roseGrad)' },
                               { label: 'Gallery', count: galleryImages.length, grad: 'url(#amberGrad)' },
-                              { label: 'Reviews', count: testimonials.length, grad: 'url(#indigoGrad)' }
+                              { label: 'Reviews', count: testimonials.length, grad: 'url(#indigoGrad)' },
+                              { label: 'Alumni', count: alumni.length, grad: 'url(#purpleGrad)' }
                             ];
                             const maxCount = Math.max(...items.map(i => i.count), 5);
                             return items.map((item, idx) => {
@@ -1182,6 +1313,12 @@ export const AdminDashboard: React.FC = () => {
                             className="w-full flex items-center gap-3 px-4 py-2.5 bg-indigo-50 text-indigo-600 hover:bg-indigo-100 rounded-xl text-xs font-bold transition-all border border-indigo-200/20 text-left cursor-pointer"
                           >
                             <HelpCircle className="h-4 w-4" /> Add Parent Testimonial
+                          </button>
+                          <button 
+                            onClick={() => { setActiveTab('alumni'); setShowAlumniModal(true); }}
+                            className="w-full flex items-center gap-3 px-4 py-2.5 bg-purple-50 text-[#652d90] hover:bg-purple-100 rounded-xl text-xs font-bold transition-all border border-purple-200/20 text-left cursor-pointer"
+                          >
+                            <Award className="h-4 w-4" /> Add Alumni Graduate
                           </button>
                         </div>
                       </div>
@@ -1929,6 +2066,90 @@ export const AdminDashboard: React.FC = () => {
                     </button>
                   </div>
                 </form>
+              </div>
+            )}
+
+            {activeTab === 'alumni' && (
+              <div className="flex flex-col gap-6">
+                
+                {/* Header Actions */}
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between bg-white border border-slate-200/80 rounded-3xl p-6 gap-4 shadow-sm text-left">
+                  <div>
+                    <h2 className="text-xl font-black text-slate-800 font-serif">Alumni Success Network</h2>
+                    <p className="text-slate-400 text-xs font-light">Publish, update, and track verified career paths of our SEE graduates</p>
+                  </div>
+                  <button 
+                    onClick={() => {
+                      setEditingAlumniId(null);
+                      setNewAlumni({ name: '', batch: '', profession: '', quote: '', affiliation: '', path: '', image: '' });
+                      setShowAlumniModal(true);
+                    }}
+                    className="px-5 py-2.5 bg-[#652d90] hover:bg-[#4b1f6b] text-white rounded-xl text-xs font-bold transition-all shadow-md active:scale-95 flex items-center gap-1.5 self-start sm:self-auto cursor-pointer"
+                  >
+                    <Plus className="h-4.5 w-4.5" /> Add Graduate
+                  </button>
+                </div>
+
+                {/* Alumni Card Grid */}
+                {alumni.length === 0 ? (
+                  <div className="bg-white border border-slate-200/80 rounded-3xl p-16 text-center shadow-sm">
+                    <Award className="h-12 w-12 text-slate-300 mx-auto mb-3 animate-pulse" />
+                    <h3 className="text-slate-700 font-bold text-sm">No alumni records found</h3>
+                    <p className="text-slate-400 text-xs font-light mt-1 max-w-sm mx-auto">Add alumni entries to showcase their professional growth on the About Us page.</p>
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    {alumni.map((al) => (
+                      <div 
+                        key={al.id} 
+                        className="bg-white border border-slate-200/80 rounded-3xl p-6 shadow-sm flex flex-col justify-between text-left hover:shadow-md transition-all duration-300 relative group"
+                      >
+                        <div className="flex-1 flex flex-col gap-4">
+                          <div className="flex items-center gap-4">
+                            <div className="w-14 h-14 rounded-full overflow-hidden border border-slate-100 shadow-sm shrink-0">
+                              <img 
+                                src={al.image || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?q=80&w=200'} 
+                                alt={al.name} 
+                                className="w-full h-full object-cover"
+                              />
+                            </div>
+                            <div className="truncate">
+                              <h4 className="font-extrabold text-slate-800 text-sm sm:text-base truncate">{al.name}</h4>
+                              <span className="text-xs text-[#652d90] font-bold block mt-0.5">SEE Batch {al.batch}</span>
+                            </div>
+                          </div>
+                          
+                          <div className="bg-purple-50/50 border border-purple-100/50 rounded-2xl p-3 flex flex-col gap-1.5 text-xs text-slate-600">
+                            <div><strong className="text-slate-700 font-semibold">Role:</strong> {al.profession}</div>
+                            <div><strong className="text-slate-700 font-semibold">Affiliation:</strong> {al.affiliation}</div>
+                            <div><strong className="text-slate-700 font-semibold">Path:</strong> {al.path}</div>
+                          </div>
+
+                          <blockquote className="text-slate-500 font-light text-xs italic leading-relaxed mt-1 border-l-2 border-slate-100 pl-3">
+                            "{al.quote}"
+                          </blockquote>
+                        </div>
+
+                        {/* Edit / Delete Actions */}
+                        <div className="flex gap-2 justify-end mt-4 pt-3 border-t border-slate-100/60 z-15">
+                          <button
+                            onClick={() => handleEditAlumni(al)}
+                            className="px-2.5 py-1.5 bg-purple-50 hover:bg-purple-100 text-[#652d90] rounded-lg text-[11px] font-bold transition-all border border-purple-200/20 cursor-pointer flex items-center gap-1"
+                          >
+                            <Edit className="h-3.5 w-3.5" /> Edit
+                          </button>
+                          <button
+                            onClick={() => handleDeleteAlumni(al.id)}
+                            className="px-2.5 py-1.5 bg-rose-50 hover:bg-rose-100 text-rose-600 rounded-lg text-[11px] font-bold transition-all border border-rose-200/20 cursor-pointer flex items-center gap-1"
+                          >
+                            <Trash2 className="h-3.5 w-3.5" /> Delete
+                          </button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+
               </div>
             )}
 
@@ -2813,6 +3034,198 @@ export const AdminDashboard: React.FC = () => {
                       </>
                     ) : (
                       editingTestimonialId ? 'Save Changes' : 'Add Testimonial'
+                    )}
+                  </button>
+                </div>
+
+              </form>
+            </motion.div>
+          </div>
+        )}
+
+        {/* 8. ALUMNI SUCCESS NETWORK MODAL FORM */}
+        {showAlumniModal && (
+          <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex justify-center items-center p-4">
+            <motion.div 
+              initial={{ scale: 0.95, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.95, opacity: 0 }}
+              className="bg-white border border-slate-200 shadow-2xl rounded-3xl w-full max-w-lg p-6 sm:p-7 relative z-50 text-left max-h-[90vh] overflow-y-auto"
+            >
+              <div className="flex justify-between items-center border-b border-slate-100 pb-3 mb-5">
+                <h3 className="text-lg font-black text-slate-800 font-serif">{editingAlumniId ? 'Edit Alumni Graduate' : 'Add Alumni Graduate'}</h3>
+                <button 
+                  onClick={() => {
+                    setShowAlumniModal(false);
+                    setEditingAlumniId(null);
+                    setNewAlumni({ name: '', batch: '', profession: '', quote: '', affiliation: '', path: '', image: '' });
+                  }} 
+                  className="p-1 hover:bg-slate-100 rounded-lg cursor-pointer"
+                >
+                  <X className="h-5 w-5 text-slate-400" />
+                </button>
+              </div>
+
+              <form onSubmit={handleCreateAlumniSubmit} className="flex flex-col gap-4">
+                
+                {/* Graduate Name */}
+                <div className="flex flex-col gap-1">
+                  <label className="text-xs font-bold text-slate-600 uppercase tracking-wider pl-0.5">Graduate Name</label>
+                  <input 
+                    type="text" 
+                    placeholder="e.g. Dr. Sandesh Rijal" 
+                    value={newAlumni.name}
+                    onChange={e => setNewAlumni({...newAlumni, name: e.target.value})}
+                    required
+                    className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 focus:border-[#652d90] rounded-xl text-xs sm:text-sm font-light focus:outline-none transition-all duration-300"
+                  />
+                </div>
+
+                {/* Batch */}
+                <div className="flex flex-col gap-1">
+                  <label className="text-xs font-bold text-slate-600 uppercase tracking-wider pl-0.5">SEE Graduation Batch</label>
+                  <input 
+                    type="text" 
+                    placeholder="e.g. 2012" 
+                    value={newAlumni.batch}
+                    onChange={e => setNewAlumni({...newAlumni, batch: e.target.value})}
+                    required
+                    className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 focus:border-[#652d90] rounded-xl text-xs sm:text-sm font-light focus:outline-none transition-all duration-300"
+                  />
+                </div>
+
+                {/* Profession / Role */}
+                <div className="flex flex-col gap-1">
+                  <label className="text-xs font-bold text-slate-600 uppercase tracking-wider pl-0.5">Current Profession / Title</label>
+                  <input 
+                    type="text" 
+                    placeholder="e.g. Software Engineer" 
+                    value={newAlumni.profession}
+                    onChange={e => setNewAlumni({...newAlumni, profession: e.target.value})}
+                    required
+                    className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 focus:border-[#652d90] rounded-xl text-xs sm:text-sm font-light focus:outline-none transition-all duration-300"
+                  />
+                </div>
+
+                {/* Affiliation */}
+                <div className="flex flex-col gap-1">
+                  <label className="text-xs font-bold text-slate-600 uppercase tracking-wider pl-0.5">Current Affiliation / Organization</label>
+                  <input 
+                    type="text" 
+                    placeholder="e.g. Tribhuvan University Teaching Hospital, Kathmandu" 
+                    value={newAlumni.affiliation}
+                    onChange={e => setNewAlumni({...newAlumni, affiliation: e.target.value})}
+                    required
+                    className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 focus:border-[#652d90] rounded-xl text-xs sm:text-sm font-light focus:outline-none transition-all duration-300"
+                  />
+                </div>
+
+                {/* Education Path */}
+                <div className="flex flex-col gap-1">
+                  <label className="text-xs font-bold text-slate-600 uppercase tracking-wider pl-0.5">Education Path Sequence</label>
+                  <input 
+                    type="text" 
+                    placeholder="e.g. SEE -> +2 Science -> MBBS" 
+                    value={newAlumni.path}
+                    onChange={e => setNewAlumni({...newAlumni, path: e.target.value})}
+                    required
+                    className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 focus:border-[#652d90] rounded-xl text-xs sm:text-sm font-light focus:outline-none transition-all duration-300"
+                  />
+                </div>
+
+                {/* Quote Text */}
+                <div className="flex flex-col gap-1">
+                  <label className="text-xs font-bold text-slate-600 uppercase tracking-wider pl-0.5">Graduate Success Quote</label>
+                  <textarea 
+                    rows={3} 
+                    placeholder="Type their testimonial or advice for current students..." 
+                    value={newAlumni.quote}
+                    onChange={e => setNewAlumni({...newAlumni, quote: e.target.value})}
+                    required
+                    className="w-full px-4 py-3 bg-slate-50 border border-slate-200 focus:border-[#652d90] rounded-xl text-xs sm:text-sm font-light resize-none focus:outline-none transition-all duration-300"
+                  />
+                </div>
+
+                {/* Photo URL / Upload */}
+                <div className="flex flex-col gap-1">
+                  <label className="text-xs font-bold text-slate-600 uppercase tracking-wider pl-0.5">Graduate Photo</label>
+                  <div className="flex items-center gap-4 mt-1 bg-slate-50 border border-slate-200 rounded-xl p-3.5">
+                    {newAlumni.image && (
+                      <div className="h-16 w-16 rounded-full overflow-hidden border border-slate-200 shrink-0">
+                        <img src={newAlumni.image} alt="Preview" className="w-full h-full object-cover" />
+                      </div>
+                    )}
+                    <div className="flex-1 flex flex-col gap-2">
+                      <div className="flex gap-2">
+                        <button
+                          type="button"
+                          onClick={() => setImageInputMode('upload')}
+                          className={`flex-1 py-1.5 rounded-lg text-[10px] font-extrabold tracking-wider uppercase border transition-all cursor-pointer ${
+                            imageInputMode === 'upload' 
+                              ? 'bg-[#652d90] text-white shadow-sm border-[#652d90]' 
+                              : 'bg-white border-slate-200 text-slate-500 hover:bg-slate-50'
+                          }`}
+                        >
+                          Local File
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setImageInputMode('url')}
+                          className={`flex-1 py-1.5 rounded-lg text-[10px] font-extrabold tracking-wider uppercase border transition-all cursor-pointer ${
+                            imageInputMode === 'url' 
+                              ? 'bg-[#652d90] text-white shadow-sm border-[#652d90]' 
+                              : 'bg-white border-slate-200 text-slate-500 hover:bg-slate-50'
+                          }`}
+                        >
+                          Photo URL
+                        </button>
+                      </div>
+                      
+                      {imageInputMode === 'upload' ? (
+                        <input
+                          type="file"
+                          accept="image/*"
+                          onChange={handleAlumniImageFileChange}
+                          className="text-[10px] text-slate-500 file:mr-2 file:py-1 file:px-2.5 file:rounded-lg file:border-0 file:text-[10px] file:font-bold file:bg-[#652d90]/10 file:text-[#652d90] hover:file:bg-[#652d90]/20 cursor-pointer"
+                        />
+                      ) : (
+                        <input
+                          type="url"
+                          placeholder="Paste image link URL..."
+                          value={newAlumni.image}
+                          onChange={e => setNewAlumni({...newAlumni, image: e.target.value})}
+                          className="w-full px-3 py-1.5 bg-white border border-slate-200 focus:border-[#652d90] rounded-lg text-xs font-light focus:outline-none"
+                        />
+                      )}
+                    </div>
+                  </div>
+                </div>
+
+                {/* Buttons */}
+                <div className="flex gap-3 justify-end mt-2">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setShowAlumniModal(false);
+                      setEditingAlumniId(null);
+                      setNewAlumni({ name: '', batch: '', profession: '', quote: '', affiliation: '', path: '', image: '' });
+                    }}
+                    className="px-5 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-600 rounded-xl text-xs sm:text-sm font-bold transition-all cursor-pointer"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={isSubmitting}
+                    className="px-6 py-2.5 bg-[#652d90] hover:bg-[#4b1f6b] disabled:bg-slate-300 text-white rounded-xl text-xs sm:text-sm font-bold shadow-md transition-all cursor-pointer flex items-center gap-1.5"
+                  >
+                    {isSubmitting ? (
+                      <>
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                        Saving...
+                      </>
+                    ) : (
+                      editingAlumniId ? 'Save Changes' : 'Add Graduate'
                     )}
                   </button>
                 </div>

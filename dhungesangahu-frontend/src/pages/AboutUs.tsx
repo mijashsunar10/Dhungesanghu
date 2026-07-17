@@ -1,10 +1,11 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { MissionVisionGoals } from '../components/MissionVisionGoals';
 import { RulesSection } from '../components/RulesSection';
 import { ChevronLeft, ChevronRight, GraduationCap } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ImageWithFallback } from '../components/ImageWithFallback';
 import { PageBanner } from '../components/PageBanner';
+import { getAlumni } from '../api';
 
 interface TimelineEvent {
   year: string;
@@ -22,7 +23,7 @@ interface Alumni {
   image: string;
 }
 
-const alumniList: Alumni[] = [
+const staticAlumniList: Alumni[] = [
   {
     name: "Dr. Sandesh Rijal",
     batch: "2012",
@@ -55,13 +56,29 @@ const alumniList: Alumni[] = [
 export const AboutUs: React.FC = () => {
   const [activeValue, setActiveValue] = useState<'wisdom' | 'excellence' | 'competency'>('wisdom');
   const [activeAlumniIdx, setActiveAlumniIdx] = useState<number>(0);
+  const [alumni, setAlumni] = useState<Alumni[]>([]);
+
+  useEffect(() => {
+    getAlumni()
+      .then(list => {
+        if (list && list.length > 0) {
+          setAlumni(list);
+        } else {
+          setAlumni(staticAlumniList);
+        }
+      })
+      .catch(err => {
+        console.warn("Failed to fetch alumni, fallback to static:", err);
+        setAlumni(staticAlumniList);
+      });
+  }, []);
 
   const nextAlumni = () => {
-    setActiveAlumniIdx(prev => (prev === alumniList.length - 1 ? 0 : prev + 1));
+    setActiveAlumniIdx(prev => (prev === alumni.length - 1 ? 0 : prev + 1));
   };
 
   const prevAlumni = () => {
-    setActiveAlumniIdx(prev => (prev === 0 ? alumniList.length - 1 : prev - 1));
+    setActiveAlumniIdx(prev => (prev === 0 ? alumni.length - 1 : prev - 1));
   };
 
   const timelineEvents: TimelineEvent[] = [
@@ -285,58 +302,60 @@ export const AboutUs: React.FC = () => {
             <div className="absolute top-0 left-0 w-full h-2.5 bg-gradient-to-r from-[#652d90] to-[#ffdd57]" />
             
             <AnimatePresence mode="wait">
-              <motion.div
-                key={activeAlumniIdx}
-                initial={{ opacity: 0, x: 20 }}
-                animate={{ opacity: 1, x: 0 }}
-                exit={{ opacity: 0, x: -20 }}
-                transition={{ duration: 0.35, ease: "easeOut" }}
-                className="col-span-12 grid grid-cols-1 md:grid-cols-12 gap-8 items-center w-full"
-              >
-                {/* Left Photo & Badges */}
-                <div className="md:col-span-4 flex flex-col items-center text-center gap-3">
-                  <div className="w-36 h-36 sm:w-40 sm:h-40 rounded-full overflow-hidden border-4 border-slate-100 shadow-md">
-                    <ImageWithFallback 
-                      src={alumniList[activeAlumniIdx].image} 
-                      alt={alumniList[activeAlumniIdx].name} 
-                      fallbackType="user"
-                      className="w-full h-full object-cover"
-                    />
-                  </div>
-                  <div>
-                    <h4 className="font-extrabold text-slate-800 text-base">{alumniList[activeAlumniIdx].name}</h4>
-                    <span className="text-xs font-bold text-[#652d90] uppercase tracking-wider block mt-0.5">
-                      SEE Batch {alumniList[activeAlumniIdx].batch}
-                    </span>
-                  </div>
-                </div>
-
-                {/* Right Quote & Details */}
-                <div className="md:col-span-8 flex flex-col gap-4 text-left">
-                  <div className="flex items-center gap-2 text-xs font-extrabold text-emerald-600 bg-emerald-50 border border-emerald-200/50 w-fit px-3 py-1 rounded-full uppercase tracking-wider">
-                    <GraduationCap className="h-4 w-4" />
-                    {alumniList[activeAlumniIdx].profession}
+              {alumni.length > 0 && (
+                <motion.div
+                  key={activeAlumniIdx}
+                  initial={{ opacity: 0, x: 20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  exit={{ opacity: 0, x: -20 }}
+                  transition={{ duration: 0.35, ease: "easeOut" }}
+                  className="col-span-12 grid grid-cols-1 md:grid-cols-12 gap-8 items-center w-full"
+                >
+                  {/* Left Photo & Badges */}
+                  <div className="md:col-span-4 flex flex-col items-center text-center gap-3">
+                    <div className="w-36 h-36 sm:w-40 sm:h-40 rounded-full overflow-hidden border-4 border-slate-100 shadow-md">
+                      <ImageWithFallback 
+                        src={alumni[activeAlumniIdx]?.image} 
+                        alt={alumni[activeAlumniIdx]?.name} 
+                        fallbackType="user"
+                        className="w-full h-full object-cover"
+                      />
+                    </div>
+                    <div>
+                      <h4 className="font-extrabold text-slate-800 text-base">{alumni[activeAlumniIdx]?.name}</h4>
+                      <span className="text-xs font-bold text-[#652d90] uppercase tracking-wider block mt-0.5">
+                        SEE Batch {alumni[activeAlumniIdx]?.batch}
+                      </span>
+                    </div>
                   </div>
 
-                  <blockquote className="text-slate-600 italic text-sm sm:text-base leading-relaxed relative">
-                    <span className="text-4xl text-purple-200 font-serif absolute -top-5 -left-4 select-none">“</span>
-                    <span className="relative z-10">{alumniList[activeAlumniIdx].quote}</span>
-                  </blockquote>
+                  {/* Right Quote & Details */}
+                  <div className="md:col-span-8 flex flex-col gap-4 text-left">
+                    <div className="flex items-center gap-2 text-xs font-extrabold text-emerald-600 bg-emerald-50 border border-emerald-200/50 w-fit px-3 py-1 rounded-full uppercase tracking-wider">
+                      <GraduationCap className="h-4 w-4" />
+                      {alumni[activeAlumniIdx]?.profession}
+                    </div>
 
-                  <div className="h-[1px] bg-slate-100 w-full my-1" />
+                    <blockquote className="text-slate-600 italic text-sm sm:text-base leading-relaxed relative">
+                      <span className="text-4xl text-purple-200 font-serif absolute -top-5 -left-4 select-none">“</span>
+                      <span className="relative z-10">{alumni[activeAlumniIdx]?.quote}</span>
+                    </blockquote>
 
-                  <div className="flex flex-col gap-1 text-slate-400 text-xs font-light">
-                    <span>Current Affiliation: <strong className="text-slate-700 font-semibold">{alumniList[activeAlumniIdx].affiliation}</strong></span>
-                    <span>Education Path: <strong className="text-slate-700 font-semibold">{alumniList[activeAlumniIdx].path}</strong></span>
+                    <div className="h-[1px] bg-slate-100 w-full my-1" />
+
+                    <div className="flex flex-col gap-1 text-slate-400 text-xs font-light">
+                      <span>Current Affiliation: <strong className="text-slate-700 font-semibold">{alumni[activeAlumniIdx]?.affiliation}</strong></span>
+                      <span>Education Path: <strong className="text-slate-700 font-semibold">{alumni[activeAlumniIdx]?.path}</strong></span>
+                    </div>
                   </div>
-                </div>
-              </motion.div>
+                </motion.div>
+              )}
             </AnimatePresence>
           </div>
 
           {/* Dots Indicator */}
           <div className="flex justify-center gap-2 mt-1">
-            {alumniList.map((_, idx) => (
+            {alumni.map((_, idx) => (
               <button
                 key={idx}
                 onClick={() => setActiveAlumniIdx(idx)}

@@ -120,6 +120,20 @@ const PrincipalMessageSchema = new mongoose.Schema({
 
 export const PrincipalMessage = mongoose.model('PrincipalMessage', PrincipalMessageSchema);
 
+// 9. Alumni Schema & Model
+const AlumniSchema = new mongoose.Schema({
+  name: { type: String, required: true },
+  batch: { type: String, required: true },
+  profession: { type: String, required: true },
+  quote: { type: String, required: true },
+  affiliation: { type: String, required: true },
+  path: { type: String, required: true },
+  image: { type: String, required: true }
+});
+
+export const Alumni = mongoose.model('Alumni', AlumniSchema);
+
+
 // Initial Seeding Logic
 async function seedDatabase() {
   try {
@@ -375,6 +389,42 @@ async function seedDatabase() {
       ];
       await Testimonial.insertMany(mockTestimonials);
       console.log('Seeded default parent testimonials to MongoDB Atlas.');
+    }
+
+    // Seed Alumni
+    const alumniCount = await Alumni.countDocuments();
+    if (alumniCount === 0) {
+      const mockAlumni = [
+        {
+          name: "Dr. Sandesh Rijal",
+          batch: "2012",
+          profession: "Medical Doctor / Resident",
+          quote: "The solid academic foundation and the regular science lab experiments at Dhungesanghu gave me the interest and drive to pursue medical school. I am forever grateful to my teachers.",
+          affiliation: "Tribhuvan University Teaching Hospital, Kathmandu",
+          path: "SEE (Dhungesanghu) -> +2 Science -> MBBS (IOM)",
+          image: "https://images.unsplash.com/photo-1622253692010-333f2da6031d?q=80&w=400"
+        },
+        {
+          name: "Er. Sneha Baral",
+          batch: "2014",
+          profession: "Software Engineer",
+          quote: "Dhungesanghu's early coding classes and computer lab assignments were where my tech journey began. The school helped build my self-belief and logic.",
+          affiliation: "F1Soft Technologies, Lalitpur",
+          path: "SEE (Dhungesanghu) -> +2 Computer Science -> B.E. in Software Engineering",
+          image: "https://images.unsplash.com/photo-1573497019940-1c28c88b4f3e?q=80&w=400"
+        },
+        {
+          name: "Abhishek Thapa",
+          batch: "2016",
+          profession: "Chartered Accountant (CA)",
+          quote: "The mathematical training and analytical tests at school trained my brain for speed and logic. It made clearing my professional CA papers much easier.",
+          affiliation: "Deloitte Nepal, Kathmandu",
+          path: "SEE (Dhungesanghu) -> +2 Commerce -> Chartered Accountancy (ICAN)",
+          image: "https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?q=80&w=400"
+        }
+      ];
+      await Alumni.insertMany(mockAlumni);
+      console.log('Seeded default alumni to MongoDB.');
     }
   } catch (err) {
     console.error('Error seeding MongoDB Atlas:', err.message);

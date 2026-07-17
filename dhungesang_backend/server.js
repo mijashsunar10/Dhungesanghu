@@ -2,7 +2,7 @@ import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
 import './database.js'; // Imports connection & seeds database
-import { Notice, CalendarEvent, ContactMessage, Admin, Service, GalleryImage, GalleryCategory, Testimonial, PrincipalMessage } from './database.js';
+import { Notice, CalendarEvent, ContactMessage, Admin, Service, GalleryImage, GalleryCategory, Testimonial, PrincipalMessage, Alumni } from './database.js';
 
 dotenv.config();
 
@@ -558,6 +558,98 @@ app.put('/api/principal-message', async (req, res) => {
   } catch (err) {
     console.error('Error updating principal message:', err.message);
     res.status(500).json({ error: 'Database error updating principal message' });
+  }
+});
+
+// --- ALUMNI SUCCESS NETWORK ENDPOINTS ---
+app.get('/api/alumni', async (req, res) => {
+  try {
+    const list = await Alumni.find().sort({ batch: -1 });
+    res.json(list.map(item => ({
+      id: item._id,
+      name: item.name,
+      batch: item.batch,
+      profession: item.profession,
+      quote: item.quote,
+      affiliation: item.affiliation,
+      path: item.path,
+      image: item.image
+    })));
+  } catch (err) {
+    console.error('Error fetching alumni:', err.message);
+    res.status(500).json({ error: 'Database error fetching alumni' });
+  }
+});
+
+app.post('/api/alumni', async (req, res) => {
+  const { name, batch, profession, quote, affiliation, path, image } = req.body;
+  if (!name || !batch || !profession || !quote || !affiliation || !path) {
+    return res.status(400).json({ error: 'All fields (name, batch, profession, quote, affiliation, path) are required.' });
+  }
+  try {
+    const fresh = new Alumni({
+      name,
+      batch,
+      profession,
+      quote,
+      affiliation,
+      path,
+      image: image || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?q=80&w=200'
+    });
+    const saved = await fresh.save();
+    res.status(201).json({
+      id: saved._id,
+      name: saved.name,
+      batch: saved.batch,
+      profession: saved.profession,
+      quote: saved.quote,
+      affiliation: saved.affiliation,
+      path: saved.path,
+      image: saved.image
+    });
+  } catch (err) {
+    console.error('Error creating alumni:', err.message);
+    res.status(500).json({ error: 'Database error creating alumni' });
+  }
+});
+
+app.put('/api/alumni/:id', async (req, res) => {
+  const { name, batch, profession, quote, affiliation, path, image } = req.body;
+  try {
+    const updated = await Alumni.findByIdAndUpdate(
+      req.params.id,
+      { name, batch, profession, quote, affiliation, path, image },
+      { new: true }
+    );
+    if (!updated) {
+      return res.status(404).json({ error: 'Alumni not found.' });
+    }
+    res.json({
+      id: updated._id,
+      name: updated.name,
+      batch: updated.batch,
+      profession: updated.profession,
+      quote: updated.quote,
+      affiliation: updated.affiliation,
+      path: updated.path,
+      image: updated.image
+    });
+  } catch (err) {
+    console.error('Error updating alumni:', err.message);
+    res.status(500).json({ error: 'Database error updating alumni' });
+  }
+});
+
+app.delete('/api/alumni/:id', async (req, res) => {
+  try {
+    const deleted = await Alumni.findByIdAndDelete(req.params.id);
+    if (!deleted) {
+      return res.status(404).json({ error: 'Alumni not found.' });
+    }
+    res.json({ success: true, message: 'Alumni deleted successfully' });
+  } catch (err) {
+    console.error('Error deleting alumni:', err.message);
+    res.status(500).json({ error: 'Database error deleting alumni' });
   }
 });
 

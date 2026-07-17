@@ -449,3 +449,66 @@ export async function updatePrincipalMessage(data: PrincipalMessageData): Promis
   }
   return res.json();
 }
+
+export interface Alumni {
+  id: string;
+  name: string;
+  batch: string;
+  profession: string;
+  quote: string;
+  affiliation: string;
+  path: string;
+  image: string;
+}
+
+export async function getAlumni(): Promise<Alumni[]> {
+  const res = await fetch(`${API_URL}/alumni`);
+  if (!res.ok) {
+    throw new Error('Failed to fetch alumni list');
+  }
+  const data = await res.json();
+  return data.map((item: any) => ({
+    ...item,
+    id: item._id || item.id
+  }));
+}
+
+export async function createAlumni(alumni: Omit<Alumni, 'id'>): Promise<Alumni> {
+  const res = await fetch(`${API_URL}/alumni`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(alumni),
+  });
+  if (!res.ok) {
+    throw new Error('Failed to create alumni entry');
+  }
+  const data = await res.json();
+  return { ...data, id: data._id || data.id };
+}
+
+export async function updateAlumni(id: string, alumni: Omit<Alumni, 'id'>): Promise<Alumni> {
+  const res = await fetch(`${API_URL}/alumni/${id}`, {
+    method: 'PUT',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(alumni),
+  });
+  if (!res.ok) {
+    throw new Error('Failed to update alumni entry');
+  }
+  const data = await res.json();
+  return { ...data, id: data._id || data.id };
+}
+
+export async function deleteAlumni(id: string): Promise<void> {
+  const res = await fetch(`${API_URL}/alumni/${id}`, {
+    method: 'DELETE',
+  });
+  if (!res.ok) {
+    throw new Error('Failed to delete alumni entry');
+  }
+}
+
