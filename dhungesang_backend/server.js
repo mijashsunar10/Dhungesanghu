@@ -2,7 +2,7 @@ import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
 import './database.js'; // Imports connection & seeds database
-import { Notice, CalendarEvent, ContactMessage, Admin, Service, GalleryImage, GalleryCategory, Testimonial, PrincipalMessage, Alumni, Milestone, Rule, Program, AdmissionStep, Official, AdmissionFaq } from './database.js';
+import { Notice, CalendarEvent, ContactMessage, Admin, Service, GalleryImage, GalleryCategory, Testimonial, PrincipalMessage, Alumni, Milestone, Rule, Program, AdmissionStep, Official, AdmissionFaq, TriviaQuestion } from './database.js';
 
 dotenv.config();
 
@@ -1161,6 +1161,86 @@ app.delete('/api/admission-faqs/:id', async (req, res) => {
   } catch (err) {
     console.error('Error deleting admission FAQ:', err.message);
     res.status(500).json({ error: 'Database error deleting admission FAQ' });
+  }
+});
+
+// --- TRIVIA QUESTIONS ENDPOINTS ---
+app.get('/api/trivia-questions', async (req, res) => {
+  try {
+    const list = await TriviaQuestion.find().sort({ order: 1 });
+    res.json(list.map(item => ({
+      id: item._id,
+      question: item.question,
+      options: item.options,
+      answer: item.answer,
+      order: item.order
+    })));
+  } catch (err) {
+    console.error('Error fetching trivia questions:', err.message);
+    res.status(500).json({ error: 'Database error fetching trivia questions' });
+  }
+});
+
+app.post('/api/trivia-questions', async (req, res) => {
+  const { question, options, answer, order } = req.body;
+  if (!question || !options || options.length === 0 || answer === undefined) {
+    return res.status(400).json({ error: 'Question, options, and correct answer index are required.' });
+  }
+  try {
+    let qOrder = order;
+    if (qOrder === undefined) {
+      const maxQ = await TriviaQuestion.findOne().sort({ order: -1 });
+      qOrder = maxQ ? maxQ.order + 1 : 1;
+    }
+    const fresh = new TriviaQuestion({ question, options, answer, order: qOrder });
+    const saved = await fresh.save();
+    res.status(201).json({
+      id: saved._id,
+      question: saved.question,
+      options: saved.options,
+      answer: saved.answer,
+      order: saved.order
+    });
+  } catch (err) {
+    console.error('Error creating trivia question:', err.message);
+    res.status(500).json({ error: 'Database error creating trivia question' });
+  }
+});
+
+app.put('/api/trivia-questions/:id', async (req, res) => {
+  const { question, options, answer, order } = req.body;
+  try {
+    const updated = await TriviaQuestion.findByIdAndUpdate(
+      req.params.id,
+      { question, options, answer, order },
+      { new: true }
+    );
+    if (!updated) {
+      return res.status(404).json({ error: 'Trivia question not found.' });
+    }
+    res.json({
+      id: updated._id,
+      question: updated.question,
+      options: updated.options,
+      answer: updated.answer,
+      order: updated.order
+    });
+  } catch (err) {
+    console.error('Error updating trivia question:', err.message);
+    res.status(500).json({ error: 'Database error updating trivia question' });
+  }
+});
+
+app.delete('/api/trivia-questions/:id', async (req, res) => {
+  try {
+    const deleted = await TriviaQuestion.findByIdAndDelete(req.params.id);
+    if (!deleted) {
+      return res.status(404).json({ error: 'Trivia question not found.' });
+    }
+    res.json({ success: true, message: 'Trivia question deleted successfully' });
+  } catch (err) {
+    console.error('Error deleting trivia question:', err.message);
+    res.status(500).json({ error: 'Database error deleting trivia question' });
   }
 });
 

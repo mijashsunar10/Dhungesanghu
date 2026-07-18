@@ -2,58 +2,71 @@ import React, { useState, useEffect } from 'react';
 import { Gamepad2, Trophy, RefreshCw, Play, Timer, Check, X, Brain, Calculator, Award } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { PageBanner } from '../components/PageBanner';
+import { getTriviaQuestions } from '../api';
 
 interface Question {
+  id?: string;
   question: string;
   options: string[];
   answer: number;
+  order?: number;
 }
-
-const triviaQuestions: Question[] = [
-  {
-    question: "Which planet is known as the Red Planet?",
-    options: ["Earth", "Mars", "Jupiter", "Saturn"],
-    answer: 1
-  },
-  {
-    question: "What is the capital city of Nepal?",
-    options: ["Pokhara", "Lalitpur", "Kathmandu", "Bhaktapur"],
-    answer: 2
-  },
-  {
-    question: "What is 15 multiplied by 4?",
-    options: ["50", "60", "70", "80"],
-    answer: 1
-  },
-  {
-    question: "Which gas do plants absorb from the atmosphere for photosynthesis?",
-    options: ["Oxygen", "Nitrogen", "Carbon Dioxide", "Hydrogen"],
-    answer: 2
-  },
-  {
-    question: "Who is known as the father of modern physics?",
-    options: ["Isaac Newton", "Albert Einstein", "Galileo Galilei", "Nikola Tesla"],
-    answer: 1
-  },
-  {
-    question: "What is the chemical formula for water?",
-    options: ["CO2", "NaCl", "H2O", "O2"],
-    answer: 2
-  },
-  {
-    question: "Which is the tallest mountain in the world?",
-    options: ["Mount Everest", "K2", "Kangchenjunga", "Lhotse"],
-    answer: 0
-  },
-  {
-    question: "How many bones are there in an adult human body?",
-    options: ["204", "206", "210", "220"],
-    answer: 1
-  }
-];
 
 export const GameZone: React.FC = () => {
   const [activeTab, setActiveTab] = useState<'home' | 'trivia' | 'math' | 'memory'>('home');
+
+  const [questions, setQuestions] = useState<Question[]>([
+    {
+      question: "Which planet is known as the Red Planet?",
+      options: ["Earth", "Mars", "Jupiter", "Saturn"],
+      answer: 1
+    },
+    {
+      question: "What is the capital city of Nepal?",
+      options: ["Pokhara", "Lalitpur", "Kathmandu", "Bhaktapur"],
+      answer: 2
+    },
+    {
+      question: "What is 15 multiplied by 4?",
+      options: ["50", "60", "70", "80"],
+      answer: 1
+    },
+    {
+      question: "Which gas do plants absorb from the atmosphere for photosynthesis?",
+      options: ["Oxygen", "Nitrogen", "Carbon Dioxide", "Hydrogen"],
+      answer: 2
+    },
+    {
+      question: "Who is known as the father of modern physics?",
+      options: ["Isaac Newton", "Albert Einstein", "Galileo Galilei", "Nikola Tesla"],
+      answer: 1
+    },
+    {
+      question: "What is the chemical formula for water?",
+      options: ["CO2", "NaCl", "H2O", "O2"],
+      answer: 2
+    },
+    {
+      question: "Which is the tallest mountain in the world?",
+      options: ["Mount Everest", "K2", "Kangchenjunga", "Lhotse"],
+      answer: 0
+    },
+    {
+      question: "How many bones are there in an adult human body?",
+      options: ["204", "206", "210", "220"],
+      answer: 1
+    }
+  ]);
+
+  useEffect(() => {
+    getTriviaQuestions()
+      .then(data => {
+        if (data && data.length > 0) {
+          setQuestions(data.sort((a, b) => (a.order || 0) - (b.order || 0)));
+        }
+      })
+      .catch(err => console.error('Failed loading trivia questions:', err));
+  }, []);
 
   // Trivia State
   const [currentQuestionIdx, setCurrentQuestionIdx] = useState(0);
@@ -223,7 +236,7 @@ export const GameZone: React.FC = () => {
     if (answered) return;
     setSelectedOption(index);
     setAnswered(true);
-    if (index === triviaQuestions[currentQuestionIdx].answer) {
+    if (index === questions[currentQuestionIdx].answer) {
       setScore(prev => prev + 1);
     }
   };
@@ -231,7 +244,7 @@ export const GameZone: React.FC = () => {
   const nextTriviaQuestion = () => {
     setAnswered(false);
     setSelectedOption(null);
-    if (currentQuestionIdx + 1 < triviaQuestions.length) {
+    if (currentQuestionIdx + 1 < questions.length) {
       setCurrentQuestionIdx(prev => prev + 1);
     } else {
       setTriviaFinished(true);
@@ -369,7 +382,7 @@ export const GameZone: React.FC = () => {
                   {/* Header Info */}
                   <div className="flex justify-between items-center pb-4 border-b border-slate-100">
                     <span className="text-xs font-bold text-[#652d90] bg-purple-100 px-3.5 py-1.5 rounded-full">
-                      Question {currentQuestionIdx + 1} of {triviaQuestions.length}
+                      Question {currentQuestionIdx + 1} of {questions.length}
                     </span>
                     <span className="text-sm font-semibold text-slate-500">Score: {score}</span>
                   </div>
@@ -377,20 +390,20 @@ export const GameZone: React.FC = () => {
                   {/* Progress bar */}
                   <div className="w-full h-2 bg-slate-100 rounded-full overflow-hidden">
                     <div 
-                      className="h-full bg-gradient-to-r from-[#652d90] to-[#4b1f6b] transition-all duration-300"
-                      style={{ width: `${((currentQuestionIdx + 1) / triviaQuestions.length) * 100}%` }}
+                       className="h-full bg-gradient-to-r from-[#652d90] to-[#4b1f6b] transition-all duration-300"
+                      style={{ width: `${((currentQuestionIdx + 1) / questions.length) * 100}%` }}
                     />
                   </div>
 
                   {/* Question */}
                   <h3 className="text-xl sm:text-2xl font-bold text-slate-800 font-serif mt-2 leading-relaxed">
-                    {triviaQuestions[currentQuestionIdx].question}
+                    {questions[currentQuestionIdx].question}
                   </h3>
 
                   {/* Options List */}
                   <div className="flex flex-col gap-4 mt-2">
-                    {triviaQuestions[currentQuestionIdx].options.map((opt, idx) => {
-                      const isCorrect = idx === triviaQuestions[currentQuestionIdx].answer;
+                    {questions[currentQuestionIdx].options.map((opt, idx) => {
+                      const isCorrect = idx === questions[currentQuestionIdx].answer;
                       const isSelected = idx === selectedOption;
 
                       let btnStyle = "border-slate-200 hover:border-purple-300 bg-white text-slate-700 hover:bg-purple-50/20";
@@ -446,7 +459,7 @@ export const GameZone: React.FC = () => {
                   </div>
                   <div className="bg-purple-50 rounded-2xl px-12 py-6 border border-purple-100 text-center">
                     <span className="text-5xl font-black text-[#652d90]">{score}</span>
-                    <span className="text-slate-500 font-semibold block text-sm mt-1">out of {triviaQuestions.length} correct</span>
+                    <span className="text-slate-500 font-semibold block text-sm mt-1">out of {questions.length} correct</span>
                   </div>
                   <div className="flex gap-4 mt-2">
                     <button 

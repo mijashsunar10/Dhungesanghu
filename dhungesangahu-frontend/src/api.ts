@@ -875,6 +875,65 @@ export async function deleteAdmissionFaq(id: string): Promise<void> {
   }
 }
 
+export interface TriviaQuestion {
+  id: string;
+  question: string;
+  options: string[];
+  answer: number;
+  order: number;
+}
+
+export async function getTriviaQuestions(): Promise<TriviaQuestion[]> {
+  const res = await fetch(`${API_URL}/trivia-questions`);
+  if (!res.ok) {
+    throw new Error('Failed to fetch trivia questions');
+  }
+  const data = await res.json();
+  return data.map((item: any) => ({
+    ...item,
+    id: item._id || item.id
+  }));
+}
+
+export async function createTriviaQuestion(q: Omit<TriviaQuestion, 'id'>): Promise<TriviaQuestion> {
+  const res = await fetch(`${API_URL}/trivia-questions`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(q),
+  });
+  if (!res.ok) {
+    throw new Error('Failed to create trivia question');
+  }
+  const data = await res.json();
+  return { ...data, id: data._id || data.id };
+}
+
+export async function updateTriviaQuestion(id: string, q: Omit<TriviaQuestion, 'id'>): Promise<TriviaQuestion> {
+  const res = await fetch(`${API_URL}/trivia-questions/${id}`, {
+    method: 'PUT',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(q),
+  });
+  if (!res.ok) {
+    throw new Error('Failed to update trivia question');
+  }
+  const data = await res.json();
+  return { ...data, id: data._id || data.id };
+}
+
+export async function deleteTriviaQuestion(id: string): Promise<void> {
+  const res = await fetch(`${API_URL}/trivia-questions/${id}`, {
+    method: 'DELETE',
+  });
+  if (!res.ok) {
+    throw new Error('Failed to delete trivia question');
+  }
+}
+
 
 
 

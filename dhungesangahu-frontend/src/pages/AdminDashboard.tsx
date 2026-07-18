@@ -26,7 +26,7 @@ import {
   Shield,
   BookOpen,
   HelpCircle,
-  Activity,
+  Brain,
   FileText,
   BarChart3
 } from 'lucide-react';
@@ -102,12 +102,17 @@ import {
   createAdmissionFaq,
   updateAdmissionFaq,
   deleteAdmissionFaq,
-  type AdmissionFaq
+  type AdmissionFaq,
+  getTriviaQuestions,
+  createTriviaQuestion,
+  updateTriviaQuestion,
+  deleteTriviaQuestion,
+  type TriviaQuestion
 } from '../api';
 
 export const AdminDashboard: React.FC = () => {
   const navigate = useNavigate();
-  const [activeTab, setActiveTab] = useState<'overview' | 'notices' | 'calendar' | 'inbox' | 'services' | 'gallery' | 'testimonials' | 'principal' | 'alumni' | 'milestones' | 'rules' | 'programs' | 'admissionSteps' | 'officials' | 'admissionFaqs'>('overview');
+  const [activeTab, setActiveTab] = useState<'overview' | 'notices' | 'calendar' | 'inbox' | 'services' | 'gallery' | 'testimonials' | 'principal' | 'alumni' | 'milestones' | 'rules' | 'programs' | 'admissionSteps' | 'officials' | 'admissionFaqs' | 'triviaQuestions'>('overview');
   const [adminUser, setAdminUser] = useState('Admin');
   
   // Data States
@@ -251,6 +256,20 @@ export const AdminDashboard: React.FC = () => {
     order: 0
   });
 
+  // Trivia Questions Modals & States
+  const [triviaQuestions, setTriviaQuestions] = useState<TriviaQuestion[]>([]);
+  const [showTriviaModal, setShowTriviaModal] = useState(false);
+  const [editingTriviaId, setEditingTriviaId] = useState<string | null>(null);
+  const [newTrivia, setNewTrivia] = useState({
+    question: '',
+    opt1: '',
+    opt2: '',
+    opt3: '',
+    opt4: '',
+    answer: 0,
+    order: 0
+  });
+
   // New Form Data states
   const [newNotice, setNewNotice] = useState({
     title: '',
@@ -308,7 +327,7 @@ export const AdminDashboard: React.FC = () => {
     try {
       setLoading(true);
       setError(null);
-      const [nList, eList, mList, sList, gList, gcList, tList, pMsg, aList, milList, rList, progList, stepList, offList, faqList] = await Promise.all([
+      const [nList, eList, mList, sList, gList, gcList, tList, pMsg, aList, milList, rList, progList, stepList, offList, faqList, triviaList] = await Promise.all([
         getNotices(),
         getCalendarEvents(),
         getContactMessages(),
@@ -323,7 +342,8 @@ export const AdminDashboard: React.FC = () => {
         getPrograms(),
         getAdmissionSteps(),
         getOfficials(),
-        getAdmissionFaqs()
+        getAdmissionFaqs(),
+        getTriviaQuestions()
       ]);
       setNotices(nList);
       setEvents(eList);
@@ -340,6 +360,7 @@ export const AdminDashboard: React.FC = () => {
       setAdmissionSteps(stepList.sort((a, b) => a.order - b.order));
       setOfficials(offList.sort((a, b) => a.order - b.order));
       setAdmissionFaqs(faqList.sort((a, b) => a.order - b.order));
+      setTriviaQuestions(triviaList.sort((a, b) => a.order - b.order));
     } catch (err: any) {
       console.error('Error fetching admin data:', err);
       setError('Could not load data. Ensure the database server is running.');
@@ -1245,6 +1266,69 @@ export const AdminDashboard: React.FC = () => {
     }
   };
 
+  // TRIVIA QUESTIONS HANDLERS
+  const handleCreateTriviaSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newTrivia.question.trim() || !newTrivia.opt1.trim() || !newTrivia.opt2.trim() || !newTrivia.opt3.trim() || !newTrivia.opt4.trim()) {
+      alert('Question and all 4 options are required.');
+      return;
+    }
+
+    const payload = {
+      question: newTrivia.question.trim(),
+      options: [newTrivia.opt1.trim(), newTrivia.opt2.trim(), newTrivia.opt3.trim(), newTrivia.opt4.trim()],
+      answer: newTrivia.answer,
+      order: newTrivia.order
+    };
+
+    try {
+      setIsSubmitting(true);
+      if (editingTriviaId) {
+        const updated = await updateTriviaQuestion(editingTriviaId, payload);
+        setTriviaQuestions(triviaQuestions.map(item => item.id === editingTriviaId ? updated : item).sort((a, b) => a.order - b.order));
+        triggerSuccess('Trivia question updated successfully.');
+      } else {
+        const created = await createTriviaQuestion(payload);
+        setTriviaQuestions([...triviaQuestions, created].sort((a, b) => a.order - b.order));
+        triggerSuccess('Trivia question created successfully.');
+      }
+      setShowTriviaModal(false);
+      setEditingTriviaId(null);
+      setNewTrivia({ question: '', opt1: '', opt2: '', opt3: '', opt4: '', answer: 0, order: 0 });
+    } catch (err: any) {
+      console.error(err);
+      alert('Error saving trivia question.');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleEditTrivia = (trivia: TriviaQuestion) => {
+    setEditingTriviaId(trivia.id);
+    setNewTrivia({
+      question: trivia.question,
+      opt1: trivia.options[0] || '',
+      opt2: trivia.options[1] || '',
+      opt3: trivia.options[2] || '',
+      opt4: trivia.options[3] || '',
+      answer: trivia.answer,
+      order: trivia.order
+    });
+    setShowTriviaModal(true);
+  };
+
+  const handleDeleteTrivia = async (id: string) => {
+    if (!window.confirm('Are you sure you want to delete this trivia question?')) return;
+    try {
+      await deleteTriviaQuestion(id);
+      setTriviaQuestions(triviaQuestions.filter(item => item.id !== id));
+      triggerSuccess('Trivia question deleted successfully.');
+    } catch (err) {
+      console.error(err);
+      alert('Error deleting trivia question.');
+    }
+  };
+
   return (
     <div className="min-h-screen bg-slate-50 flex font-sans text-slate-800 relative overflow-hidden">
       
@@ -1528,6 +1612,23 @@ export const AdminDashboard: React.FC = () => {
                   {admissionFaqs.length}
                 </span>
               </button>
+
+              <button
+                onClick={() => { setActiveTab('triviaQuestions'); setIsMobileSidebarOpen(false); }}
+                className={`w-full flex items-center justify-between px-4 py-3 rounded-xl font-bold text-xs sm:text-sm transition-all cursor-pointer text-left ${
+                  activeTab === 'triviaQuestions'
+                    ? 'bg-[#652d90] text-white shadow-md shadow-purple-900/30'
+                    : 'hover:bg-slate-800 hover:text-white text-slate-400'
+                }`}
+              >
+                <span className="flex items-center gap-3">
+                  <Brain className="h-4.5 w-4.5" />
+                  Trivia Questions
+                </span>
+                <span className="bg-slate-800 text-slate-300 text-[10px] font-extrabold px-2 py-0.5 rounded-full">
+                  {triviaQuestions.length}
+                </span>
+              </button>
             </nav>
           </div>
 
@@ -1544,7 +1645,7 @@ export const AdminDashboard: React.FC = () => {
                 { name: 'Academic Programs', icon: BookOpen, status: 'Active' },
                 { name: 'Admission Journey Steps', icon: FileText, status: 'Active' },
                 { name: 'Admission FAQs', icon: HelpCircle, status: 'Active' },
-                { name: 'Trivia Game Questions', icon: Activity, status: 'Planned' }
+                { name: 'Trivia Game Questions', icon: Brain, status: 'Active' }
               ].map((m, idx) => (
                 <div key={idx} className="flex items-center justify-between px-4 py-2 rounded-xl text-xs font-bold text-slate-500 bg-slate-800/20 border border-slate-800/10">
                   <span className="flex items-center gap-3">
@@ -1839,6 +1940,21 @@ export const AdminDashboard: React.FC = () => {
                         <p className="text-[10px] text-slate-400 font-medium mt-1">Admission FAQs</p>
                       </div>
                     </div>
+
+                    {/* Card 14 */}
+                    <div 
+                      onClick={() => setActiveTab('triviaQuestions')}
+                      className="bg-white border border-slate-200/80 rounded-2xl p-5 shadow-sm text-left flex items-center gap-4 hover:shadow-md transition-all cursor-pointer"
+                    >
+                      <div className="h-12 w-12 bg-purple-50 text-[#652d90] rounded-xl flex items-center justify-center shrink-0">
+                        <Brain className="h-6 w-6" />
+                      </div>
+                      <div>
+                        <p className="text-[10px] uppercase font-bold text-slate-400 tracking-wider">Trivia</p>
+                        <h4 className="text-2xl font-black text-slate-800 leading-none mt-1">{triviaQuestions.length}</h4>
+                        <p className="text-[10px] text-slate-400 font-medium mt-1">Game Questions</p>
+                      </div>
+                    </div>
                   </div>
 
                   {/* Analytical Charts */}
@@ -1851,7 +1967,7 @@ export const AdminDashboard: React.FC = () => {
                       </div>
                       <div className="h-64 flex flex-col justify-center items-center">
                         {/* Responsive SVG Chart */}
-                        <svg viewBox="0 0 400 480" className="w-full h-full max-h-[420px]">
+                        <svg viewBox="0 0 400 520" className="w-full h-full max-h-[460px]">
                           {/* Define gradients for dynamic styling */}
                           <defs>
                             <linearGradient id="purpleGrad" x1="0" y1="0" x2="1" y2="0">
@@ -1903,7 +2019,8 @@ export const AdminDashboard: React.FC = () => {
                               { label: 'Programs', count: programs.length, grad: 'url(#emeraldGrad)' },
                               { label: 'Admissions', count: admissionSteps.length, grad: 'url(#amberGrad)' },
                               { label: 'Officials', count: officials.length, grad: 'url(#purpleGrad)' },
-                              { label: 'FAQs', count: admissionFaqs.length, grad: 'url(#indigoGrad)' }
+                              { label: 'FAQs', count: admissionFaqs.length, grad: 'url(#indigoGrad)' },
+                              { label: 'Trivia', count: triviaQuestions.length, grad: 'url(#purpleGrad)' }
                             ];
                             const maxCount = Math.max(...items.map(i => i.count), 5);
                             return items.map((item, idx) => {
@@ -3398,6 +3515,112 @@ export const AdminDashboard: React.FC = () => {
                   </div>
                 )}
 
+              </div>
+            )}
+
+            {activeTab === 'triviaQuestions' && (
+              <div className="bg-white border border-slate-200/80 rounded-3xl p-6 sm:p-8 shadow-sm flex flex-col gap-6 text-left">
+                {/* Header Section */}
+                <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border-b border-slate-100 pb-5">
+                  <div>
+                    <h2 className="text-xl font-bold text-slate-800 font-serif">Trivia Game Questions</h2>
+                    <p className="text-slate-400 text-xs mt-1">Manage multiple choice questions for the Trivia Game Zone</p>
+                  </div>
+                  <button
+                    onClick={() => {
+                      setEditingTriviaId(null);
+                      setNewTrivia({
+                        question: '',
+                        opt1: '',
+                        opt2: '',
+                        opt3: '',
+                        opt4: '',
+                        answer: 0,
+                        order: (triviaQuestions[triviaQuestions.length - 1]?.order || 0) + 1
+                      });
+                      setShowTriviaModal(true);
+                    }}
+                    className="flex items-center gap-2 px-4 py-2.5 bg-[#652d90] hover:bg-[#4b1f6b] text-white rounded-xl text-xs font-bold transition-all shadow-md shadow-purple-900/30 cursor-pointer active:scale-95"
+                  >
+                    <Plus className="h-4 w-4" /> Add New Question
+                  </button>
+                </div>
+
+                {/* Listing Grid */}
+                {triviaQuestions.length === 0 ? (
+                  <div className="text-center py-16 flex flex-col items-center gap-3">
+                    <div className="h-16 w-16 bg-purple-50 text-[#652d90] rounded-full flex items-center justify-center shadow-inner">
+                      <Brain className="h-8 w-8" />
+                    </div>
+                    <p className="text-slate-500 font-light text-sm">No trivia questions found in database. Create one to get started.</p>
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    {triviaQuestions.map((trivia) => (
+                      <div
+                        key={trivia.id}
+                        className="border border-slate-200 rounded-2xl p-5 hover:shadow-md transition-all flex flex-col justify-between bg-slate-50/30 hover:bg-white"
+                      >
+                        <div>
+                          {/* Label info */}
+                          <div className="flex justify-between items-center mb-3">
+                            <span className="text-[10px] font-extrabold uppercase bg-purple-100 text-[#652d90] px-2.5 py-1 rounded-full">
+                              Order {trivia.order}
+                            </span>
+                            <span className="text-[10px] text-slate-400 font-bold">
+                              ID: {trivia.id?.substring(0, 8)}...
+                            </span>
+                          </div>
+
+                          {/* Question Text */}
+                          <h3 className="font-bold text-slate-800 text-sm leading-snug mb-4">
+                            {trivia.question}
+                          </h3>
+
+                          {/* Options grid */}
+                          <div className="grid grid-cols-1 gap-2 mb-4">
+                            {trivia.options.map((opt, idx) => {
+                              const isCorrect = idx === trivia.answer;
+                              return (
+                                <div
+                                  key={idx}
+                                  className={`text-xs px-3 py-2 rounded-xl flex items-center justify-between border ${
+                                    isCorrect
+                                      ? 'bg-emerald-50 border-emerald-200 text-emerald-800 font-bold'
+                                      : 'bg-white border-slate-100 text-slate-500'
+                                  }`}
+                                >
+                                  <span>{opt}</span>
+                                  {isCorrect && (
+                                    <span className="text-[9px] bg-emerald-600 text-white font-extrabold px-1.5 py-0.5 rounded-md">
+                                      Correct
+                                    </span>
+                                  )}
+                                </div>
+                              );
+                            })}
+                          </div>
+                        </div>
+
+                        {/* Actions */}
+                        <div className="flex gap-2 justify-end pt-3 border-t border-slate-100/50 mt-2">
+                          <button
+                            onClick={() => handleEditTrivia(trivia)}
+                            className="px-2.5 py-1.5 bg-purple-50 hover:bg-purple-100 text-[#652d90] rounded-lg text-[10px] font-bold transition-all border border-purple-200/20 cursor-pointer flex items-center gap-1"
+                          >
+                            <Edit className="h-3 w-3" /> Edit
+                          </button>
+                          <button
+                            onClick={() => handleDeleteTrivia(trivia.id!)}
+                            className="px-2.5 py-1.5 bg-rose-50 hover:bg-rose-100 text-rose-600 rounded-lg text-[10px] font-bold transition-all border border-rose-200/20 cursor-pointer flex items-center gap-1"
+                          >
+                            <Trash2 className="h-3 w-3" /> Delete
+                          </button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
             )}
 
@@ -5235,6 +5458,153 @@ export const AdminDashboard: React.FC = () => {
                       </>
                     ) : (
                       editingFaqId ? 'Save Changes' : 'Add FAQ'
+                    )}
+                  </button>
+                </div>
+
+              </form>
+            </motion.div>
+          </div>
+        )}
+        {/* 15. TRIVIA MODAL FORM */}
+        {showTriviaModal && (
+          <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex justify-center items-center p-4">
+            <motion.div 
+              initial={{ scale: 0.95, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.95, opacity: 0 }}
+              className="bg-white border border-slate-200 shadow-2xl rounded-3xl w-full max-w-lg p-6 sm:p-7 relative z-50 text-left max-h-[90vh] overflow-y-auto"
+            >
+              <div className="flex justify-between items-center border-b border-slate-100 pb-3 mb-5">
+                <h3 className="text-lg font-black text-slate-800 font-serif">{editingTriviaId ? 'Edit Trivia Question' : 'Add Trivia Question'}</h3>
+                <button 
+                  onClick={() => {
+                    setShowTriviaModal(false);
+                    setEditingTriviaId(null);
+                    setNewTrivia({ question: '', opt1: '', opt2: '', opt3: '', opt4: '', answer: 0, order: 0 });
+                  }} 
+                  className="p-1 hover:bg-slate-100 rounded-lg cursor-pointer"
+                >
+                  <X className="h-5 w-5 text-slate-400" />
+                </button>
+              </div>
+
+              <form onSubmit={handleCreateTriviaSubmit} className="flex flex-col gap-4">
+                
+                {/* Question */}
+                <div className="flex flex-col gap-1">
+                  <label className="text-xs font-bold text-slate-600 uppercase tracking-wider pl-0.5">Question</label>
+                  <input 
+                    type="text" 
+                    placeholder="e.g. Which is the tallest mountain in the world?" 
+                    value={newTrivia.question}
+                    onChange={e => setNewTrivia({...newTrivia, question: e.target.value})}
+                    required
+                    className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 focus:border-[#652d90] rounded-xl text-xs sm:text-sm font-light focus:outline-none transition-all duration-300"
+                  />
+                </div>
+
+                {/* Options 1-4 */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div className="flex flex-col gap-1">
+                    <label className="text-xs font-bold text-slate-600 uppercase tracking-wider pl-0.5">Option 1</label>
+                    <input 
+                      type="text" 
+                      placeholder="First option" 
+                      value={newTrivia.opt1}
+                      onChange={e => setNewTrivia({...newTrivia, opt1: e.target.value})}
+                      required
+                      className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 focus:border-[#652d90] rounded-xl text-xs sm:text-sm font-light focus:outline-none transition-all duration-300"
+                    />
+                  </div>
+                  <div className="flex flex-col gap-1">
+                    <label className="text-xs font-bold text-slate-600 uppercase tracking-wider pl-0.5">Option 2</label>
+                    <input 
+                      type="text" 
+                      placeholder="Second option" 
+                      value={newTrivia.opt2}
+                      onChange={e => setNewTrivia({...newTrivia, opt2: e.target.value})}
+                      required
+                      className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 focus:border-[#652d90] rounded-xl text-xs sm:text-sm font-light focus:outline-none transition-all duration-300"
+                    />
+                  </div>
+                  <div className="flex flex-col gap-1">
+                    <label className="text-xs font-bold text-slate-600 uppercase tracking-wider pl-0.5">Option 3</label>
+                    <input 
+                      type="text" 
+                      placeholder="Third option" 
+                      value={newTrivia.opt3}
+                      onChange={e => setNewTrivia({...newTrivia, opt3: e.target.value})}
+                      required
+                      className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 focus:border-[#652d90] rounded-xl text-xs sm:text-sm font-light focus:outline-none transition-all duration-300"
+                    />
+                  </div>
+                  <div className="flex flex-col gap-1">
+                    <label className="text-xs font-bold text-slate-600 uppercase tracking-wider pl-0.5">Option 4</label>
+                    <input 
+                      type="text" 
+                      placeholder="Fourth option" 
+                      value={newTrivia.opt4}
+                      onChange={e => setNewTrivia({...newTrivia, opt4: e.target.value})}
+                      required
+                      className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 focus:border-[#652d90] rounded-xl text-xs sm:text-sm font-light focus:outline-none transition-all duration-300"
+                    />
+                  </div>
+                </div>
+
+                {/* Correct Answer Select */}
+                <div className="flex flex-col gap-1">
+                  <label className="text-xs font-bold text-slate-600 uppercase tracking-wider pl-0.5">Correct Answer</label>
+                  <select 
+                    value={newTrivia.answer}
+                    onChange={e => setNewTrivia({...newTrivia, answer: parseInt(e.target.value) || 0})}
+                    className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 focus:border-[#652d90] rounded-xl text-xs sm:text-sm font-light focus:outline-none transition-all duration-300"
+                  >
+                    <option value={0}>Option 1 ( {newTrivia.opt1 || 'Empty'} )</option>
+                    <option value={1}>Option 2 ( {newTrivia.opt2 || 'Empty'} )</option>
+                    <option value={2}>Option 3 ( {newTrivia.opt3 || 'Empty'} )</option>
+                    <option value={3}>Option 4 ( {newTrivia.opt4 || 'Empty'} )</option>
+                  </select>
+                </div>
+
+                {/* Sort Order */}
+                <div className="flex flex-col gap-1">
+                  <label className="text-xs font-bold text-slate-600 uppercase tracking-wider pl-0.5">Sort Order Index</label>
+                  <input 
+                    type="number" 
+                    placeholder="e.g. 1" 
+                    value={newTrivia.order}
+                    onChange={e => setNewTrivia({...newTrivia, order: parseInt(e.target.value) || 0})}
+                    required
+                    className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 focus:border-[#652d90] rounded-xl text-xs sm:text-sm font-light focus:outline-none transition-all duration-300"
+                  />
+                </div>
+
+                {/* Buttons */}
+                <div className="flex gap-3 justify-end mt-2">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setShowTriviaModal(false);
+                      setEditingTriviaId(null);
+                      setNewTrivia({ question: '', opt1: '', opt2: '', opt3: '', opt4: '', answer: 0, order: 0 });
+                    }}
+                    className="px-5 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-600 rounded-xl text-xs sm:text-sm font-bold transition-all cursor-pointer"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={isSubmitting}
+                    className="px-6 py-2.5 bg-[#652d90] hover:bg-[#4b1f6b] disabled:bg-slate-300 text-white rounded-xl text-xs sm:text-sm font-bold shadow-md transition-all cursor-pointer flex items-center gap-1.5"
+                  >
+                    {isSubmitting ? (
+                      <>
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                        Saving...
+                      </>
+                    ) : (
+                      editingTriviaId ? 'Save Changes' : 'Add Question'
                     )}
                   </button>
                 </div>

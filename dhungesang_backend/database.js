@@ -201,6 +201,16 @@ const AdmissionFaqSchema = new mongoose.Schema({
 
 export const AdmissionFaq = mongoose.model('AdmissionFaq', AdmissionFaqSchema);
 
+// 16. Trivia Question Schema & Model
+const TriviaQuestionSchema = new mongoose.Schema({
+  question: { type: String, required: true },
+  options: [{ type: String, required: true }],
+  answer: { type: Number, required: true }, // index of correct option
+  order: { type: Number, default: 0 }
+});
+
+export const TriviaQuestion = mongoose.model('TriviaQuestion', TriviaQuestionSchema);
+
 
 
 
@@ -794,6 +804,63 @@ async function seedDatabase() {
       ];
       await AdmissionFaq.insertMany(mockFaqs);
       console.log('Seeded default admission FAQs to MongoDB.');
+    }
+
+    // Seed Trivia Game Questions
+    const triviaCount = await TriviaQuestion.countDocuments();
+    if (triviaCount === 0) {
+      const mockTrivia = [
+        {
+          question: "Which planet is known as the Red Planet?",
+          options: ["Earth", "Mars", "Jupiter", "Saturn"],
+          answer: 1,
+          order: 1
+        },
+        {
+          question: "What is the capital city of Nepal?",
+          options: ["Pokhara", "Lalitpur", "Kathmandu", "Bhaktapur"],
+          answer: 2,
+          order: 2
+        },
+        {
+          question: "What is 15 multiplied by 4?",
+          options: ["50", "60", "70", "80"],
+          answer: 1,
+          order: 3
+        },
+        {
+          question: "Which gas do plants absorb from the atmosphere for photosynthesis?",
+          options: ["Oxygen", "Nitrogen", "Carbon Dioxide", "Hydrogen"],
+          answer: 2,
+          order: 4
+        },
+        {
+          question: "Who is known as the father of modern physics?",
+          options: ["Isaac Newton", "Albert Einstein", "Galileo Galilei", "Nikola Tesla"],
+          answer: 1,
+          order: 5
+        },
+        {
+          question: "What is the chemical formula for water?",
+          options: ["CO2", "NaCl", "H2O", "O2"],
+          answer: 2,
+          order: 6
+        },
+        {
+          question: "Which is the tallest mountain in the world?",
+          options: ["Mount Everest", "K2", "Kangchenjunga", "Lhotse"],
+          answer: 0,
+          order: 7
+        },
+        {
+          question: "How many bones are there in an adult human body?",
+          options: ["204", "206", "210", "220"],
+          answer: 1,
+          order: 8
+        }
+      ];
+      await TriviaQuestion.insertMany(mockTrivia);
+      console.log('Seeded default trivia game questions to MongoDB.');
     }
   } catch (err) {
     console.error('Error seeding MongoDB Atlas:', err.message);
