@@ -192,6 +192,16 @@ const OfficialSchema = new mongoose.Schema({
 
 export const Official = mongoose.model('Official', OfficialSchema);
 
+// 15. Admission FAQ Schema & Model
+const AdmissionFaqSchema = new mongoose.Schema({
+  q: { type: String, required: true },
+  a: { type: String, required: true },
+  order: { type: Number, default: 0 }
+});
+
+export const AdmissionFaq = mongoose.model('AdmissionFaq', AdmissionFaqSchema);
+
+
 
 
 
@@ -755,6 +765,35 @@ async function seedDatabase() {
       ];
       await Official.insertMany(mockOfficials);
       console.log('Seeded default school officials to MongoDB.');
+    }
+
+    // Seed Admission FAQs
+    const faqsCount = await AdmissionFaq.countDocuments();
+    if (faqsCount === 0) {
+      const mockFaqs = [
+        {
+          q: "What is the age criteria for Kindergarten admissions?",
+          a: "Children should be 2.5+ years old for Nursery, 3.5+ years for LKG, and 4.5+ years for UKG admissions. Age validation is done using their birth certificate.",
+          order: 1
+        },
+        {
+          q: "Is transportation facility available for all routes in Pokhara?",
+          a: "Yes, our transport covers almost all major routes in Pokhara-17, Mahatgaunda, Birauta, Damside, Chorepatan, and adjoining areas. You can register for transportation during final admission.",
+          order: 2
+        },
+        {
+          q: "Are scholarship schemes available for deserving students?",
+          a: "Dhungesanghu Boarding School provides scholarships based on merit (entrance exam toppers, terminal toppers) and need-based scholarships for underprivileged or marginalized students. Details can be requested from the administration desk.",
+          order: 3
+        },
+        {
+          q: "Can I pay the school fee in installments?",
+          a: "Yes, fees can be paid in installments corresponding to the four academic terms (Shrawan, Kartika, Magh, Baisakh). Term fees should be cleared before terminal examinations begin.",
+          order: 4
+        }
+      ];
+      await AdmissionFaq.insertMany(mockFaqs);
+      console.log('Seeded default admission FAQs to MongoDB.');
     }
   } catch (err) {
     console.error('Error seeding MongoDB Atlas:', err.message);

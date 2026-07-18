@@ -2,7 +2,7 @@ import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
 import './database.js'; // Imports connection & seeds database
-import { Notice, CalendarEvent, ContactMessage, Admin, Service, GalleryImage, GalleryCategory, Testimonial, PrincipalMessage, Alumni, Milestone, Rule, Program, AdmissionStep, Official } from './database.js';
+import { Notice, CalendarEvent, ContactMessage, Admin, Service, GalleryImage, GalleryCategory, Testimonial, PrincipalMessage, Alumni, Milestone, Rule, Program, AdmissionStep, Official, AdmissionFaq } from './database.js';
 
 dotenv.config();
 
@@ -1086,6 +1086,84 @@ app.delete('/api/officials/:id', async (req, res) => {
     res.status(500).json({ error: 'Database error deleting official' });
   }
 });
+
+// --- ADMISSION FAQS ENDPOINTS ---
+app.get('/api/admission-faqs', async (req, res) => {
+  try {
+    const list = await AdmissionFaq.find().sort({ order: 1 });
+    res.json(list.map(item => ({
+      id: item._id,
+      q: item.q,
+      a: item.a,
+      order: item.order
+    })));
+  } catch (err) {
+    console.error('Error fetching admission FAQs:', err.message);
+    res.status(500).json({ error: 'Database error fetching admission FAQs' });
+  }
+});
+
+app.post('/api/admission-faqs', async (req, res) => {
+  const { q, a, order } = req.body;
+  if (!q || !a) {
+    return res.status(400).json({ error: 'Question and answer are required.' });
+  }
+  try {
+    let faqOrder = order;
+    if (faqOrder === undefined) {
+      const maxFaq = await AdmissionFaq.findOne().sort({ order: -1 });
+      faqOrder = maxFaq ? maxFaq.order + 1 : 1;
+    }
+    const fresh = new AdmissionFaq({ q, a, order: faqOrder });
+    const saved = await fresh.save();
+    res.status(201).json({
+      id: saved._id,
+      q: saved.q,
+      a: saved.a,
+      order: saved.order
+    });
+  } catch (err) {
+    console.error('Error creating admission FAQ:', err.message);
+    res.status(500).json({ error: 'Database error creating admission FAQ' });
+  }
+});
+
+app.put('/api/admission-faqs/:id', async (req, res) => {
+  const { q, a, order } = req.body;
+  try {
+    const updated = await AdmissionFaq.findByIdAndUpdate(
+      req.params.id,
+      { q, a, order },
+      { new: true }
+    );
+    if (!updated) {
+      return res.status(404).json({ error: 'Admission FAQ not found.' });
+    }
+    res.json({
+      id: updated._id,
+      q: updated.q,
+      a: updated.a,
+      order: updated.order
+    });
+  } catch (err) {
+    console.error('Error updating admission FAQ:', err.message);
+    res.status(500).json({ error: 'Database error updating admission FAQ' });
+  }
+});
+
+app.delete('/api/admission-faqs/:id', async (req, res) => {
+  try {
+    const deleted = await AdmissionFaq.findByIdAndDelete(req.params.id);
+    if (!deleted) {
+      return res.status(404).json({ error: 'Admission FAQ not found.' });
+    }
+    res.json({ success: true, message: 'Admission FAQ deleted successfully' });
+  } catch (err) {
+    console.error('Error deleting admission FAQ:', err.message);
+    res.status(500).json({ error: 'Database error deleting admission FAQ' });
+  }
+});
+
 
 // Start Server
 app.listen(PORT, () => {

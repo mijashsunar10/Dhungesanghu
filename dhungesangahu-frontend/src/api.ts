@@ -817,6 +817,65 @@ export async function deleteOfficial(id: string): Promise<void> {
   }
 }
 
+export interface AdmissionFaq {
+  id: string;
+  q: string;
+  a: string;
+  order: number;
+}
+
+export async function getAdmissionFaqs(): Promise<AdmissionFaq[]> {
+  const res = await fetch(`${API_URL}/admission-faqs`);
+  if (!res.ok) {
+    throw new Error('Failed to fetch admission FAQs');
+  }
+  const data = await res.json();
+  return data.map((item: any) => ({
+    ...item,
+    id: item._id || item.id
+  }));
+}
+
+export async function createAdmissionFaq(faq: Omit<AdmissionFaq, 'id'>): Promise<AdmissionFaq> {
+  const res = await fetch(`${API_URL}/admission-faqs`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(faq),
+  });
+  if (!res.ok) {
+    throw new Error('Failed to create admission FAQ');
+  }
+  const data = await res.json();
+  return { ...data, id: data._id || data.id };
+}
+
+export async function updateAdmissionFaq(id: string, faq: Omit<AdmissionFaq, 'id'>): Promise<AdmissionFaq> {
+  const res = await fetch(`${API_URL}/admission-faqs/${id}`, {
+    method: 'PUT',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(faq),
+  });
+  if (!res.ok) {
+    throw new Error('Failed to update admission FAQ');
+  }
+  const data = await res.json();
+  return { ...data, id: data._id || data.id };
+}
+
+export async function deleteAdmissionFaq(id: string): Promise<void> {
+  const res = await fetch(`${API_URL}/admission-faqs/${id}`, {
+    method: 'DELETE',
+  });
+  if (!res.ok) {
+    throw new Error('Failed to delete admission FAQ');
+  }
+}
+
+
 
 
 

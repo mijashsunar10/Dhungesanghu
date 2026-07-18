@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { ClipboardList, FileCheck, FileSpreadsheet, Compass, ArrowRight, ChevronDown, ChevronUp, Download, Calculator, Coins } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { PageBanner } from '../components/PageBanner';
-import { getAdmissionSteps } from '../api';
+import { getAdmissionSteps, getAdmissionFaqs } from '../api';
 
 interface Step {
   num: string;
@@ -78,27 +78,7 @@ export const Admissions: React.FC = () => {
     }
   ]);
 
-  useEffect(() => {
-    getAdmissionSteps()
-      .then(data => {
-        if (data && data.length > 0) {
-          setAdmissionSteps(data.sort((a, b) => a.order - b.order));
-        }
-      })
-      .catch(err => console.error('Failed loading admission steps:', err));
-  }, []);
-
-  const renderStepIcon = (iconName: string) => {
-    switch (iconName) {
-      case 'ClipboardList': return <ClipboardList className="h-6 w-6 text-[#652d90]" />;
-      case 'FileCheck': return <FileCheck className="h-6 w-6 text-[#652d90]" />;
-      case 'FileSpreadsheet': return <FileSpreadsheet className="h-6 w-6 text-[#652d90]" />;
-      case 'Compass': return <Compass className="h-6 w-6 text-[#652d90]" />;
-      default: return <ClipboardList className="h-6 w-6 text-[#652d90]" />;
-    }
-  };
-
-  const faqs: Faq[] = [
+  const [faqs, setFaqs] = useState<Faq[]>([
     {
       q: "What is the age criteria for Kindergarten admissions?",
       a: "Children should be 2.5+ years old for Nursery, 3.5+ years for LKG, and 4.5+ years for UKG admissions. Age validation is done using their birth certificate."
@@ -115,7 +95,37 @@ export const Admissions: React.FC = () => {
       q: "Can I pay the school fee in installments?",
       a: "Yes, fees can be paid in installments corresponding to the four academic terms (Shrawan, Kartika, Magh, Baisakh). Term fees should be cleared before terminal examinations begin."
     }
-  ];
+  ]);
+
+  useEffect(() => {
+    getAdmissionSteps()
+      .then(data => {
+        if (data && data.length > 0) {
+          setAdmissionSteps(data.sort((a, b) => a.order - b.order));
+        }
+      })
+      .catch(err => console.error('Failed loading admission steps:', err));
+
+    getAdmissionFaqs()
+      .then(data => {
+        if (data && data.length > 0) {
+          setFaqs(data.sort((a, b) => a.order - b.order));
+        }
+      })
+      .catch(err => console.error('Failed loading admission FAQs:', err));
+  }, []);
+
+  const renderStepIcon = (iconName: string) => {
+    switch (iconName) {
+      case 'ClipboardList': return <ClipboardList className="h-6 w-6 text-[#652d90]" />;
+      case 'FileCheck': return <FileCheck className="h-6 w-6 text-[#652d90]" />;
+      case 'FileSpreadsheet': return <FileSpreadsheet className="h-6 w-6 text-[#652d90]" />;
+      case 'Compass': return <Compass className="h-6 w-6 text-[#652d90]" />;
+      default: return <ClipboardList className="h-6 w-6 text-[#652d90]" />;
+    }
+  };
+
+
 
   // Fee calculation logic
   const getBaseTuition = () => {

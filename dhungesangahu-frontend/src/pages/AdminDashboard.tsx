@@ -97,12 +97,17 @@ import {
   createOfficial,
   updateOfficial,
   deleteOfficial,
-  type Official
+  type Official,
+  getAdmissionFaqs,
+  createAdmissionFaq,
+  updateAdmissionFaq,
+  deleteAdmissionFaq,
+  type AdmissionFaq
 } from '../api';
 
 export const AdminDashboard: React.FC = () => {
   const navigate = useNavigate();
-  const [activeTab, setActiveTab] = useState<'overview' | 'notices' | 'calendar' | 'inbox' | 'services' | 'gallery' | 'testimonials' | 'principal' | 'alumni' | 'milestones' | 'rules' | 'programs' | 'admissionSteps' | 'officials'>('overview');
+  const [activeTab, setActiveTab] = useState<'overview' | 'notices' | 'calendar' | 'inbox' | 'services' | 'gallery' | 'testimonials' | 'principal' | 'alumni' | 'milestones' | 'rules' | 'programs' | 'admissionSteps' | 'officials' | 'admissionFaqs'>('overview');
   const [adminUser, setAdminUser] = useState('Admin');
   
   // Data States
@@ -119,6 +124,7 @@ export const AdminDashboard: React.FC = () => {
   const [programs, setPrograms] = useState<Program[]>([]);
   const [admissionSteps, setAdmissionSteps] = useState<AdmissionStep[]>([]);
   const [officials, setOfficials] = useState<Official[]>([]);
+  const [admissionFaqs, setAdmissionFaqs] = useState<AdmissionFaq[]>([]);
   const [principalData, setPrincipalData] = useState<PrincipalMessageData>({
     name: '',
     title: '',
@@ -236,6 +242,15 @@ export const AdminDashboard: React.FC = () => {
     order: 0
   });
 
+  // Admission FAQs Modals & States
+  const [showFaqModal, setShowFaqModal] = useState(false);
+  const [editingFaqId, setEditingFaqId] = useState<string | null>(null);
+  const [newFaq, setNewFaq] = useState({
+    q: '',
+    a: '',
+    order: 0
+  });
+
   // New Form Data states
   const [newNotice, setNewNotice] = useState({
     title: '',
@@ -293,7 +308,7 @@ export const AdminDashboard: React.FC = () => {
     try {
       setLoading(true);
       setError(null);
-      const [nList, eList, mList, sList, gList, gcList, tList, pMsg, aList, milList, rList, progList, stepList, offList] = await Promise.all([
+      const [nList, eList, mList, sList, gList, gcList, tList, pMsg, aList, milList, rList, progList, stepList, offList, faqList] = await Promise.all([
         getNotices(),
         getCalendarEvents(),
         getContactMessages(),
@@ -307,7 +322,8 @@ export const AdminDashboard: React.FC = () => {
         getRules(),
         getPrograms(),
         getAdmissionSteps(),
-        getOfficials()
+        getOfficials(),
+        getAdmissionFaqs()
       ]);
       setNotices(nList);
       setEvents(eList);
@@ -323,6 +339,7 @@ export const AdminDashboard: React.FC = () => {
       setPrograms(progList.sort((a, b) => a.order - b.order));
       setAdmissionSteps(stepList.sort((a, b) => a.order - b.order));
       setOfficials(offList.sort((a, b) => a.order - b.order));
+      setAdmissionFaqs(faqList.sort((a, b) => a.order - b.order));
     } catch (err: any) {
       console.error('Error fetching admin data:', err);
       setError('Could not load data. Ensure the database server is running.');
@@ -1170,6 +1187,64 @@ export const AdminDashboard: React.FC = () => {
     }
   };
 
+  // ADMISSION FAQS HANDLERS
+  const handleCreateFaqSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newFaq.q.trim() || !newFaq.a.trim()) {
+      alert('Question and Answer are required.');
+      return;
+    }
+
+    const payload = {
+      q: newFaq.q.trim(),
+      a: newFaq.a.trim(),
+      order: newFaq.order
+    };
+
+    try {
+      setIsSubmitting(true);
+      if (editingFaqId) {
+        const updated = await updateAdmissionFaq(editingFaqId, payload);
+        setAdmissionFaqs(admissionFaqs.map(item => item.id === editingFaqId ? updated : item).sort((a, b) => a.order - b.order));
+        triggerSuccess('Admission FAQ updated successfully.');
+      } else {
+        const created = await createAdmissionFaq(payload);
+        setAdmissionFaqs([...admissionFaqs, created].sort((a, b) => a.order - b.order));
+        triggerSuccess('Admission FAQ created successfully.');
+      }
+      setShowFaqModal(false);
+      setEditingFaqId(null);
+      setNewFaq({ q: '', a: '', order: 0 });
+    } catch (err: any) {
+      console.error(err);
+      alert('Error saving admission FAQ.');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleEditFaq = (faq: AdmissionFaq) => {
+    setEditingFaqId(faq.id);
+    setNewFaq({
+      q: faq.q,
+      a: faq.a,
+      order: faq.order
+    });
+    setShowFaqModal(true);
+  };
+
+  const handleDeleteFaq = async (id: string) => {
+    if (!window.confirm('Are you sure you want to delete this FAQ?')) return;
+    try {
+      await deleteAdmissionFaq(id);
+      setAdmissionFaqs(admissionFaqs.filter(item => item.id !== id));
+      triggerSuccess('Admission FAQ deleted successfully.');
+    } catch (err) {
+      console.error(err);
+      alert('Error deleting FAQ.');
+    }
+  };
+
   return (
     <div className="min-h-screen bg-slate-50 flex font-sans text-slate-800 relative overflow-hidden">
       
@@ -1436,6 +1511,23 @@ export const AdminDashboard: React.FC = () => {
                   {officials.length}
                 </span>
               </button>
+
+              <button
+                onClick={() => { setActiveTab('admissionFaqs'); setIsMobileSidebarOpen(false); }}
+                className={`w-full flex items-center justify-between px-4 py-3 rounded-xl font-bold text-xs sm:text-sm transition-all cursor-pointer text-left ${
+                  activeTab === 'admissionFaqs'
+                    ? 'bg-[#652d90] text-white shadow-md shadow-purple-900/30'
+                    : 'hover:bg-slate-800 hover:text-white text-slate-400'
+                }`}
+              >
+                <span className="flex items-center gap-3">
+                  <HelpCircle className="h-4.5 w-4.5" />
+                  Admission FAQs
+                </span>
+                <span className="bg-slate-800 text-slate-300 text-[10px] font-extrabold px-2 py-0.5 rounded-full">
+                  {admissionFaqs.length}
+                </span>
+              </button>
             </nav>
           </div>
 
@@ -1451,7 +1543,7 @@ export const AdminDashboard: React.FC = () => {
                 { name: 'School Rules & Policies', icon: Shield, status: 'Active' },
                 { name: 'Academic Programs', icon: BookOpen, status: 'Active' },
                 { name: 'Admission Journey Steps', icon: FileText, status: 'Active' },
-                { name: 'Admission FAQs', icon: HelpCircle, status: 'Planned' },
+                { name: 'Admission FAQs', icon: HelpCircle, status: 'Active' },
                 { name: 'Trivia Game Questions', icon: Activity, status: 'Planned' }
               ].map((m, idx) => (
                 <div key={idx} className="flex items-center justify-between px-4 py-2 rounded-xl text-xs font-bold text-slate-500 bg-slate-800/20 border border-slate-800/10">
@@ -1732,6 +1824,21 @@ export const AdminDashboard: React.FC = () => {
                         <p className="text-[10px] text-slate-400 font-medium mt-1">Staff Members</p>
                       </div>
                     </div>
+
+                    {/* Card 13 */}
+                    <div 
+                      onClick={() => setActiveTab('admissionFaqs')}
+                      className="bg-white border border-slate-200/80 rounded-2xl p-5 shadow-sm text-left flex items-center gap-4 hover:shadow-md transition-all cursor-pointer"
+                    >
+                      <div className="h-12 w-12 bg-indigo-50 text-indigo-600 rounded-xl flex items-center justify-center shrink-0">
+                        <HelpCircle className="h-6 w-6" />
+                      </div>
+                      <div>
+                        <p className="text-[10px] uppercase font-bold text-slate-400 tracking-wider">FAQ</p>
+                        <h4 className="text-2xl font-black text-slate-800 leading-none mt-1">{admissionFaqs.length}</h4>
+                        <p className="text-[10px] text-slate-400 font-medium mt-1">Admission FAQs</p>
+                      </div>
+                    </div>
                   </div>
 
                   {/* Analytical Charts */}
@@ -1744,7 +1851,7 @@ export const AdminDashboard: React.FC = () => {
                       </div>
                       <div className="h-64 flex flex-col justify-center items-center">
                         {/* Responsive SVG Chart */}
-                        <svg viewBox="0 0 400 440" className="w-full h-full max-h-[420px]">
+                        <svg viewBox="0 0 400 480" className="w-full h-full max-h-[420px]">
                           {/* Define gradients for dynamic styling */}
                           <defs>
                             <linearGradient id="purpleGrad" x1="0" y1="0" x2="1" y2="0">
@@ -1795,7 +1902,8 @@ export const AdminDashboard: React.FC = () => {
                               { label: 'Rules', count: rules.length, grad: 'url(#skyGrad)' },
                               { label: 'Programs', count: programs.length, grad: 'url(#emeraldGrad)' },
                               { label: 'Admissions', count: admissionSteps.length, grad: 'url(#amberGrad)' },
-                              { label: 'Officials', count: officials.length, grad: 'url(#purpleGrad)' }
+                              { label: 'Officials', count: officials.length, grad: 'url(#purpleGrad)' },
+                              { label: 'FAQs', count: admissionFaqs.length, grad: 'url(#indigoGrad)' }
                             ];
                             const maxCount = Math.max(...items.map(i => i.count), 5);
                             return items.map((item, idx) => {
@@ -3208,6 +3316,82 @@ export const AdminDashboard: React.FC = () => {
                               <Trash2 className="h-3 w-3" /> Delete
                             </button>
                           </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+              </div>
+            )}
+
+            {activeTab === 'admissionFaqs' && (
+              <div className="flex flex-col gap-6">
+                
+                {/* Header Actions */}
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between bg-white border border-slate-200/80 rounded-3xl p-6 gap-4 shadow-sm text-left">
+                  <div>
+                    <h2 className="text-xl font-black text-slate-800 font-serif">Admission FAQs</h2>
+                    <p className="text-slate-400 text-xs font-light">Manage questions and answers displayed on the Admissions page</p>
+                  </div>
+                  <button 
+                    onClick={() => {
+                      setEditingFaqId(null);
+                      setNewFaq({
+                        q: '',
+                        a: '',
+                        order: admissionFaqs.length + 1
+                      });
+                      setShowFaqModal(true);
+                    }}
+                    className="px-5 py-2.5 bg-[#652d90] hover:bg-[#4b1f6b] text-white rounded-xl text-xs font-bold transition-all shadow-md active:scale-95 flex items-center gap-1.5 self-start sm:self-auto cursor-pointer"
+                  >
+                    <Plus className="h-4.5 w-4.5" /> Add FAQ
+                  </button>
+                </div>
+
+                {/* FAQs Grid/List */}
+                {admissionFaqs.length === 0 ? (
+                  <div className="bg-white border border-slate-200/80 rounded-3xl p-16 text-center shadow-sm">
+                    <HelpCircle className="h-12 w-12 text-slate-300 mx-auto mb-3 animate-pulse" />
+                    <h3 className="text-slate-700 font-bold text-sm">No FAQs registered</h3>
+                    <p className="text-slate-400 text-xs font-light mt-1 max-w-sm mx-auto">Create FAQs to help prospective parents with standard queries.</p>
+                  </div>
+                ) : (
+                  <div className="flex flex-col gap-4 text-left">
+                    {admissionFaqs.map((faq) => (
+                      <div 
+                        key={faq.id} 
+                        className="bg-white border border-slate-200/80 rounded-3xl p-6 shadow-sm flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4 hover:shadow-md transition-all duration-300 animate-fadeIn"
+                      >
+                        <div className="flex-1 flex flex-col gap-1.5">
+                          <div className="flex items-center gap-2">
+                            <span className="bg-purple-100 text-[#652d90] text-[10px] font-extrabold px-2.5 py-0.5 rounded-full shrink-0">
+                              Order {faq.order}
+                            </span>
+                          </div>
+                          <h3 className="text-sm sm:text-base font-black text-slate-800 font-serif leading-snug">
+                            Q: {faq.q}
+                          </h3>
+                          <p className="text-slate-500 text-xs sm:text-sm font-light leading-relaxed">
+                            A: {faq.a}
+                          </p>
+                        </div>
+
+                        {/* Actions */}
+                        <div className="flex gap-2 shrink-0 self-end sm:self-start">
+                          <button
+                            onClick={() => handleEditFaq(faq)}
+                            className="px-2.5 py-1.5 bg-purple-50 hover:bg-purple-100 text-[#652d90] rounded-lg text-[10px] font-bold transition-all border border-purple-200/20 cursor-pointer flex items-center gap-1"
+                          >
+                            <Edit className="h-3 w-3" /> Edit
+                          </button>
+                          <button
+                            onClick={() => handleDeleteFaq(faq.id)}
+                            className="px-2.5 py-1.5 bg-rose-50 hover:bg-rose-100 text-rose-600 rounded-lg text-[10px] font-bold transition-all border border-rose-200/20 cursor-pointer flex items-center gap-1"
+                          >
+                            <Trash2 className="h-3 w-3" /> Delete
+                          </button>
                         </div>
                       </div>
                     ))}
@@ -4949,6 +5133,108 @@ export const AdminDashboard: React.FC = () => {
                       </>
                     ) : (
                       editingOfficialId ? 'Save Changes' : 'Add Official'
+                    )}
+                  </button>
+                </div>
+
+              </form>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
+      {/* 13. ADMISSION FAQ MODAL FORM */}
+      <AnimatePresence>
+        {showFaqModal && (
+          <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex justify-center items-center p-4">
+            <motion.div 
+              initial={{ scale: 0.95, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.95, opacity: 0 }}
+              className="bg-white border border-slate-200 shadow-2xl rounded-3xl w-full max-w-xl p-6 sm:p-7 relative z-50 text-left"
+            >
+              <div className="flex justify-between items-center border-b border-slate-100 pb-3 mb-5">
+                <h3 className="text-lg font-black text-slate-800 font-serif">
+                  {editingFaqId ? 'Edit Admission FAQ' : 'Add Admission FAQ'}
+                </h3>
+                <button 
+                  onClick={() => {
+                    setShowFaqModal(false);
+                    setEditingFaqId(null);
+                    setNewFaq({ q: '', a: '', order: 0 });
+                  }} 
+                  className="p-1.5 hover:bg-slate-100 rounded-lg text-slate-400 hover:text-slate-600 transition-all cursor-pointer"
+                >
+                  <X className="h-5 w-5" />
+                </button>
+              </div>
+
+              <form onSubmit={handleCreateFaqSubmit} className="flex flex-col gap-4">
+                
+                {/* Question */}
+                <div className="flex flex-col gap-1">
+                  <label className="text-xs font-bold text-slate-600 uppercase tracking-wider pl-0.5">Question</label>
+                  <input 
+                    type="text" 
+                    placeholder="e.g. Can I pay the school fee in installments?" 
+                    value={newFaq.q}
+                    onChange={e => setNewFaq({...newFaq, q: e.target.value})}
+                    required
+                    className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 focus:border-[#652d90] rounded-xl text-xs sm:text-sm font-light focus:outline-none transition-all duration-300"
+                  />
+                </div>
+
+                {/* Answer */}
+                <div className="flex flex-col gap-1">
+                  <label className="text-xs font-bold text-slate-600 uppercase tracking-wider pl-0.5">Answer</label>
+                  <textarea 
+                    placeholder="e.g. Yes, fees can be paid in installments corresponding to the four academic terms..." 
+                    value={newFaq.a}
+                    onChange={e => setNewFaq({...newFaq, a: e.target.value})}
+                    required
+                    rows={4}
+                    className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 focus:border-[#652d90] rounded-xl text-xs sm:text-sm font-light focus:outline-none transition-all duration-300 resize-none"
+                  />
+                </div>
+
+                {/* Sort Order */}
+                <div className="flex flex-col gap-1">
+                  <label className="text-xs font-bold text-slate-600 uppercase tracking-wider pl-0.5">Sort Order Index</label>
+                  <input 
+                    type="number" 
+                    placeholder="e.g. 1" 
+                    value={newFaq.order}
+                    onChange={e => setNewFaq({...newFaq, order: parseInt(e.target.value) || 0})}
+                    required
+                    className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 focus:border-[#652d90] rounded-xl text-xs sm:text-sm font-light focus:outline-none transition-all duration-300"
+                  />
+                </div>
+
+                {/* Buttons */}
+                <div className="flex gap-3 justify-end mt-2">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setShowFaqModal(false);
+                      setEditingFaqId(null);
+                      setNewFaq({ q: '', a: '', order: 0 });
+                    }}
+                    className="px-5 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-600 rounded-xl text-xs sm:text-sm font-bold transition-all cursor-pointer"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={isSubmitting}
+                    className="px-6 py-2.5 bg-[#652d90] hover:bg-[#4b1f6b] disabled:bg-slate-300 text-white rounded-xl text-xs sm:text-sm font-bold shadow-md transition-all cursor-pointer flex items-center gap-1.5"
+                  >
+                    {isSubmitting ? (
+                      <>
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                        Saving...
+                      </>
+                    ) : (
+                      editingFaqId ? 'Save Changes' : 'Add FAQ'
                     )}
                   </button>
                 </div>
