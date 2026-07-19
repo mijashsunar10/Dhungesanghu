@@ -1,8 +1,27 @@
 import React, { useState, useEffect } from 'react';
-import { Search, Calendar, Printer, X, ChevronLeft, ChevronRight, Info, Loader2 } from 'lucide-react';
+import { Search, Calendar, Printer, X, ChevronLeft, ChevronRight, Info, Loader2, SlidersHorizontal, RotateCcw } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { PageBanner } from '../components/PageBanner';
 import { getNotices, getCalendarEvents, type Notice, type CalendarEvent } from '../api';
+
+const HighlightText: React.FC<{ text: string; highlight: string }> = ({ text, highlight }) => {
+  if (!highlight.trim()) return <>{text}</>;
+  const regex = new RegExp(`(${highlight.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&')})`, 'gi');
+  const parts = text.split(regex);
+  return (
+    <>
+      {parts.map((part, i) => 
+        regex.test(part) ? (
+          <mark key={i} className="bg-amber-100 text-amber-950 font-bold px-0.5 rounded">
+            {part}
+          </mark>
+        ) : (
+          part
+        )
+      )}
+    </>
+  );
+};
 
 interface MonthData {
   name: string;
@@ -17,6 +36,7 @@ export const Bulletins: React.FC = () => {
   const [activeCategory, setActiveCategory] = useState<string>('all');
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [selectedNotice, setSelectedNotice] = useState<Notice | null>(null);
+  const [sortBy, setSortBy] = useState<'newest' | 'oldest' | 'alphabetical'>('newest');
 
   // Calendar States
   const [selectedMonthIdx, setSelectedMonthIdx] = useState<number>(3); // Defaults to Shrawan (July-August)
@@ -101,12 +121,28 @@ export const Bulletins: React.FC = () => {
     { id: 'admin', label: 'Administrative' }
   ];
 
+  const getCategoryCount = (categoryId: string) => {
+    if (categoryId === 'all') return notices.length;
+    return notices.filter(n => n.category === categoryId).length;
+  };
+
   // Notice Filtering
   const filteredNotices = notices.filter(notice => {
     const matchesCategory = activeCategory === 'all' || notice.category === activeCategory;
     const matchesSearch = notice.title.toLowerCase().includes(searchQuery.toLowerCase()) || 
-                          notice.desc.toLowerCase().includes(searchQuery.toLowerCase());
+                          notice.desc.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                          (notice.fullContent && notice.fullContent.toLowerCase().includes(searchQuery.toLowerCase()));
     return matchesCategory && matchesSearch;
+  });
+
+  const sortedNotices = [...filteredNotices].sort((a, b) => {
+    if (sortBy === 'newest') {
+      return new Date(b.date).getTime() - new Date(a.date).getTime();
+    } else if (sortBy === 'oldest') {
+      return new Date(a.date).getTime() - new Date(b.date).getTime();
+    } else {
+      return a.title.localeCompare(b.title);
+    }
   });
 
   // Calendar Event Logic
@@ -199,46 +235,128 @@ export const Bulletins: React.FC = () => {
               transition={{ duration: 0.25, ease: "easeInOut" }}
               className="flex flex-col gap-8 w-full"
             >
-              {/* Search and Filters */}
-              <div className="flex flex-col sm:flex-row gap-4 justify-between items-center w-full bg-white p-4.5 rounded-2xl border border-slate-200 shadow-sm">
-                <div className="flex flex-wrap gap-2 w-full sm:w-auto">
-                  {noticeCategories.map(cat => (
-                    <button
-                      key={cat.id}
-                      onClick={() => setActiveCategory(cat.id)}
-                      className={`px-4 py-2 rounded-xl text-xs sm:text-sm font-bold transition-all duration-300 ease-in-out active:scale-95 cursor-pointer ${
-                        activeCategory === cat.id
-                          ? 'bg-[#652d90] text-white shadow-sm'
-                          : 'bg-slate-50 text-slate-600 hover:bg-slate-100'
-                      }`}
-                    >
-                      {cat.label}
-                    </button>
-                  ))}
+              {/* Search, Filters, and Sorting Controls */}
+              <div className="flex flex-col gap-4 w-full bg-white p-5 rounded-2xl border border-slate-200 shadow-sm">
+                <div className="flex flex-col lg:flex-row gap-4 justify-between items-stretch lg:items-center w-full">
+                  {/* Category Pills with counts */}
+                  <div className="flex flex-wrap gap-2">
+                    {noticeCategories.map(cat => (
+                      <button
+                        key={cat.id}
+                        onClick={() => setActiveCategory(cat.id)}
+                        className={`px-4 py-2 rounded-xl text-xs sm:text-sm font-bold transition-all duration-300 ease-in-out active:scale-95 cursor-pointer flex items-center gap-2 ${
+                          activeCategory === cat.id
+                            ? 'bg-[#652d90] text-white shadow-md'
+                            : 'bg-slate-50 text-slate-600 hover:bg-slate-100'
+                        }`}
+                      >
+                        <span>{cat.label}</span>
+                        <span className={`px-2 py-0.5 rounded-full text-[10px] ${
+                          activeCategory === cat.id 
+                            ? 'bg-white/20 text-white' 
+                            : 'bg-slate-200/60 text-slate-500'
+                        }`}>
+                          {getCategoryCount(cat.id)}
+                        </span>
+                      </button>
+                    ))}
+                  </div>
+
+                  {/* Search and Sort controls */}
+                  <div className="flex flex-col sm:flex-row gap-3 items-stretch sm:items-center">
+                    {/* Search Field */}
+                    <div className="relative flex-1 sm:w-64">
+                      <Search className="absolute left-3.5 top-3 h-4 w-4 text-slate-400" />
+                      <input 
+                        type="text" 
+                        placeholder="Search bulletins..."
+                        value={searchQuery}
+                        onChange={(e) => setSearchQuery(e.target.value)}
+                        className="w-full pl-10 pr-10 py-2.5 bg-slate-50 border border-slate-200 focus:border-[#652d90] rounded-xl text-xs sm:text-sm font-light focus:outline-none transition-all duration-300"
+                      />
+                      {searchQuery && (
+                        <button 
+                          onClick={() => setSearchQuery('')}
+                          className="absolute right-3.5 top-3 text-slate-400 hover:text-slate-600 transition-colors"
+                        >
+                          <X className="h-4 w-4" />
+                        </button>
+                      )}
+                    </div>
+
+                    {/* Sorting dropdown */}
+                    <div className="flex items-center gap-2 border border-slate-200 rounded-xl px-3 py-2 bg-slate-50">
+                      <SlidersHorizontal className="h-3.5 w-3.5 text-slate-400" />
+                      <select
+                        value={sortBy}
+                        onChange={(e) => setSortBy(e.target.value as any)}
+                        className="bg-transparent border-0 text-slate-600 text-xs font-bold focus:outline-none cursor-pointer pr-1"
+                      >
+                        <option value="newest">Newest First</option>
+                        <option value="oldest">Oldest First</option>
+                        <option value="alphabetical">Title (A-Z)</option>
+                      </select>
+                    </div>
+                  </div>
                 </div>
 
-                <div className="relative w-full sm:w-64">
-                  <Search className="absolute left-3.5 top-3 h-4 w-4 text-slate-400" />
-                  <input 
-                    type="text" 
-                    placeholder="Search bulletins..."
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    className="w-full pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-200 focus:border-[#652d90] rounded-xl text-xs sm:text-sm font-light focus:outline-none transition-all duration-300"
-                  />
-                </div>
+                {/* Active Filters Summary row */}
+                {(activeCategory !== 'all' || searchQuery || sortBy !== 'newest') && (
+                  <div className="flex flex-wrap items-center justify-between gap-3 pt-3.5 border-t border-slate-100">
+                    <div className="flex flex-wrap items-center gap-2 text-xs text-slate-500">
+                      <span className="font-semibold text-slate-400">Active Filters:</span>
+                      {activeCategory !== 'all' && (
+                        <span className="px-2.5 py-1 bg-purple-50 text-[#652d90] rounded-lg font-bold border border-purple-100 flex items-center gap-1">
+                          Category: {noticeCategories.find(c => c.id === activeCategory)?.label}
+                          <button onClick={() => setActiveCategory('all')} className="hover:text-purple-900 ml-1">
+                            <X className="h-3 w-3" />
+                          </button>
+                        </span>
+                      )}
+                      {searchQuery && (
+                        <span className="px-2.5 py-1 bg-amber-50 text-amber-700 rounded-lg font-bold border border-amber-100 flex items-center gap-1">
+                          Query: "{searchQuery}"
+                          <button onClick={() => setSearchQuery('')} className="hover:text-amber-900 ml-1">
+                            <X className="h-3 w-3" />
+                          </button>
+                        </span>
+                      )}
+                      {sortBy !== 'newest' && (
+                        <span className="px-2.5 py-1 bg-slate-100 text-slate-700 rounded-lg font-bold border border-slate-200 flex items-center gap-1">
+                          Sort: {sortBy === 'oldest' ? 'Oldest First' : 'A-Z'}
+                          <button onClick={() => setSortBy('newest')} className="hover:text-slate-900 ml-1">
+                            <X className="h-3 w-3" />
+                          </button>
+                        </span>
+                      )}
+                    </div>
+                    <button
+                      onClick={() => {
+                        setActiveCategory('all');
+                        setSearchQuery('');
+                        setSortBy('newest');
+                      }}
+                      className="text-xs text-slate-400 hover:text-[#652d90] transition-colors flex items-center gap-1.5 font-bold cursor-pointer"
+                    >
+                      <RotateCcw className="h-3.5 w-3.5" />
+                      Reset Filters
+                    </button>
+                  </div>
+                )}
               </div>
 
               {/* Filter Stats */}
-              <div className="text-slate-400 dark:text-purple-300/60 text-xs sm:text-sm font-light text-left pl-1 -mt-3">
-                Showing {filteredNotices.length} out of {notices.length} notices
+              <div className="text-slate-400 text-xs sm:text-sm font-light text-left pl-1 -mt-3 flex items-center justify-between">
+                <span>
+                  Showing <strong>{sortedNotices.length}</strong> out of <strong>{notices.length}</strong> notices
+                </span>
               </div>
 
               {/* List */}
-              {filteredNotices.length > 0 ? (
+              {sortedNotices.length > 0 ? (
                 <motion.div layout className="flex flex-col gap-5 text-left">
                   <AnimatePresence mode="popLayout">
-                    {filteredNotices.map((notice) => (
+                    {sortedNotices.map((notice) => (
                       <motion.div 
                         layout
                         initial={{ opacity: 0, y: 15 }}
@@ -267,10 +385,10 @@ export const Bulletins: React.FC = () => {
                             <span className="text-slate-400 text-xs font-light">• Posted on {notice.date}</span>
                           </div>
                           <h3 className="text-lg font-bold text-slate-800 group-hover:text-[#652d90] transition-colors leading-snug">
-                            {notice.title}
+                            <HighlightText text={notice.title} highlight={searchQuery} />
                           </h3>
                           <p className="text-slate-500 text-sm mt-1 font-light leading-relaxed">
-                            {notice.desc}
+                            <HighlightText text={notice.desc} highlight={searchQuery} />
                           </p>
                         </div>
                       </motion.div>
@@ -282,11 +400,24 @@ export const Bulletins: React.FC = () => {
                   layout
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
-                  className="bg-white rounded-3xl p-16 text-center border border-slate-200/60 shadow-sm flex flex-col items-center gap-4"
+                  className="bg-white rounded-3xl p-16 text-center border border-slate-200/60 shadow-sm flex flex-col items-center justify-center gap-4"
                 >
-                  <Search className="h-7 w-7 text-slate-300" />
-                  <h3 className="text-xl font-bold text-slate-800 font-serif">No notices found</h3>
-                  <p className="text-slate-400 text-sm font-light">We couldn't find any notices matching your query.</p>
+                  <div className="p-4 bg-slate-50 rounded-full text-slate-300">
+                    <Search className="h-8 w-8" />
+                  </div>
+                  <h3 className="text-xl font-bold text-slate-800 font-serif">No notices match your filters</h3>
+                  <p className="text-slate-400 text-sm font-light max-w-sm">We couldn't find any notices. Try clearing your search query or choosing another category.</p>
+                  <button
+                    onClick={() => {
+                      setActiveCategory('all');
+                      setSearchQuery('');
+                      setSortBy('newest');
+                    }}
+                    className="mt-2 bg-[#652d90] hover:bg-[#4b1f6b] text-white px-5 py-2 rounded-xl font-bold text-xs shadow-sm active:scale-95 transition-all cursor-pointer flex items-center gap-1.5"
+                  >
+                    <RotateCcw className="h-3.5 w-3.5" />
+                    Reset All Filters
+                  </button>
                 </motion.div>
               )}
             </motion.div>
