@@ -14,6 +14,7 @@ import {
   restoreBackup 
 } from './backupService.js';
 import './database.js'; // Imports connection & seeds database
+import { sendContactAlertEmail } from './emailService.js';
 import { Notice, CalendarEvent, ContactMessage, Admin, Service, GalleryImage, GalleryCategory, Testimonial, PrincipalMessage, Alumni, Milestone, Rule, Program, AdmissionStep, Official, AdmissionFaq, TriviaQuestion, GameScore } from './database.js';
 
 const __filename = fileURLToPath(import.meta.url);
@@ -331,6 +332,12 @@ app.post('/api/contact', async (req, res) => {
   try {
     const newMessage = new ContactMessage({ name, email, subject, message });
     const saved = await newMessage.save();
+    
+    // Trigger background email alert notification to admin
+    sendContactAlertEmail({ name, email, subject, message }).catch(err => {
+      console.error('Failed sending background contact alert email:', err.message);
+    });
+
     res.status(201).json({ success: true, message: 'Message sent successfully!', data: saved });
   } catch (err) {
     console.error('Error submitting contact form:', err.message);
