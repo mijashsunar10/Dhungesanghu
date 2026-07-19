@@ -1,6 +1,8 @@
 import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
+import bcrypt from 'bcryptjs';
+import jwt from 'jsonwebtoken';
 import './database.js'; // Imports connection & seeds database
 import { Notice, CalendarEvent, ContactMessage, Admin, Service, GalleryImage, GalleryCategory, Testimonial, PrincipalMessage, Alumni, Milestone, Rule, Program, AdmissionStep, Official, AdmissionFaq, TriviaQuestion } from './database.js';
 
@@ -26,13 +28,45 @@ app.post('/api/admin/login', async (req, res) => {
 
   try {
     const admin = await Admin.findOne({ username });
-    if (!admin || admin.password !== password) {
+    if (!admin) {
       return res.status(401).json({ error: 'Invalid username or password.' });
     }
-    // Return a simple persistent token for session storage
+
+    // Verify using bcrypt
+    let isMatch = false;
+    try {
+      isMatch = await bcrypt.compare(password, admin.password);
+    } catch (err) {
+      isMatch = false;
+    }
+
+    // Fallback: check plain text if it hasn't been hashed yet (self-healing migration)
+    if (!isMatch && admin.password === password) {
+      isMatch = true;
+      try {
+        const salt = await bcrypt.genSalt(10);
+        admin.password = await bcrypt.hash(password, salt);
+        await admin.save();
+        console.log(`Self-healed: migrated admin user '${username}' to hashed password format.`);
+      } catch (saveErr) {
+        console.error('Failed to hash & migrate admin password:', saveErr);
+      }
+    }
+
+    if (!isMatch) {
+      return res.status(401).json({ error: 'Invalid username or password.' });
+    }
+
+    // Generate secure JWT token
+    const token = jwt.sign(
+      { id: admin._id, username: admin.username },
+      process.env.JWT_SECRET || 'dhungesanghu_school_super_secret_key_2026',
+      { expiresIn: '7d' }
+    );
+
     res.json({ 
       success: true, 
-      token: `session_token_${admin._id}_${Date.now()}`, 
+      token, 
       username: admin.username 
     });
   } catch (err) {
