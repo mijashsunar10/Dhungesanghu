@@ -46,6 +46,32 @@ export interface Service {
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
 
+// Intercept all fetch requests globally to automatically attach Authorization header
+if (typeof window !== 'undefined') {
+  const originalFetch = window.fetch;
+  window.fetch = async (input: RequestInfo | URL, init?: RequestInit) => {
+    const token = localStorage.getItem('admin_token');
+    if (token) {
+      init = init || {};
+      const headers = new Headers(init.headers || {});
+      if (!headers.has('Authorization')) {
+        headers.set('Authorization', `Bearer ${token}`);
+      }
+      init.headers = headers;
+    }
+    const response = await originalFetch(input, init);
+    if (response.status === 401 || response.status === 403) {
+      const path = window.location.pathname;
+      if (path.startsWith('/admin') && path !== '/admin/login') {
+        localStorage.removeItem('admin_token');
+        localStorage.removeItem('admin_user');
+        window.location.href = '/admin/login';
+      }
+    }
+    return response;
+  };
+}
+
 export async function adminLogin(username: string, password: string): Promise<{ success: boolean; token: string; username: string }> {
   const res = await fetch(`${API_URL}/admin/login`, {
     method: 'POST',

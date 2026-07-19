@@ -16,6 +16,53 @@ app.use(cors());
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ limit: '10mb', extended: true }));
 
+// Authentication Middleware to protect write endpoints and contact inbox
+app.use((req, res, next) => {
+  const method = req.method;
+  const path = req.path;
+
+  // Skip auth for admin login
+  if (path === '/api/admin/login') {
+    return next();
+  }
+  // Skip auth for public contact submissions
+  if (path === '/api/contact' && method === 'POST') {
+    return next();
+  }
+
+  // Protect contact messages read/delete, and any write/delete operations
+  const isContactMessages = path.startsWith('/api/contact-messages');
+  const isWriteOperation = ['POST', 'PUT', 'DELETE'].includes(method);
+
+  if (isContactMessages || isWriteOperation) {
+    const authHeader = req.headers['authorization'];
+    if (!authHeader) {
+      return res.status(401).json({ error: 'Authorization header is missing.' });
+    }
+
+    const token = authHeader.startsWith('Bearer ') 
+      ? authHeader.split(' ')[1] 
+      : authHeader;
+
+    if (!token) {
+      return res.status(401).json({ error: 'Token is missing.' });
+    }
+
+    try {
+      const decoded = jwt.verify(
+        token,
+        process.env.JWT_SECRET || 'dhungesanghu_school_super_secret_key_2026'
+      );
+      req.admin = decoded;
+      return next();
+    } catch (err) {
+      return res.status(403).json({ error: 'Invalid or expired token.' });
+    }
+  }
+
+  next();
+});
+
 // Routes
 
 // --- ADMIN LOGIN ---
