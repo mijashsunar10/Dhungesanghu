@@ -1,7 +1,7 @@
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
-import { Notice, CalendarEvent, ContactMessage, Admin, Service, GalleryImage, GalleryCategory, Testimonial, PrincipalMessage, Alumni, Milestone, Rule, Program, AdmissionStep, Official, AdmissionFaq, TriviaQuestion } from './database.js';
+import { Notice, CalendarEvent, ContactMessage, Admin, Service, GalleryImage, GalleryCategory, Testimonial, PrincipalMessage, Alumni, Milestone, Rule, Program, AdmissionStep, Official, AdmissionFaq, TriviaQuestion, GameScore } from './database.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -32,6 +32,7 @@ export async function createBackup() {
       officials: await Official.find(),
       admissionFaqs: await AdmissionFaq.find(),
       triviaQuestions: await TriviaQuestion.find(),
+      gameScores: await GameScore.find(),
       backupTime: new Date().toISOString()
     };
 
@@ -131,6 +132,7 @@ export async function restoreBackup(fileName) {
     await restoreCollection(Official, data.officials);
     await restoreCollection(AdmissionFaq, data.admissionFaqs);
     await restoreCollection(TriviaQuestion, data.triviaQuestions);
+    await restoreCollection(GameScore, data.gameScores);
 
     console.log(`Database restored successfully from backup: ${fileName}`);
     return { success: true };

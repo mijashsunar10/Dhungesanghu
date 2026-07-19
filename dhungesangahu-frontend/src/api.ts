@@ -1032,3 +1032,36 @@ export async function downloadBackup(filename: string): Promise<void> {
   document.body.removeChild(a);
   window.URL.revokeObjectURL(url);
 }
+
+export interface GameScoreInfo {
+  id?: string;
+  playerName: string;
+  gameType: 'trivia' | 'math' | 'memory';
+  score: number;
+  maxScore: number;
+  playedAt?: string;
+}
+
+export async function getGameScores(gameType?: 'trivia' | 'math' | 'memory'): Promise<GameScoreInfo[]> {
+  const url = gameType ? `${API_URL}/game-scores?gameType=${gameType}` : `${API_URL}/game-scores`;
+  const res = await fetch(url);
+  if (!res.ok) {
+    throw new Error('Failed to fetch game scores.');
+  }
+  return res.json();
+}
+
+export async function saveGameScore(scoreData: GameScoreInfo): Promise<{ success: boolean; score: GameScoreInfo }> {
+  const res = await fetch(`${API_URL}/game-scores`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify(scoreData)
+  });
+  if (!res.ok) {
+    const errData = await res.json().catch(() => ({}));
+    throw new Error(errData.error || 'Failed to save game score.');
+  }
+  return res.json();
+}

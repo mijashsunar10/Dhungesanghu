@@ -14,7 +14,7 @@ import {
   restoreBackup 
 } from './backupService.js';
 import './database.js'; // Imports connection & seeds database
-import { Notice, CalendarEvent, ContactMessage, Admin, Service, GalleryImage, GalleryCategory, Testimonial, PrincipalMessage, Alumni, Milestone, Rule, Program, AdmissionStep, Official, AdmissionFaq, TriviaQuestion } from './database.js';
+import { Notice, CalendarEvent, ContactMessage, Admin, Service, GalleryImage, GalleryCategory, Testimonial, PrincipalMessage, Alumni, Milestone, Rule, Program, AdmissionStep, Official, AdmissionFaq, TriviaQuestion, GameScore } from './database.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -40,6 +40,10 @@ app.use((req, res, next) => {
   }
   // Skip auth for public contact submissions
   if (path === '/api/contact' && method === 'POST') {
+    return next();
+  }
+  // Skip auth for public game score submissions
+  if (path === '/api/game-scores' && method === 'POST') {
     return next();
   }
 
@@ -1392,6 +1396,38 @@ app.delete('/api/trivia-questions/:id', async (req, res) => {
   } catch (err) {
     console.error('Error deleting trivia question:', err.message);
     res.status(500).json({ error: 'Database error deleting trivia question' });
+  }
+});
+
+
+// --- GAME SCORE LEADERBOARD ROUTES ---
+app.get('/api/game-scores', async (req, res) => {
+  const { gameType } = req.query;
+  try {
+    const filter = gameType ? { gameType } : {};
+    const scores = await GameScore.find(filter)
+      .sort({ score: -1, playedAt: -1 })
+      .limit(10);
+    res.json(scores);
+  } catch (err) {
+    console.error('Error fetching game scores:', err.message);
+    res.status(500).json({ error: 'Database error fetching game scores' });
+  }
+});
+
+app.post('/api/game-scores', async (req, res) => {
+  const { playerName, gameType, score, maxScore } = req.body;
+  if (!playerName || !gameType || score === undefined || maxScore === undefined) {
+    return res.status(400).json({ error: 'Missing required score fields: playerName, gameType, score, maxScore.' });
+  }
+
+  try {
+    const newScore = new GameScore({ playerName, gameType, score, maxScore });
+    await newScore.save();
+    res.status(201).json({ success: true, score: newScore });
+  } catch (err) {
+    console.error('Error saving game score:', err.message);
+    res.status(500).json({ error: 'Database error saving game score' });
   }
 });
 

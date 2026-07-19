@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Gamepad2, Trophy, RefreshCw, Play, Timer, Check, X, Brain, Calculator, Award } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { PageBanner } from '../components/PageBanner';
-import { getTriviaQuestions } from '../api';
+import { getTriviaQuestions, saveGameScore, getGameScores, type GameScoreInfo } from '../api';
 
 interface Question {
   id?: string;
@@ -13,7 +13,35 @@ interface Question {
 }
 
 export const GameZone: React.FC = () => {
-  const [activeTab, setActiveTab] = useState<'home' | 'trivia' | 'math' | 'memory'>('home');
+  const [activeTab, setActiveTab] = useState<'home' | 'trivia' | 'math' | 'memory' | 'leaderboard'>('home');
+
+  // Submission state
+  const [playerName, setPlayerName] = useState('');
+  const [scoreSubmitted, setScoreSubmitted] = useState(false);
+  const [submittingScore, setSubmittingScore] = useState(false);
+
+  // Leaderboard states
+  const [leaderboardScores, setLeaderboardScores] = useState<GameScoreInfo[]>([]);
+  const [loadingLeaderboard, setLoadingLeaderboard] = useState(false);
+  const [selectedLeaderboardTab, setSelectedLeaderboardTab] = useState<'trivia' | 'math' | 'memory'>('trivia');
+
+  const loadLeaderboardData = async (game: 'trivia' | 'math' | 'memory') => {
+    try {
+      setLoadingLeaderboard(true);
+      const data = await getGameScores(game);
+      setLeaderboardScores(data);
+    } catch (err) {
+      console.error('Failed to load leaderboard:', err);
+    } finally {
+      setLoadingLeaderboard(false);
+    }
+  };
+
+  useEffect(() => {
+    if (activeTab === 'leaderboard') {
+      loadLeaderboardData(selectedLeaderboardTab);
+    }
+  }, [activeTab, selectedLeaderboardTab]);
 
   const [questions, setQuestions] = useState<Question[]>([
     {
@@ -107,6 +135,9 @@ export const GameZone: React.FC = () => {
     setMemoryMoves(0);
     setMemoryMatches(0);
     setMemoryFinished(false);
+    setPlayerName('');
+    setScoreSubmitted(false);
+    setSubmittingScore(false);
   };
 
   const handleCardClick = (id: number) => {
@@ -200,6 +231,9 @@ export const GameZone: React.FC = () => {
     setMathTimer(20);
     setMathActive(true);
     generateMathQuestion();
+    setPlayerName('');
+    setScoreSubmitted(false);
+    setSubmittingScore(false);
   };
 
   const handleMathAnswer = (val: number) => {
@@ -257,6 +291,9 @@ export const GameZone: React.FC = () => {
     setScore(0);
     setTriviaFinished(false);
     setAnswered(false);
+    setPlayerName('');
+    setScoreSubmitted(false);
+    setSubmittingScore(false);
   };
 
   return (
@@ -276,13 +313,24 @@ export const GameZone: React.FC = () => {
       <div className="max-w-6xl w-full mx-auto px-6 py-12 flex-1 flex flex-col">
         
         {/* Navigation Tabs */}
-        {activeTab !== 'home' && (
+        {activeTab !== 'home' ? (
           <button 
             onClick={() => setActiveTab('home')}
             className="mb-8 self-start flex items-center gap-2 text-sm font-semibold text-[#652d90] hover:text-[#4b1f6b] bg-white px-5 py-2.5 rounded-full shadow-sm border border-slate-200 transition-colors cursor-pointer"
           >
             ← Back to Game Hub
           </button>
+        ) : (
+          <div className="mb-6 flex justify-between items-center w-full">
+            <h2 className="text-xl font-bold text-slate-800 font-serif">Select a Game</h2>
+            <button 
+              onClick={() => { setActiveTab('leaderboard'); setSelectedLeaderboardTab('trivia'); }}
+              className="flex items-center gap-2 text-sm font-bold text-[#652d90] hover:text-[#4b1f6b] bg-purple-50 hover:bg-purple-100/60 px-5 py-2.5 rounded-full border border-purple-200/50 transition-colors cursor-pointer shadow-sm"
+            >
+              <Trophy className="h-4 w-4 text-[#652d90]" />
+              View Leaderboards
+            </button>
+          </div>
         )}
 
         <AnimatePresence mode="wait">
@@ -461,6 +509,65 @@ export const GameZone: React.FC = () => {
                     <span className="text-5xl font-black text-[#652d90]">{score}</span>
                     <span className="text-slate-500 font-semibold block text-sm mt-1">out of {questions.length} correct</span>
                   </div>
+
+                  {/* Leaderboard Score submission */}
+                  {!scoreSubmitted ? (
+                    <form 
+                      onSubmit={async (e) => {
+                        e.preventDefault();
+                        if (!playerName.trim()) return;
+                        try {
+                          setSubmittingScore(true);
+                          await saveGameScore({
+                            playerName: playerName.trim(),
+                            gameType: 'trivia',
+                            score: score,
+                            maxScore: questions.length
+                          });
+                          setScoreSubmitted(true);
+                        } catch (err) {
+                          alert('Failed to save score. Please try again.');
+                        } finally {
+                          setSubmittingScore(false);
+                        }
+                      }}
+                      className="w-full max-w-sm flex flex-col gap-2 mt-2"
+                    >
+                      <label className="text-xs font-bold text-slate-500 text-left pl-1">
+                        SAVE SCORE TO LEADERBOARD
+                      </label>
+                      <div className="flex gap-2">
+                        <input
+                          type="text"
+                          placeholder="Enter your name"
+                          value={playerName}
+                          onChange={(e) => setPlayerName(e.target.value)}
+                          maxLength={25}
+                          required
+                          className="flex-1 bg-slate-50 border border-slate-200 focus:border-[#652d90] focus:ring-1 focus:ring-[#652d90] rounded-xl px-4 py-2.5 text-sm font-medium text-slate-700 outline-none transition-all"
+                        />
+                        <button
+                          type="submit"
+                          disabled={submittingScore}
+                          className="bg-[#652d90] hover:bg-[#4b1f6b] disabled:opacity-50 text-white font-bold px-5 py-2.5 rounded-xl text-sm transition-all cursor-pointer flex items-center gap-1.5"
+                        >
+                          {submittingScore ? 'Saving...' : 'Submit'}
+                        </button>
+                      </div>
+                    </form>
+                  ) : (
+                    <div className="bg-emerald-50 border border-emerald-100 rounded-xl px-6 py-3.5 text-center flex flex-col items-center gap-1.5 mt-2 max-w-sm w-full">
+                      <span className="text-xs font-bold text-emerald-800 flex items-center gap-1">
+                        <Check className="h-4 w-4" /> Score Saved Successfully!
+                      </span>
+                      <button
+                        onClick={() => { setActiveTab('leaderboard'); setSelectedLeaderboardTab('trivia'); }}
+                        className="text-xs font-extrabold text-[#652d90] hover:underline"
+                      >
+                        View Leaderboard →
+                      </button>
+                    </div>
+                  )}
                   <div className="flex gap-4 mt-2">
                     <button 
                       onClick={restartTrivia}
@@ -559,6 +666,65 @@ export const GameZone: React.FC = () => {
                     <span className="text-5xl font-black text-[#652d90]">{mathScore}</span>
                     <span className="text-slate-500 font-semibold block text-sm mt-1">points gathered</span>
                   </div>
+
+                  {/* Leaderboard Score submission */}
+                  {!scoreSubmitted ? (
+                    <form 
+                      onSubmit={async (e) => {
+                        e.preventDefault();
+                        if (!playerName.trim()) return;
+                        try {
+                          setSubmittingScore(true);
+                          await saveGameScore({
+                            playerName: playerName.trim(),
+                            gameType: 'math',
+                            score: mathScore,
+                            maxScore: mathScore
+                          });
+                          setScoreSubmitted(true);
+                        } catch (err) {
+                          alert('Failed to save score. Please try again.');
+                        } finally {
+                          setSubmittingScore(false);
+                        }
+                      }}
+                      className="w-full max-w-sm flex flex-col gap-2 mt-2"
+                    >
+                      <label className="text-xs font-bold text-slate-500 text-left pl-1">
+                        SAVE SCORE TO LEADERBOARD
+                      </label>
+                      <div className="flex gap-2">
+                        <input
+                          type="text"
+                          placeholder="Enter your name"
+                          value={playerName}
+                          onChange={(e) => setPlayerName(e.target.value)}
+                          maxLength={25}
+                          required
+                          className="flex-1 bg-slate-50 border border-slate-200 focus:border-[#652d90] focus:ring-1 focus:ring-[#652d90] rounded-xl px-4 py-2.5 text-sm font-medium text-slate-700 outline-none transition-all"
+                        />
+                        <button
+                          type="submit"
+                          disabled={submittingScore}
+                          className="bg-[#652d90] hover:bg-[#4b1f6b] disabled:opacity-50 text-white font-bold px-5 py-2.5 rounded-xl text-sm transition-all cursor-pointer flex items-center gap-1.5"
+                        >
+                          {submittingScore ? 'Saving...' : 'Submit'}
+                        </button>
+                      </div>
+                    </form>
+                  ) : (
+                    <div className="bg-emerald-50 border border-emerald-100 rounded-xl px-6 py-3.5 text-center flex flex-col items-center gap-1.5 mt-2 max-w-sm w-full">
+                      <span className="text-xs font-bold text-emerald-800 flex items-center gap-1">
+                        <Check className="h-4 w-4" /> Score Saved Successfully!
+                      </span>
+                      <button
+                        onClick={() => { setActiveTab('leaderboard'); setSelectedLeaderboardTab('math'); }}
+                        className="text-xs font-extrabold text-[#652d90] hover:underline"
+                      >
+                        View Leaderboard →
+                      </button>
+                    </div>
+                  )}
                   <div className="flex gap-4 mt-2">
                     <button 
                       onClick={startMathGame}
@@ -654,6 +820,66 @@ export const GameZone: React.FC = () => {
                       </div>
                     </div>
                   </div>
+
+                  {/* Leaderboard Score submission */}
+                  {!scoreSubmitted ? (
+                    <form 
+                      onSubmit={async (e) => {
+                        e.preventDefault();
+                        if (!playerName.trim()) return;
+                        try {
+                          setSubmittingScore(true);
+                          const calculatedScore = Math.max(10, 200 - memoryMoves * 4);
+                          await saveGameScore({
+                            playerName: playerName.trim(),
+                            gameType: 'memory',
+                            score: calculatedScore,
+                            maxScore: memoryMoves
+                          });
+                          setScoreSubmitted(true);
+                        } catch (err) {
+                          alert('Failed to save score. Please try again.');
+                        } finally {
+                          setSubmittingScore(false);
+                        }
+                      }}
+                      className="w-full flex flex-col gap-2 mt-2"
+                    >
+                      <label className="text-xs font-bold text-slate-500 text-left pl-1">
+                        SAVE SCORE TO LEADERBOARD
+                      </label>
+                      <div className="flex gap-2">
+                        <input
+                          type="text"
+                          placeholder="Enter your name"
+                          value={playerName}
+                          onChange={(e) => setPlayerName(e.target.value)}
+                          maxLength={25}
+                          required
+                          className="flex-1 bg-slate-50 border border-slate-200 focus:border-[#652d90] focus:ring-1 focus:ring-[#652d90] rounded-xl px-4 py-2.5 text-sm font-medium text-slate-700 outline-none transition-all"
+                        />
+                        <button
+                          type="submit"
+                          disabled={submittingScore}
+                          className="bg-[#652d90] hover:bg-[#4b1f6b] disabled:opacity-50 text-white font-bold px-5 py-2.5 rounded-xl text-sm transition-all cursor-pointer flex items-center gap-1.5"
+                        >
+                          {submittingScore ? 'Saving...' : 'Submit'}
+                        </button>
+                      </div>
+                    </form>
+                  ) : (
+                    <div className="bg-emerald-50 border border-emerald-100 rounded-xl px-6 py-3.5 text-center flex flex-col items-center gap-1.5 mt-2 w-full">
+                      <span className="text-xs font-bold text-emerald-800 flex items-center gap-1">
+                        <Check className="h-4 w-4" /> Score Saved Successfully!
+                      </span>
+                      <button
+                        onClick={() => { setActiveTab('leaderboard'); setSelectedLeaderboardTab('memory'); }}
+                        className="text-xs font-extrabold text-[#652d90] hover:underline"
+                      >
+                        View Leaderboard →
+                      </button>
+                    </div>
+                  )}
                   <div className="flex gap-4 mt-2 w-full justify-center">
                     <button 
                       onClick={initMemoryGame}
@@ -669,6 +895,111 @@ export const GameZone: React.FC = () => {
                       Select Game
                     </button>
                   </div>
+                </div>
+              )}
+            </motion.div>
+          )}
+          {/* LEADERBOARD VIEW */}
+          {activeTab === 'leaderboard' && (
+            <motion.div 
+              key="leaderboard"
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.95 }}
+              transition={{ duration: 0.25 }}
+              className="max-w-2xl w-full mx-auto bg-white rounded-3xl border border-slate-200 shadow-2xl p-6 sm:p-10 flex flex-col gap-6 text-left"
+            >
+              {/* Header */}
+              <div className="flex flex-col gap-2 border-b border-slate-100 pb-5">
+                <div className="flex items-center gap-2">
+                  <Trophy className="h-6 w-6 text-amber-500" />
+                  <h2 className="text-2xl font-bold text-slate-800 font-serif">Hall of Fame</h2>
+                </div>
+                <p className="text-slate-400 text-xs font-light">See the top players and highest scores across all interactive student games!</p>
+              </div>
+
+              {/* Game type selector tab pills */}
+              <div className="flex bg-slate-100 p-1.5 rounded-2xl w-full">
+                {(['trivia', 'math', 'memory'] as const).map((game) => (
+                  <button
+                    key={game}
+                    onClick={() => setSelectedLeaderboardTab(game)}
+                    className={`flex-1 py-2.5 rounded-xl font-bold text-xs sm:text-sm capitalize transition-all cursor-pointer ${
+                      selectedLeaderboardTab === game
+                        ? 'bg-white text-[#652d90] shadow-sm'
+                        : 'text-slate-500 hover:text-slate-700'
+                    }`}
+                  >
+                    {game === 'math' ? 'Math Quest' : game === 'memory' ? 'Memory Match' : 'Trivia Challenge'}
+                  </button>
+                ))}
+              </div>
+
+              {/* Scores List */}
+              {loadingLeaderboard ? (
+                <div className="flex flex-col items-center justify-center py-16 gap-3">
+                  <RefreshCw className="h-8 w-8 text-[#652d90] animate-spin" />
+                  <p className="text-slate-400 text-xs font-light">Loading scores...</p>
+                </div>
+              ) : leaderboardScores.length === 0 ? (
+                <div className="flex flex-col items-center justify-center py-16 text-center text-slate-400 gap-2.5">
+                  <div className="p-3.5 bg-slate-50 rounded-full text-slate-300">
+                    <Trophy className="h-8 w-8" />
+                  </div>
+                  <span className="font-bold text-sm text-slate-700">No scores recorded yet</span>
+                  <p className="text-xs font-light max-w-sm">Be the first to secure a spot in the Hall of Fame by finishing a game!</p>
+                </div>
+              ) : (
+                <div className="flex flex-col gap-2">
+                  {leaderboardScores.map((item, index) => {
+                    // Custom crown styles for top 3
+                    const isFirst = index === 0;
+                    const isSecond = index === 1;
+                    const isThird = index === 2;
+
+                    let rankBg = "bg-slate-100 text-slate-600";
+                    if (isFirst) rankBg = "bg-amber-100 text-amber-700 font-extrabold ring-2 ring-amber-300/40";
+                    if (isSecond) rankBg = "bg-slate-200 text-slate-700 font-extrabold";
+                    if (isThird) rankBg = "bg-orange-100 text-orange-700 font-extrabold";
+
+                    return (
+                      <div 
+                        key={item.id || index}
+                        className={`flex items-center justify-between p-4 rounded-2xl border transition-all duration-300 ${
+                          isFirst 
+                            ? 'bg-gradient-to-r from-amber-50/40 to-transparent border-amber-200/50' 
+                            : 'bg-white hover:bg-slate-50/50 border-slate-100'
+                        }`}
+                      >
+                        <div className="flex items-center gap-3">
+                          <span className={`w-7 h-7 rounded-lg flex items-center justify-center text-xs ${rankBg}`}>
+                            {index + 1}
+                          </span>
+                          <div className="flex flex-col gap-0.5">
+                            <span className={`text-sm font-bold text-slate-800 ${isFirst ? 'font-serif text-base' : ''}`}>
+                              {item.playerName}
+                            </span>
+                            <span className="text-[10px] text-slate-400">
+                              {item.playedAt ? new Date(item.playedAt).toLocaleDateString(undefined, { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }) : ''}
+                            </span>
+                          </div>
+                        </div>
+
+                        <div className="flex items-center gap-3">
+                          <div className="text-right">
+                            <span className="text-base font-black text-[#652d90] block">
+                              {item.score}
+                            </span>
+                            <span className="text-[10px] text-slate-400 font-medium block">
+                              {selectedLeaderboardTab === 'trivia' && `out of ${item.maxScore} correct`}
+                              {selectedLeaderboardTab === 'math' && 'points'}
+                              {selectedLeaderboardTab === 'memory' && `${item.maxScore} moves`}
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })}
                 </div>
               )}
             </motion.div>

@@ -223,6 +223,17 @@ const TriviaQuestionSchema = new mongoose.Schema({
 
 export const TriviaQuestion = mongoose.model('TriviaQuestion', TriviaQuestionSchema);
 
+// 17. Game Score Schema & Model
+const GameScoreSchema = new mongoose.Schema({
+  playerName: { type: String, required: true },
+  gameType: { type: String, enum: ['trivia', 'math', 'memory'], required: true },
+  score: { type: Number, required: true },
+  maxScore: { type: Number, required: true },
+  playedAt: { type: Date, default: Date.now }
+});
+
+export const GameScore = mongoose.model('GameScore', GameScoreSchema);
+
 
 
 
