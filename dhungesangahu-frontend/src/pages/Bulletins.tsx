@@ -650,7 +650,42 @@ export const Bulletins: React.FC = () => {
               </div>
 
               <div className="p-6 sm:p-8 flex-1 overflow-y-auto max-h-[50vh] text-slate-600 font-light text-sm sm:text-base leading-relaxed flex flex-col gap-6">
-                <p className="whitespace-pre-wrap">{selectedNotice.fullContent || selectedNotice.desc}</p>
+                <div 
+                  className="whitespace-pre-wrap rich-text-content font-light text-slate-600 text-sm sm:text-base leading-relaxed w-full" 
+                  dangerouslySetInnerHTML={{ __html: selectedNotice.fullContent || selectedNotice.desc }}
+                />
+
+                <style dangerouslySetInnerHTML={{ __html: `
+                  .rich-text-content blockquote {
+                    border-left: 3px solid #652d90;
+                    padding-left: 12px;
+                    color: #64748b;
+                    font-style: italic;
+                    margin: 12px 0;
+                  }
+                  .rich-text-content ul {
+                    list-style-type: disc;
+                    padding-left: 20px;
+                    margin: 12px 0;
+                  }
+                  .rich-text-content ol {
+                    list-style-type: decimal;
+                    padding-left: 20px;
+                    margin: 12px 0;
+                  }
+                  .rich-text-content h3 {
+                    font-size: 1.25rem;
+                    font-weight: 700;
+                    color: #1e293b;
+                    margin-top: 16px;
+                    margin-bottom: 8px;
+                  }
+                  .rich-text-content a {
+                    color: #652d90;
+                    text-decoration: underline;
+                    font-weight: 500;
+                  }
+                `}} />
                 
                 {selectedNotice.author && (
                   <div className="flex flex-col border-t border-slate-100 pt-5 mt-2 self-start font-sans">

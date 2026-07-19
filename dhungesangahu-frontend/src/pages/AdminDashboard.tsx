@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { RichTextEditor } from '../components/RichTextEditor';
 import { 
   LogOut, 
   Plus, 
@@ -3861,16 +3862,13 @@ export const AdminDashboard: React.FC = () => {
                   />
                 </div>
 
-                {/* Full Description content */}
-                <div className="flex flex-col gap-1">
+                 {/* Full Description content */}
+                <div className="flex flex-col gap-1.5">
                   <label className="text-xs font-bold text-slate-600 uppercase tracking-wider pl-0.5">Full Detailed Notice Message</label>
-                  <textarea 
-                    rows={4} 
-                    placeholder="Provide full notice details. Shown in detail view dialog..." 
+                  <RichTextEditor 
                     value={newNotice.fullContent}
-                    onChange={e => setNewNotice({...newNotice, fullContent: e.target.value})}
-                    required
-                    className="w-full px-4 py-3 bg-slate-50 border border-slate-200 focus:border-[#652d90] rounded-xl text-xs sm:text-sm font-light resize-none focus:outline-none transition-all duration-300"
+                    onChange={val => setNewNotice({...newNotice, fullContent: val})}
+                    placeholder="Provide full notice details. Markdown or rich formatting is supported..."
                   />
                 </div>
 
