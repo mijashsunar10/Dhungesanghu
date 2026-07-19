@@ -28,7 +28,8 @@ import {
   HelpCircle,
   Brain,
   FileText,
-  BarChart3
+  BarChart3,
+  Database
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ImageWithFallback } from '../components/ImageWithFallback';
@@ -108,12 +109,17 @@ import {
   updateTriviaQuestion,
   deleteTriviaQuestion,
   type TriviaQuestion,
+  getBackups,
+  triggerBackup,
+  restoreFromBackup,
+  downloadBackup,
+  type BackupInfo,
   uploadImage
 } from '../api';
 
 export const AdminDashboard: React.FC = () => {
   const navigate = useNavigate();
-  const [activeTab, setActiveTab] = useState<'overview' | 'notices' | 'calendar' | 'inbox' | 'services' | 'gallery' | 'testimonials' | 'principal' | 'alumni' | 'milestones' | 'rules' | 'programs' | 'admissionSteps' | 'officials' | 'admissionFaqs' | 'triviaQuestions'>('overview');
+  const [activeTab, setActiveTab] = useState<'overview' | 'notices' | 'calendar' | 'inbox' | 'services' | 'gallery' | 'testimonials' | 'principal' | 'alumni' | 'milestones' | 'rules' | 'programs' | 'admissionSteps' | 'officials' | 'admissionFaqs' | 'triviaQuestions' | 'backups'>('overview');
   const [adminUser, setAdminUser] = useState('Admin');
   
   // Data States
@@ -324,6 +330,28 @@ export const AdminDashboard: React.FC = () => {
     }
   }, [activeTab]);
 
+  // Backups state & loading
+  const [backups, setBackups] = useState<BackupInfo[]>([]);
+  const [loadingBackups, setLoadingBackups] = useState(false);
+
+  const loadBackupsData = async () => {
+    try {
+      setLoadingBackups(true);
+      const list = await getBackups();
+      setBackups(list);
+    } catch (err: any) {
+      console.error('Failed to load database backups:', err);
+    } finally {
+      setLoadingBackups(false);
+    }
+  };
+
+  useEffect(() => {
+    if (activeTab === 'backups') {
+      loadBackupsData();
+    }
+  }, [activeTab]);
+
   const loadAllData = async () => {
     try {
       setLoading(true);
@@ -356,12 +384,12 @@ export const AdminDashboard: React.FC = () => {
       setPrincipalData(pMsg);
       setAlumni(aList);
       setMilestones(milList);
-      setRules(rList.sort((a, b) => a.order - b.order));
-      setPrograms(progList.sort((a, b) => a.order - b.order));
-      setAdmissionSteps(stepList.sort((a, b) => a.order - b.order));
-      setOfficials(offList.sort((a, b) => a.order - b.order));
-      setAdmissionFaqs(faqList.sort((a, b) => a.order - b.order));
-      setTriviaQuestions(triviaList.sort((a, b) => a.order - b.order));
+      setRules(rList.sort((a: any, b: any) => a.order - b.order));
+      setPrograms(progList.sort((a: any, b: any) => a.order - b.order));
+      setAdmissionSteps(stepList.sort((a: any, b: any) => a.order - b.order));
+      setOfficials(offList.sort((a: any, b: any) => a.order - b.order));
+      setAdmissionFaqs(faqList.sort((a: any, b: any) => a.order - b.order));
+      setTriviaQuestions(triviaList.sort((a: any, b: any) => a.order - b.order));
     } catch (err: any) {
       console.error('Error fetching admin data:', err);
       setError('Could not load data. Ensure the database server is running.');
@@ -1624,6 +1652,23 @@ export const AdminDashboard: React.FC = () => {
                 </span>
                 <span className="bg-slate-800 text-slate-300 text-[10px] font-extrabold px-2 py-0.5 rounded-full">
                   {triviaQuestions.length}
+                </span>
+              </button>
+
+              <button
+                onClick={() => { setActiveTab('backups'); setIsMobileSidebarOpen(false); }}
+                className={`w-full flex items-center justify-between px-4 py-3 rounded-xl font-bold text-xs sm:text-sm transition-all cursor-pointer text-left ${
+                  activeTab === 'backups'
+                    ? 'bg-[#652d90] text-white shadow-md shadow-purple-900/30'
+                    : 'hover:bg-slate-800 hover:text-white text-slate-400'
+                }`}
+              >
+                <span className="flex items-center gap-3">
+                  <Database className="h-4.5 w-4.5" />
+                  Database Backups
+                </span>
+                <span className="bg-slate-800 text-slate-300 text-[10px] font-extrabold px-2 py-0.5 rounded-full">
+                  {backups.length}
                 </span>
               </button>
             </nav>
@@ -3616,6 +3661,116 @@ export const AdminDashboard: React.FC = () => {
                         </div>
                       </div>
                     ))}
+                  </div>
+                )}
+              </div>
+            )}
+
+            {activeTab === 'backups' && (
+              <div className="bg-white border border-slate-200/80 rounded-3xl p-6 sm:p-8 shadow-sm flex flex-col gap-6 text-left">
+                {/* Header Section */}
+                <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border-b border-slate-100 pb-5">
+                  <div>
+                    <h2 className="text-xl font-bold text-slate-800 font-serif">Database Snapshots & Backups</h2>
+                    <p className="text-slate-400 text-xs mt-1">Generate automated or manual JSON database backups and restore snapshots</p>
+                  </div>
+                  <button
+                    onClick={async () => {
+                      if (window.confirm('Generate a new manual snapshot of the current database?')) {
+                        try {
+                          setIsSubmitting(true);
+                          const res = await triggerBackup();
+                          alert(`Snapshot successfully generated: ${res.fileName}`);
+                          loadBackupsData();
+                        } catch (err: any) {
+                          alert(err.message || 'Failed to trigger backup.');
+                        } finally {
+                          setIsSubmitting(false);
+                        }
+                      }
+                    }}
+                    disabled={isSubmitting}
+                    className="bg-[#652d90] hover:bg-[#4b1f6b] text-white px-5 py-2.5 rounded-xl font-bold text-xs sm:text-sm transition-all shadow-md active:scale-95 cursor-pointer flex items-center gap-2 disabled:opacity-50"
+                  >
+                    <Plus className="h-4 w-4" /> Trigger New Backup
+                  </button>
+                </div>
+
+                {/* Backups List */}
+                {loadingBackups ? (
+                  <div className="flex flex-col items-center justify-center py-16 gap-3">
+                    <Loader2 className="h-8 w-8 text-[#652d90] animate-spin" />
+                    <p className="text-slate-400 text-xs font-light">Loading snapshots...</p>
+                  </div>
+                ) : backups.length === 0 ? (
+                  <div className="flex flex-col items-center justify-center py-16 text-center text-slate-400 gap-2.5">
+                    <div className="p-3.5 bg-slate-50 rounded-full text-slate-300">
+                      <Database className="h-8 w-8" />
+                    </div>
+                    <span className="font-bold text-sm text-slate-700">No snapshots found</span>
+                    <p className="text-xs font-light max-w-sm">No database backups have been generated yet. Click the button above to create one immediately.</p>
+                  </div>
+                ) : (
+                  <div className="flex flex-col gap-4">
+                    <div className="flex items-center justify-between">
+                      <h3 className="text-xs font-extrabold text-slate-400 uppercase tracking-widest pl-0.5">Available Backups (Kept: Last 7 daily)</h3>
+                      <span className="text-[10px] text-slate-400">Database restored snapshot will overwrite current data.</span>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      {backups.map((backup) => (
+                        <div key={backup.filename} className="border border-slate-100 hover:border-slate-200 bg-slate-50/50 hover:bg-slate-50 p-4.5 rounded-2xl flex flex-col justify-between gap-4 transition-all duration-300">
+                          <div className="flex items-start gap-3">
+                            <div className="p-2.5 bg-purple-50 text-[#652d90] rounded-xl">
+                              <Database className="h-5 w-5" />
+                            </div>
+                            <div className="flex-1 flex flex-col gap-0.5 min-w-0">
+                              <h4 className="font-bold text-slate-800 text-xs sm:text-sm truncate" title={backup.filename}>
+                                {backup.filename}
+                              </h4>
+                              <span className="text-[10px] text-slate-400 font-light">
+                                Size: {(backup.size / 1024).toFixed(2)} KB • Generated: {new Date(backup.createdAt).toLocaleString()}
+                              </span>
+                            </div>
+                          </div>
+
+                          <div className="flex gap-2 justify-end pt-3 border-t border-slate-200/40">
+                            <button
+                              onClick={async () => {
+                                try {
+                                  await downloadBackup(backup.filename);
+                                } catch (err: any) {
+                                  alert(err.message || 'Download failed');
+                                }
+                              }}
+                              className="px-2.5 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg text-[10px] font-bold transition-all border border-slate-200/30 cursor-pointer flex items-center gap-1"
+                            >
+                              Download JSON
+                            </button>
+                            <button
+                              onClick={async () => {
+                                if (window.confirm(`CRITICAL: Restoring database from snapshot '${backup.filename}' will OVERWRITE all current database entries. Are you absolutely sure?`)) {
+                                  try {
+                                    setIsSubmitting(true);
+                                    await restoreFromBackup(backup.filename);
+                                    alert('Database successfully restored from snapshot! Page will refresh to load restored data.');
+                                    window.location.reload();
+                                  } catch (err: any) {
+                                    alert(err.message || 'Restore failed');
+                                  } finally {
+                                    setIsSubmitting(false);
+                                  }
+                                }
+                              }}
+                              disabled={isSubmitting}
+                              className="px-2.5 py-1.5 bg-amber-50 hover:bg-amber-100 text-amber-700 rounded-lg text-[10px] font-bold transition-all border border-amber-200/20 cursor-pointer flex items-center gap-1 disabled:opacity-50"
+                            >
+                              Restore Snapshot
+                            </button>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
                   </div>
                 )}
               </div>

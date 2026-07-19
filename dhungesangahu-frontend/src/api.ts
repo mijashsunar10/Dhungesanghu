@@ -976,3 +976,59 @@ export async function uploadImage(file: File): Promise<{ success: boolean; url: 
 
   return res.json();
 }
+
+export interface BackupInfo {
+  filename: string;
+  size: number;
+  createdAt: string;
+}
+
+export async function getBackups(): Promise<BackupInfo[]> {
+  const res = await fetch(`${API_URL}/admin/backups`);
+  if (!res.ok) {
+    throw new Error('Failed to fetch backups list.');
+  }
+  return res.json();
+}
+
+export async function triggerBackup(): Promise<{ success: boolean; fileName: string }> {
+  const res = await fetch(`${API_URL}/admin/backups/create`, {
+    method: 'POST'
+  });
+  if (!res.ok) {
+    throw new Error('Failed to create backup.');
+  }
+  return res.json();
+}
+
+export async function restoreFromBackup(filename: string): Promise<{ success: boolean }> {
+  const res = await fetch(`${API_URL}/admin/backups/restore`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({ filename })
+  });
+  if (!res.ok) {
+    const errData = await res.json().catch(() => ({}));
+    throw new Error(errData.error || 'Failed to restore database from backup.');
+  }
+  return res.json();
+}
+
+export async function downloadBackup(filename: string): Promise<void> {
+  const res = await fetch(`${API_URL}/admin/backups/download/${filename}`);
+  if (!res.ok) {
+    throw new Error('Failed to download backup file.');
+  }
+
+  const blob = await res.blob();
+  const url = window.URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  window.URL.revokeObjectURL(url);
+}

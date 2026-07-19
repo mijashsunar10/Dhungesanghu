@@ -7,6 +7,12 @@ import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import multer from 'multer';
+import { 
+  startDailyBackupSchedule, 
+  getBackupsList, 
+  createBackup, 
+  restoreBackup 
+} from './backupService.js';
 import './database.js'; // Imports connection & seeds database
 import { Notice, CalendarEvent, ContactMessage, Admin, Service, GalleryImage, GalleryCategory, Testimonial, PrincipalMessage, Alumni, Milestone, Rule, Program, AdmissionStep, Official, AdmissionFaq, TriviaQuestion } from './database.js';
 
@@ -37,11 +43,12 @@ app.use((req, res, next) => {
     return next();
   }
 
-  // Protect contact messages read/delete, and any write/delete operations
+  // Protect contact messages read/delete, any write/delete operations, and backup operations
   const isContactMessages = path.startsWith('/api/contact-messages');
+  const isAdminBackupPath = path.startsWith('/api/admin/backups');
   const isWriteOperation = ['POST', 'PUT', 'DELETE'].includes(method);
 
-  if (isContactMessages || isWriteOperation) {
+  if (isContactMessages || isAdminBackupPath || isWriteOperation) {
     const authHeader = req.headers['authorization'];
     if (!authHeader) {
       return res.status(401).json({ error: 'Authorization header is missing.' });
@@ -1389,7 +1396,60 @@ app.delete('/api/trivia-questions/:id', async (req, res) => {
 });
 
 
+// --- BACKUP MANAGEMENT ROUTES ---
+app.get('/api/admin/backups', (req, res) => {
+  try {
+    const list = getBackupsList();
+    res.json(list);
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to retrieve backups list.' });
+  }
+});
+
+app.post('/api/admin/backups/create', async (req, res) => {
+  try {
+    const result = await createBackup();
+    res.json(result);
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to create manual backup.' });
+  }
+});
+
+app.post('/api/admin/backups/restore', async (req, res) => {
+  const { filename } = req.body;
+  if (!filename) {
+    return res.status(400).json({ error: 'Filename is required for restoration.' });
+  }
+
+  if (!filename.startsWith('backup-') || !filename.endsWith('.json') || filename.includes('..')) {
+    return res.status(400).json({ error: 'Invalid backup file requested.' });
+  }
+
+  try {
+    const result = await restoreBackup(filename);
+    res.json(result);
+  } catch (err) {
+    res.status(500).json({ error: err.message || 'Failed to restore database from backup.' });
+  }
+});
+
+app.get('/api/admin/backups/download/:filename', (req, res) => {
+  const { filename } = req.params;
+  if (!filename.startsWith('backup-') || !filename.endsWith('.json') || filename.includes('..')) {
+    return res.status(400).json({ error: 'Invalid backup file requested.' });
+  }
+
+  const filePath = path.join(__dirname, 'backups', filename);
+  if (!fs.existsSync(filePath)) {
+    return res.status(404).json({ error: 'Backup file not found.' });
+  }
+
+  res.download(filePath, filename);
+});
+
+
 // Start Server
 app.listen(PORT, () => {
   console.log(`Server is running on port ${PORT}`);
+  startDailyBackupSchedule();
 });
