@@ -107,7 +107,8 @@ import {
   createTriviaQuestion,
   updateTriviaQuestion,
   deleteTriviaQuestion,
-  type TriviaQuestion
+  type TriviaQuestion,
+  uploadImage
 } from '../api';
 
 export const AdminDashboard: React.FC = () => {
@@ -546,25 +547,24 @@ export const AdminDashboard: React.FC = () => {
     }
   };
 
-  const handleImageFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleImageFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    if (file.size > 3 * 1024 * 1024) {
-      alert('File size exceeds 3MB. Please select a smaller image.');
+    if (file.size > 5 * 1024 * 1024) {
+      alert('File size exceeds 5MB limit.');
       return;
     }
 
-    const reader = new FileReader();
-    reader.onloadend = () => {
-      if (typeof reader.result === 'string') {
-        setNewService(prev => ({ ...prev, image: reader.result as string }));
-      }
-    };
-    reader.onerror = () => {
-      alert('Error reading local file.');
-    };
-    reader.readAsDataURL(file);
+    try {
+      setIsSubmitting(true);
+      const res = await uploadImage(file);
+      setNewService(prev => ({ ...prev, image: res.url }));
+    } catch (err: any) {
+      alert(err.message || 'Error uploading image.');
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const handleEditService = (service: Service) => {
@@ -636,25 +636,24 @@ export const AdminDashboard: React.FC = () => {
     }
   };
 
-  const handleGalleryImageFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleGalleryImageFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    if (file.size > 3 * 1024 * 1024) {
-      alert('File size exceeds 3MB. Please select a smaller image.');
+    if (file.size > 5 * 1024 * 1024) {
+      alert('File size exceeds 5MB limit.');
       return;
     }
 
-    const reader = new FileReader();
-    reader.onloadend = () => {
-      if (typeof reader.result === 'string') {
-        setNewGalleryImage(prev => ({ ...prev, url: reader.result as string }));
-      }
-    };
-    reader.onerror = () => {
-      alert('Error reading local file.');
-    };
-    reader.readAsDataURL(file);
+    try {
+      setIsSubmitting(true);
+      const res = await uploadImage(file);
+      setNewGalleryImage(prev => ({ ...prev, url: res.url }));
+    } catch (err: any) {
+      alert(err.message || 'Error uploading image.');
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const handleEditGallery = (img: GalleryImage) => {
@@ -796,25 +795,24 @@ export const AdminDashboard: React.FC = () => {
     }
   };
 
-  const handlePrincipalImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handlePrincipalImageChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    if (file.size > 3 * 1024 * 1024) {
-      alert('File size exceeds 3MB. Please select a smaller image.');
+    if (file.size > 5 * 1024 * 1024) {
+      alert('File size exceeds 5MB limit.');
       return;
     }
 
-    const reader = new FileReader();
-    reader.onloadend = () => {
-      if (typeof reader.result === 'string') {
-        setPrincipalData(prev => ({ ...prev, image: reader.result as string }));
-      }
-    };
-    reader.onerror = () => {
-      alert('Error reading local file.');
-    };
-    reader.readAsDataURL(file);
+    try {
+      setIsSubmitting(true);
+      const res = await uploadImage(file);
+      setPrincipalData(prev => ({ ...prev, image: res.url }));
+    } catch (err: any) {
+      alert(err.message || 'Error uploading image.');
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   // ALUMNI HANDLERS
@@ -873,25 +871,24 @@ export const AdminDashboard: React.FC = () => {
     }
   };
 
-  const handleAlumniImageFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleAlumniImageFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    if (file.size > 3 * 1024 * 1024) {
-      alert('File size exceeds 3MB. Please select a smaller image.');
+    if (file.size > 5 * 1024 * 1024) {
+      alert('File size exceeds 5MB limit.');
       return;
     }
 
-    const reader = new FileReader();
-    reader.onloadend = () => {
-      if (typeof reader.result === 'string') {
-        setNewAlumni(prev => ({ ...prev, image: reader.result as string }));
-      }
-    };
-    reader.onerror = () => {
-      alert('Error reading local file.');
-    };
-    reader.readAsDataURL(file);
+    try {
+      setIsSubmitting(true);
+      const res = await uploadImage(file);
+      setNewAlumni(prev => ({ ...prev, image: res.url }));
+    } catch (err: any) {
+      alert(err.message || 'Error uploading image.');
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   // MILESTONE TIMELINE HANDLERS
@@ -5277,6 +5274,33 @@ export const AdminDashboard: React.FC = () => {
                     onChange={e => setNewOfficial({...newOfficial, image: e.target.value})}
                     className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 focus:border-[#652d90] rounded-xl text-xs sm:text-sm font-light focus:outline-none transition-all duration-300"
                   />
+                  <div className="flex gap-2 items-center mt-1.5">
+                    <label className="bg-[#652d90]/10 hover:bg-[#652d90]/20 text-[#652d90] text-[10px] font-bold py-1.5 px-3 rounded-lg cursor-pointer transition-colors flex items-center gap-1.5">
+                      <Plus className="h-3.5 w-3.5" />
+                      Upload Local Photo
+                      <input 
+                        type="file" 
+                        accept="image/*" 
+                        className="hidden" 
+                        onChange={async (e) => {
+                          const file = e.target.files?.[0];
+                          if (file) {
+                            try {
+                              setIsSubmitting(true);
+                              const res = await uploadImage(file);
+                              setNewOfficial(prev => ({ ...prev, image: res.url }));
+                              alert('Photo uploaded successfully!');
+                            } catch (err: any) {
+                              alert(err.message || 'Upload failed');
+                            } finally {
+                              setIsSubmitting(false);
+                            }
+                          }
+                        }} 
+                      />
+                    </label>
+                    <span className="text-[9px] text-slate-400">Max size: 5MB</span>
+                  </div>
                 </div>
 
                 {/* Email Address */}

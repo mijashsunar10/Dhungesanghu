@@ -960,8 +960,19 @@ export async function deleteTriviaQuestion(id: string): Promise<void> {
   }
 }
 
+export async function uploadImage(file: File): Promise<{ success: boolean; url: string; filename: string }> {
+  const formData = new FormData();
+  formData.append('image', file);
 
+  const res = await fetch(`${API_URL}/upload`, {
+    method: 'POST',
+    body: formData,
+  });
 
+  if (!res.ok) {
+    const data = await res.json().catch(() => ({}));
+    throw new Error(data.error || 'Failed to upload image');
+  }
 
-
-
+  return res.json();
+}

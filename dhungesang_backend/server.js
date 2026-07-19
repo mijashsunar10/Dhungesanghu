@@ -3,8 +3,15 @@ import cors from 'cors';
 import dotenv from 'dotenv';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
+import fs from 'fs';
+import path from 'path';
+import { fileURLToPath } from 'url';
+import multer from 'multer';
 import './database.js'; // Imports connection & seeds database
 import { Notice, CalendarEvent, ContactMessage, Admin, Service, GalleryImage, GalleryCategory, Testimonial, PrincipalMessage, Alumni, Milestone, Rule, Program, AdmissionStep, Official, AdmissionFaq, TriviaQuestion } from './database.js';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 dotenv.config();
 
@@ -120,6 +127,62 @@ app.post('/api/admin/login', async (req, res) => {
     console.error('Login error:', err.message);
     res.status(500).json({ error: 'Server login error' });
   }
+});
+
+// --- IMAGE UPLOAD CONFIG & ROUTE ---
+const uploadDir = path.join(__dirname, 'uploads');
+if (!fs.existsSync(uploadDir)) {
+  fs.mkdirSync(uploadDir, { recursive: true });
+}
+
+// Storage config
+const storage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    cb(null, uploadDir);
+  },
+  filename: (req, file, cb) => {
+    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
+    const ext = path.extname(file.originalname);
+    cb(null, file.fieldname + '-' + uniqueSuffix + ext);
+  }
+});
+
+const upload = multer({
+  storage: storage,
+  limits: { fileSize: 5 * 1024 * 1024 }, // Limit 5MB
+  fileFilter: (req, file, cb) => {
+    if (!file.mimetype.startsWith('image/')) {
+      return cb(new Error('Only image files are allowed!'), false);
+    }
+    cb(null, true);
+  }
+});
+
+// Serve uploaded files statically
+app.use('/uploads', express.static(uploadDir));
+
+// Route to handle image uploads
+app.post('/api/upload', (req, res) => {
+  upload.single('image')(req, res, (err) => {
+    if (err instanceof multer.MulterError) {
+      return res.status(400).json({ error: `Upload error: ${err.message}` });
+    } else if (err) {
+      return res.status(400).json({ error: err.message });
+    }
+
+    if (!req.file) {
+      return res.status(400).json({ error: 'Please select an image file to upload.' });
+    }
+
+    const baseUrl = `${req.protocol}://${req.hostname === 'localhost' ? 'localhost:5000' : req.get('host')}`;
+    const fileUrl = `${baseUrl}/uploads/${req.file.filename}`;
+
+    res.json({
+      success: true,
+      url: fileUrl,
+      filename: req.file.filename
+    });
+  });
 });
 
 // 1. Get Notices
